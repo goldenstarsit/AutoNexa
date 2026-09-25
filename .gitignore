@@ -42,3 +42,7 @@ next-env.d.ts
 
 # Local database files
 data/
+
+.env
+
+!.env.example
