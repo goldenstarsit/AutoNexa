@@ -20,4 +20,12 @@ export interface ExchangeAdapter {
   getOrder(symbol: string, orderId: string): Promise<ExchangeOrder>;
   cancelOrder(symbol: string, orderId: string): Promise<ExchangeOrder>;
   getOpenOrders(symbol?: string): Promise<ExchangeOrder[]>;
+  getOrderHistory(
+    symbol: string,
+    options?: {
+      startTime?: number;
+      endTime?: number;
+      limit?: number;
+    },
+  ): Promise<ExchangeOrder[]>;
 }

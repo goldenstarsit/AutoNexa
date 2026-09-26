@@ -114,6 +114,44 @@ export class MexcOrderApi {
     };
   }
 
+  async getOrderHistory(
+    symbol: string,
+    options?: {
+      startTime?: number;
+      endTime?: number;
+      limit?: number;
+    },
+  ): Promise<ExchangeOrder[]> {
+    const response = await this.privateApiClient.request<MexcOrderResponse[]>(
+      'GET',
+      '/api/v3/allOrders',
+      {
+        symbol: symbol.toUpperCase(),
+        ...(options?.startTime !== undefined
+          ? { startTime: options.startTime }
+          : {}),
+        ...(options?.endTime !== undefined
+          ? { endTime: options.endTime }
+          : {}),
+        ...(options?.limit !== undefined ? { limit: options.limit } : {}),
+      },
+    );
+
+    return response.map((order) => ({
+      orderId: order.orderId,
+      clientOrderId: order.clientOrderId,
+      symbol: order.symbol,
+      side: order.side.toLowerCase() as ExchangeOrder['side'],
+      type: normalizeMexcOrderType(order.type),
+      status: normalizeMexcOrderStatus(
+        order.status as Parameters<typeof normalizeMexcOrderStatus>[0],
+      ),
+      quantity: order.origQty,
+      executedQuantity: order.executedQty,
+      price: order.price,
+    }));
+  }
+
   async placeOrder(request: ExchangeOrderRequest): Promise<ExchangeOrder> {
     const response = await this.privateApiClient.request<MexcOrderResponse>(
       'POST',

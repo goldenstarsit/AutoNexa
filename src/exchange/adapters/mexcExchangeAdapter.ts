@@ -51,4 +51,15 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
   async getOpenOrders(symbol?: string): Promise<ExchangeOrder[]> {
     return this.orderApi.getOpenOrders(symbol);
   }
+
+  async getOrderHistory(
+    symbol: string,
+    options?: {
+      startTime?: number;
+      endTime?: number;
+      limit?: number;
+    },
+  ): Promise<ExchangeOrder[]> {
+    return this.orderApi.getOrderHistory(symbol, options);
+  }
 }
