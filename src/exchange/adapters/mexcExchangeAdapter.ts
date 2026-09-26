@@ -1,8 +1,10 @@
 import type { ExchangeAdapter } from '../exchange';
 import type { ExchangeAccount } from '../account/exchangeAccount';
 import type { ExchangeOrder, ExchangeOrderRequest } from '../order/exchangeOrder';
+import type { ExchangeSymbolInfo } from '../market/exchangeMarket';
 import { MexcAccountApi } from './mexc/mexcAccountApi';
 import { MexcOrderApi } from './mexc/mexcOrderApi';
+import { MexcMarketApi } from './mexc/mexcMarketApi';
 import { OrderExecutionService } from '../order/orderExecutionService';
 import { MexcPrivateApiClient } from './mexc/mexcPrivateApiClient';
 
@@ -19,6 +21,8 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
   private readonly orderApi = new MexcOrderApi(
     this.privateApiClient,
   );
+
+  private readonly marketApi = new MexcMarketApi();
 
   private readonly orderExecutionService = new OrderExecutionService(
     this.orderApi,
@@ -61,5 +65,37 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
     },
   ): Promise<ExchangeOrder[]> {
     return this.orderApi.getOrderHistory(symbol, options);
+  }
+
+  async getSymbolInfo(
+    symbol: string,
+  ): Promise<ExchangeSymbolInfo | undefined> {
+    const info = await this.marketApi.getSymbolInfo(symbol);
+
+    if (!info) {
+      return undefined;
+    }
+
+    return {
+      symbol: info.symbol,
+      status: info.status,
+      baseAsset: info.baseAsset,
+      quoteAsset: info.quoteAsset,
+      baseAssetPrecision: info.baseAssetPrecision,
+      quoteAssetPrecision: info.quoteAssetPrecision,
+    };
+  }
+
+  async getSymbols(): Promise<ExchangeSymbolInfo[]> {
+    const info = await this.marketApi.getExchangeInfo();
+
+    return info.symbols.map((symbol) => ({
+      symbol: symbol.symbol,
+      status: symbol.status,
+      baseAsset: symbol.baseAsset,
+      quoteAsset: symbol.quoteAsset,
+      baseAssetPrecision: symbol.baseAssetPrecision,
+      quoteAssetPrecision: symbol.quoteAssetPrecision,
+    }));
   }
 }
