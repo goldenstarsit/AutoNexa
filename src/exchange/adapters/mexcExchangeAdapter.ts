@@ -3,6 +3,7 @@ import type { ExchangeAccount } from '../account/exchangeAccount';
 import type { ExchangeOrder, ExchangeOrderRequest } from '../order/exchangeOrder';
 import { MexcAccountApi } from './mexc/mexcAccountApi';
 import { MexcOrderApi } from './mexc/mexcOrderApi';
+import { OrderExecutionService } from '../order/orderExecutionService';
 import { MexcPrivateApiClient } from './mexc/mexcPrivateApiClient';
 
 export class MexcExchangeAdapter implements ExchangeAdapter {
@@ -19,6 +20,10 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
     this.privateApiClient,
   );
 
+  private readonly orderExecutionService = new OrderExecutionService(
+    this.orderApi,
+  );
+
   async connect(): Promise<void> {
     // Connection lifecycle will be expanded in the MEXC integration milestone.
   }
@@ -32,6 +37,6 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
   }
 
   async placeOrder(request: ExchangeOrderRequest): Promise<ExchangeOrder> {
-    return this.orderApi.placeOrder(request);
+    return this.orderExecutionService.execute(request);
   }
 }
