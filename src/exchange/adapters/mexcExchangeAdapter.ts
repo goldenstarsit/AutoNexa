@@ -82,7 +82,18 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
       baseAsset: info.baseAsset,
       quoteAsset: info.quoteAsset,
       baseAssetPrecision: info.baseAssetPrecision,
+      quotePrecision: info.quotePrecision,
       quoteAssetPrecision: info.quoteAssetPrecision,
+      baseCommissionPrecision: info.baseCommissionPrecision,
+      quoteCommissionPrecision: info.quoteCommissionPrecision,
+      orderTypes: info.orderTypes,
+      spotTradingAllowed: info.isSpotTradingAllowed,
+      marginTradingAllowed: info.isMarginTradingAllowed,
+      quoteAmountPrecision: info.quoteAmountPrecision,
+      baseSizePrecision: info.baseSizePrecision,
+      maxQuoteAmount: info.maxQuoteAmount,
+      quoteAmountPrecisionMarket: info.quoteAmountPrecisionMarket,
+      maxQuoteAmountMarket: info.maxQuoteAmountMarket,
     };
   }
 
@@ -95,7 +106,18 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
       baseAsset: symbol.baseAsset,
       quoteAsset: symbol.quoteAsset,
       baseAssetPrecision: symbol.baseAssetPrecision,
+      quotePrecision: symbol.quotePrecision,
       quoteAssetPrecision: symbol.quoteAssetPrecision,
+      baseCommissionPrecision: symbol.baseCommissionPrecision,
+      quoteCommissionPrecision: symbol.quoteCommissionPrecision,
+      orderTypes: symbol.orderTypes,
+      spotTradingAllowed: symbol.isSpotTradingAllowed,
+      marginTradingAllowed: symbol.isMarginTradingAllowed,
+      quoteAmountPrecision: symbol.quoteAmountPrecision,
+      baseSizePrecision: symbol.baseSizePrecision,
+      maxQuoteAmount: symbol.maxQuoteAmount,
+      quoteAmountPrecisionMarket: symbol.quoteAmountPrecisionMarket,
+      maxQuoteAmountMarket: symbol.maxQuoteAmountMarket,
     }));
   }
 }
