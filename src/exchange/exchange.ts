@@ -17,4 +17,5 @@ export interface ExchangeAdapter {
   disconnect(): Promise<void>;
   getAccount(): Promise<ExchangeAccount>;
   placeOrder(request: ExchangeOrderRequest): Promise<ExchangeOrder>;
+  getOrder(symbol: string, orderId: string): Promise<ExchangeOrder>;
 }
