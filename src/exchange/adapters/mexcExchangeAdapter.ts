@@ -1,14 +1,22 @@
 import type { ExchangeAdapter } from '../exchange';
 import type { ExchangeAccount } from '../account/exchangeAccount';
+import type { ExchangeOrder, ExchangeOrderRequest } from '../order/exchangeOrder';
 import { MexcAccountApi } from './mexc/mexcAccountApi';
+import { MexcOrderApi } from './mexc/mexcOrderApi';
 import { MexcPrivateApiClient } from './mexc/mexcPrivateApiClient';
 
 export class MexcExchangeAdapter implements ExchangeAdapter {
   readonly id = 'mexc';
   readonly name = 'MEXC';
 
+  private readonly privateApiClient = new MexcPrivateApiClient();
+
   private readonly accountApi = new MexcAccountApi(
-    new MexcPrivateApiClient(),
+    this.privateApiClient,
+  );
+
+  private readonly orderApi = new MexcOrderApi(
+    this.privateApiClient,
   );
 
   async connect(): Promise<void> {
@@ -21,5 +29,9 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
 
   async getAccount(): Promise<ExchangeAccount> {
     return this.accountApi.getAccount();
+  }
+
+  async placeOrder(request: ExchangeOrderRequest): Promise<ExchangeOrder> {
+    return this.orderApi.placeOrder(request);
   }
 }
