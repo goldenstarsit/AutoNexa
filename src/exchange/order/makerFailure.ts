@@ -13,7 +13,7 @@ export interface MakerFailure {
 export function classifyMakerFailure(error: unknown): MakerFailure {
   const data = getExchangeOrderErrorData(error);
 
-  if (data?.code !== undefined || data?.msg || data?.message) {
+  if (data?.code === 30041 || data?.code === '30041') {
     return {
       reason: 'maker_rejected',
       error,
