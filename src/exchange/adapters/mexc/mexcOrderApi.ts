@@ -1,5 +1,6 @@
 import type { ExchangeOrder, ExchangeOrderRequest } from '../../order/exchangeOrder';
 import { MexcPrivateApiClient } from './mexcPrivateApiClient';
+import { normalizeMexcOrderStatus } from './mexcOrderStatus';
 
 export interface MexcOrderResponse {
   symbol: string;
@@ -46,7 +47,7 @@ export class MexcOrderApi {
       symbol: response.symbol,
       side: response.side.toLowerCase() as ExchangeOrder['side'],
       type: request.type,
-      status: response.status,
+      status: normalizeMexcOrderStatus(response.status as Parameters<typeof normalizeMexcOrderStatus>[0]),
       quantity: response.origQty,
       executedQuantity: response.executedQty,
       price: response.price,

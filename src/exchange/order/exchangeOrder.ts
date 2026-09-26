@@ -12,6 +12,15 @@ export type ExchangeOrderExecutionMode =
   | 'takerOnly'
   | 'hybrid';
 
+export type ExchangeOrderStatus =
+  | 'open'
+  | 'partiallyFilled'
+  | 'filled'
+  | 'canceled'
+  | 'partiallyCanceled'
+  | 'rejected'
+  | 'expired';
+
 export interface ExchangeOrderRequest {
   symbol: string;
   side: ExchangeOrderSide;
@@ -28,7 +37,7 @@ export interface ExchangeOrder {
   symbol: string;
   side: ExchangeOrderSide;
   type: ExchangeOrderType;
-  status: string;
+  status: ExchangeOrderStatus;
   quantity: string;
   executedQuantity: string;
   price?: string;
