@@ -3,6 +3,7 @@ import type {
   ExchangeOrderRequest,
 } from './exchangeOrder';
 import { createOrderExecutionPlan } from './orderExecution';
+import { classifyMakerFailure } from './makerFailure';
 import type {
   OrderExecutionAttempt,
   OrderExecutionResult,
@@ -114,10 +115,12 @@ export class OrderExecutionService {
         order,
       };
     } catch (error) {
+      const makerFailure = classifyMakerFailure(error);
+
       attempts.push({
         type: 'maker',
         request: makerRequest,
-        error,
+        error: makerFailure,
       });
 
       const takerRequest: ExchangeOrderRequest = {
