@@ -1,3 +1,5 @@
+import { getExchangeOrderErrorData } from './exchangeOrderError';
+
 export type MakerFailureReason =
   | 'maker_unavailable'
   | 'maker_rejected'
@@ -9,6 +11,15 @@ export interface MakerFailure {
 }
 
 export function classifyMakerFailure(error: unknown): MakerFailure {
+  const data = getExchangeOrderErrorData(error);
+
+  if (data?.code !== undefined || data?.msg || data?.message) {
+    return {
+      reason: 'maker_rejected',
+      error,
+    };
+  }
+
   return {
     reason: 'unknown',
     error,
