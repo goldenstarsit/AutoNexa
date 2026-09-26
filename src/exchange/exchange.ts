@@ -19,4 +19,5 @@ export interface ExchangeAdapter {
   placeOrder(request: ExchangeOrderRequest): Promise<ExchangeOrder>;
   getOrder(symbol: string, orderId: string): Promise<ExchangeOrder>;
   cancelOrder(symbol: string, orderId: string): Promise<ExchangeOrder>;
+  getOpenOrders(symbol?: string): Promise<ExchangeOrder[]>;
 }

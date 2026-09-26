@@ -47,4 +47,8 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
   async cancelOrder(symbol: string, orderId: string): Promise<ExchangeOrder> {
     return this.orderApi.cancelOrder(symbol, orderId);
   }
+
+  async getOpenOrders(symbol?: string): Promise<ExchangeOrder[]> {
+    return this.orderApi.getOpenOrders(symbol);
+  }
 }

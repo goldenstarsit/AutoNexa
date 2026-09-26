@@ -65,6 +65,30 @@ export class MexcOrderApi {
     };
   }
 
+  async getOpenOrders(symbol?: string): Promise<ExchangeOrder[]> {
+    const response = await this.privateApiClient.request<MexcOrderResponse[]>(
+      'GET',
+      '/api/v3/openOrders',
+      {
+        ...(symbol ? { symbol: symbol.toUpperCase() } : {}),
+      },
+    );
+
+    return response.map((order) => ({
+      orderId: order.orderId,
+      clientOrderId: order.clientOrderId,
+      symbol: order.symbol,
+      side: order.side.toLowerCase() as ExchangeOrder['side'],
+      type: normalizeMexcOrderType(order.type),
+      status: normalizeMexcOrderStatus(
+        order.status as Parameters<typeof normalizeMexcOrderStatus>[0],
+      ),
+      quantity: order.origQty,
+      executedQuantity: order.executedQty,
+      price: order.price,
+    }));
+  }
+
   async cancelOrder(symbol: string, orderId: string): Promise<ExchangeOrder> {
     const response = await this.privateApiClient.request<MexcOrderResponse>(
       'DELETE',
