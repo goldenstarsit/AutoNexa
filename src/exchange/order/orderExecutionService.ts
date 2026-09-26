@@ -7,8 +7,10 @@ import type {
   OrderExecutionAttempt,
   OrderExecutionResult,
 } from './orderExecutionResult';
+import type { OrderExecutionCapabilities } from './orderExecutionCapabilities';
 
 export interface OrderExecutionAdapter {
+  readonly executionCapabilities: OrderExecutionCapabilities;
   placeOrder(request: ExchangeOrderRequest): Promise<ExchangeOrder>;
 }
 
@@ -29,6 +31,14 @@ export class OrderExecutionService {
     request: ExchangeOrderRequest,
   ): Promise<OrderExecutionResult> {
     const plan = createOrderExecutionPlan(request);
+
+    if (request.executionMode === 'makerOnly' && !this.adapter.executionCapabilities.maker) {
+      throw new Error('Maker-only execution is not supported by this exchange adapter');
+    }
+
+    if (request.executionMode === 'takerOnly' && !this.adapter.executionCapabilities.taker) {
+      throw new Error('Taker-only execution is not supported by this exchange adapter');
+    }
 
     if (plan.mode !== 'hybrid') {
       const order = await this.adapter.placeOrder({

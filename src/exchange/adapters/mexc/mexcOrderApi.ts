@@ -15,6 +15,11 @@ export interface MexcOrderResponse {
 }
 
 export class MexcOrderApi {
+  readonly executionCapabilities = {
+    maker: true,
+    taker: true,
+    hybrid: true,
+  };
   constructor(
     private readonly privateApiClient: MexcPrivateApiClient,
   ) {}
