@@ -40,6 +40,13 @@ export class OrderExecutionService {
       throw new Error('Taker-only execution is not supported by this exchange adapter');
     }
 
+    if (
+      request.executionMode === 'hybrid' &&
+      !this.adapter.executionCapabilities.hybrid
+    ) {
+      throw new Error('Hybrid execution is not supported by this exchange adapter');
+    }
+
     if (plan.mode !== 'hybrid') {
       const order = await this.adapter.placeOrder({
         ...request,
