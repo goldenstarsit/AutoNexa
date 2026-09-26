@@ -10,6 +10,10 @@ export interface MakerFailure {
   error: unknown;
 }
 
+export function shouldFallbackToTaker(failure: MakerFailure): boolean {
+  return failure.reason === 'maker_unavailable';
+}
+
 export function classifyMakerFailure(error: unknown): MakerFailure {
   const data = getExchangeOrderErrorData(error);
 
