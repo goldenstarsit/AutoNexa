@@ -1,3 +1,5 @@
+import type { ExchangeAccount } from './account/exchangeAccount';
+
 export type ExchangeId = string;
 
 export interface ExchangeConfig {
@@ -12,4 +14,5 @@ export interface ExchangeAdapter {
 
   connect(): Promise<void>;
   disconnect(): Promise<void>;
+  getAccount(): Promise<ExchangeAccount>;
 }
