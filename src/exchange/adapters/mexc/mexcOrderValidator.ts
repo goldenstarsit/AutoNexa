@@ -57,6 +57,18 @@ export function validateMexcOrder(
         `MEXC order value must be at least ${symbolInfo.quoteAmountPrecision}`,
       );
     }
+
+    if (
+      symbolInfo.maxQuoteAmount &&
+      compareDecimal(
+        notional,
+        symbolInfo.maxQuoteAmount,
+      ) > 0
+    ) {
+      throw new Error(
+        `MEXC order value must not exceed ${symbolInfo.maxQuoteAmount}`,
+      );
+    }
   }
 }
 
