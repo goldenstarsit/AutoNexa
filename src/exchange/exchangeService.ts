@@ -41,6 +41,14 @@ export class ExchangeService {
     return exchanges;
   }
 
+  private getAdapter(exchangeId: string) {
+    if (!this.registry.has(exchangeId)) {
+      this.loadEnabledExchanges();
+    }
+
+    return this.registry.get(exchangeId);
+  }
+
   getRegistry(): ExchangeRegistry {
     return this.registry;
   }
@@ -55,11 +63,7 @@ export class ExchangeService {
     amount: string,
     updatedAt?: string,
   ): void {
-    const adapter = this.registry.get(exchangeId);
-
-    if (!adapter) {
-      throw new Error(`Exchange not registered: ${exchangeId}`);
-    }
+    const adapter = this.getAdapter(exchangeId);
 
     adapter.depositTestBalance(asset, amount, updatedAt);
   }
@@ -70,11 +74,7 @@ export class ExchangeService {
     amount: string,
     updatedAt?: string,
   ): void {
-    const adapter = this.registry.get(exchangeId);
-
-    if (!adapter) {
-      throw new Error(`Exchange not registered: ${exchangeId}`);
-    }
+    const adapter = this.getAdapter(exchangeId);
 
     adapter.withdrawTestBalance(asset, amount, updatedAt);
   }
@@ -83,11 +83,7 @@ export class ExchangeService {
     exchangeId: string,
     mode: ExchangeBalanceMode = 'live',
   ) {
-    const adapter = this.registry.get(exchangeId);
-
-    if (!adapter) {
-      throw new Error(`Exchange not registered: ${exchangeId}`);
-    }
+    const adapter = this.getAdapter(exchangeId);
 
     if (!this.balanceModeService.isEnabled(mode)) {
       throw new Error(`Balance mode is disabled: ${mode}`);

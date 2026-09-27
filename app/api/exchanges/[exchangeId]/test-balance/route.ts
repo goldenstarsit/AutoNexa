@@ -20,7 +20,6 @@ export async function GET(
   const { exchangeId } = await context.params;
 
   return withApplicationContext(async (app) => {
-    app.exchanges.loadEnabledExchanges();
     const account = await app.exchanges.getAccount(exchangeId, 'test');
 
     return NextResponse.json({
@@ -65,8 +64,6 @@ export async function POST(
 
   try {
     return withApplicationContext(async (app) => {
-      app.exchanges.loadEnabledExchanges();
-
       const asset = body.asset.trim().toUpperCase();
 
       if (body.action === 'deposit') {
