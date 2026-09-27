@@ -1,12 +1,11 @@
 import type { DatabaseAdapter } from '../../database/databaseAdapter';
-import type { BalanceModeProvider } from './balanceModeProvider';
 import {
   BalanceModeRepository,
   type BalanceModeRecord,
 } from './balanceModeRepository';
 import type { ExchangeBalanceMode } from './balanceMode';
 
-export class BalanceModeService implements BalanceModeProvider {
+export class BalanceModeService {
   private readonly repository: BalanceModeRepository;
 
   constructor(db: DatabaseAdapter) {
