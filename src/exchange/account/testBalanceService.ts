@@ -11,8 +11,6 @@ import {
 } from './decimalAmount';
 
 export class TestBalanceService implements BalanceSource, TestBalanceOperations {
-  readonly mode = 'test' as const;
-
   private readonly repository: TestBalanceRepository;
 
   constructor(
