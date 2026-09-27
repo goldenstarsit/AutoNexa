@@ -4,6 +4,7 @@ import type { ExchangeOrder, ExchangeOrderRequest } from '../order/exchangeOrder
 import type { ExchangeSymbolInfo } from '../market/exchangeMarket';
 import type { ExchangeTradingRules } from '../market/exchangeTradingRules';
 import type { ExchangeCapabilities } from '../exchangeCapabilities';
+import type { ExchangeHealth } from '../exchangeHealth';
 import { MexcAccountApi } from './mexc/mexcAccountApi';
 import { MexcOrderApi } from './mexc/mexcOrderApi';
 import { MexcMarketApi } from './mexc/mexcMarketApi';
@@ -121,6 +122,25 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
       quoteAmountPrecisionMarket: symbol.quoteAmountPrecisionMarket,
       maxQuoteAmountMarket: symbol.maxQuoteAmountMarket,
     }));
+  }
+
+  async getHealth(): Promise<ExchangeHealth> {
+    const checkedAt = Date.now();
+
+    try {
+      await this.marketApi.getExchangeInfo();
+
+      return {
+        state: 'connected',
+        checkedAt,
+      };
+    } catch (error) {
+      return {
+        state: 'error',
+        checkedAt,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
   }
 
   async getCapabilities(): Promise<ExchangeCapabilities> {
