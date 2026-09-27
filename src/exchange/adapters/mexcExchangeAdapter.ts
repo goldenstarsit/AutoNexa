@@ -3,6 +3,7 @@ import type { ExchangeAccount } from '../account/exchangeAccount';
 import type { ExchangeOrder, ExchangeOrderRequest } from '../order/exchangeOrder';
 import type { ExchangeSymbolInfo } from '../market/exchangeMarket';
 import type { ExchangeTradingRules } from '../market/exchangeTradingRules';
+import type { ExchangeCapabilities } from '../exchangeCapabilities';
 import { MexcAccountApi } from './mexc/mexcAccountApi';
 import { MexcOrderApi } from './mexc/mexcOrderApi';
 import { MexcMarketApi } from './mexc/mexcMarketApi';
@@ -120,6 +121,27 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
       quoteAmountPrecisionMarket: symbol.quoteAmountPrecisionMarket,
       maxQuoteAmountMarket: symbol.maxQuoteAmountMarket,
     }));
+  }
+
+  async getCapabilities(): Promise<ExchangeCapabilities> {
+    const symbols = await this.marketApi.getExchangeInfo();
+
+    return {
+      spotTrading: symbols.symbols.some(
+        (symbol) => symbol.isSpotTradingAllowed,
+      ),
+      marginTrading: symbols.symbols.some(
+        (symbol) => symbol.isMarginTradingAllowed,
+      ),
+      makerExecution: this.orderApi.executionCapabilities.maker,
+      takerExecution: this.orderApi.executionCapabilities.taker,
+      hybridExecution: this.orderApi.executionCapabilities.hybrid,
+      orderTypes: [
+        ...new Set(
+          symbols.symbols.flatMap((symbol) => symbol.orderTypes),
+        ),
+      ],
+    };
   }
 
   async getTradingRules(
