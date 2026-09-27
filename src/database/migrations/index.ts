@@ -4,6 +4,7 @@ import { exchangesMigration } from './002_exchanges';
 import { strategyTypesMigration } from './003_strategy_types';
 import { seedMexcExchangeMigration } from './004_seed_mexc_exchange';
 import { executionModesMigration } from './005_execution_modes';
+import { balanceModesMigration } from './006_balance_modes';
 
 export const migrations: Migration[] = [
   initialMigration,
@@ -11,4 +12,5 @@ export const migrations: Migration[] = [
   strategyTypesMigration,
   seedMexcExchangeMigration,
   executionModesMigration,
+  balanceModesMigration,
 ];
