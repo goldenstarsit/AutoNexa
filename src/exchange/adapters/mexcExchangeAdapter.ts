@@ -2,7 +2,7 @@ import type { ExchangeAdapter } from '../exchange';
 import type { DatabaseAdapter } from '../../database/databaseAdapter';
 import type { ExchangeAccount } from '../account/exchangeAccount';
 import type { ExchangeBalanceMode } from '../account/balanceMode';
-import { createTestBalanceSource } from '../account/testBalanceSourceFactory';
+import { TestBalanceService } from '../account/testBalanceService';
 import type { TestBalanceOperations } from '../account/testBalanceOperations';
 import { BalanceSourceRouter } from '../account/balanceSourceRouter';
 import type { BalanceSource } from '../account/balanceSource';
@@ -26,7 +26,7 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
     db: DatabaseAdapter,
     executionModeProvider?: ExecutionModeProvider,
   ) {
-    this.testBalanceSource = createTestBalanceSource(db, this.id);
+    this.testBalanceSource = new TestBalanceService(db, this.id);
 
     this.balanceSourceRouter = new BalanceSourceRouter(
       new Map<ExchangeBalanceMode, BalanceSource>([
