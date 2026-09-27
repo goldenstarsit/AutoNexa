@@ -1,5 +1,11 @@
 import type { ExchangeAccount, ExchangeAssetBalance } from '../exchangeAccount';
 import type { TestBalanceSource } from './testBalanceSource';
+import {
+  addDecimalAmounts,
+  compareDecimalAmounts,
+  subtractDecimalAmounts,
+  validatePositiveDecimalAmount,
+} from '../decimalAmount';
 
 export class GenericTestBalanceSource implements TestBalanceSource {
   readonly mode = 'test' as const;
@@ -23,12 +29,10 @@ export class GenericTestBalanceSource implements TestBalanceSource {
     amount: string,
     _updatedAt?: string,
   ): void {
-    const value = this.parseAmount(amount);
+    validatePositiveDecimalAmount(amount);
     const balance = this.getOrCreateBalance(asset);
 
-    balance.free = this.formatAmount(
-      this.toNumber(balance.free) + value,
-    );
+    balance.free = addDecimalAmounts(balance.free, amount);
   }
 
   withdraw(
@@ -36,17 +40,17 @@ export class GenericTestBalanceSource implements TestBalanceSource {
     amount: string,
     _updatedAt?: string,
   ): void {
-    const value = this.parseAmount(amount);
+    validatePositiveDecimalAmount(amount);
     const balance = this.getOrCreateBalance(asset);
-    const free = this.toNumber(balance.free);
+    const free = balance.free;
 
-    if (value > free) {
+    if (compareDecimalAmounts(amount, free) > 0) {
       throw new Error(
         `Insufficient test balance for ${asset}: requested ${amount}, available ${balance.free}`,
       );
     }
 
-    balance.free = this.formatAmount(free - value);
+    balance.free = subtractDecimalAmounts(free, amount);
   }
 
   private getOrCreateBalance(asset: string): ExchangeAssetBalance {
@@ -66,27 +70,4 @@ export class GenericTestBalanceSource implements TestBalanceSource {
     return balance;
   }
 
-  private parseAmount(amount: string): number {
-    const value = Number(amount);
-
-    if (!Number.isFinite(value) || value <= 0) {
-      throw new Error(`Invalid balance amount: ${amount}`);
-    }
-
-    return value;
-  }
-
-  private toNumber(amount: string): number {
-    const value = Number(amount);
-
-    if (!Number.isFinite(value) || value < 0) {
-      throw new Error(`Invalid stored balance: ${amount}`);
-    }
-
-    return value;
-  }
-
-  private formatAmount(amount: number): string {
-    return amount.toString();
-  }
 }

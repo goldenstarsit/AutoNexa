@@ -2,6 +2,12 @@ import type { DatabaseAdapter } from '../../database/databaseAdapter';
 import type { ExchangeAccount, ExchangeAssetBalance } from './exchangeAccount';
 import { TestBalanceRepository } from './testBalanceRepository';
 import type { TestBalanceSource } from './sources/testBalanceSource';
+import {
+  addDecimalAmounts,
+  compareDecimalAmounts,
+  subtractDecimalAmounts,
+  validatePositiveDecimalAmount,
+} from './decimalAmount';
 
 export class TestBalanceService implements TestBalanceSource {
   readonly mode = 'test' as const;
@@ -30,16 +36,16 @@ export class TestBalanceService implements TestBalanceSource {
     amount: string,
     updatedAt: string = new Date().toISOString(),
   ): void {
-    const value = this.parseAmount(amount);
+    validatePositiveDecimalAmount(amount);
 
     const current = this.repository.get(this.exchangeId, asset);
-    const free = this.toNumber(current?.free ?? '0') + value;
+    const free = addDecimalAmounts(current?.free ?? '0', amount);
 
     this.repository.upsert(
       this.exchangeId,
       {
         asset,
-        free: this.formatAmount(free),
+        free,
         locked: current?.locked ?? '0',
       },
       updatedAt,
@@ -51,11 +57,11 @@ export class TestBalanceService implements TestBalanceSource {
     amount: string,
     updatedAt: string = new Date().toISOString(),
   ): void {
-    const value = this.parseAmount(amount);
+    validatePositiveDecimalAmount(amount);
     const current = this.repository.get(this.exchangeId, asset);
-    const free = this.toNumber(current?.free ?? '0');
+    const free = current?.free ?? '0';
 
-    if (value > free) {
+    if (compareDecimalAmounts(amount, free) > 0) {
       throw new Error(
         `Insufficient test balance for ${asset}: requested ${amount}, available ${current?.free ?? '0'}`,
       );
@@ -65,34 +71,11 @@ export class TestBalanceService implements TestBalanceSource {
       this.exchangeId,
       {
         asset,
-        free: this.formatAmount(free - value),
+        free: subtractDecimalAmounts(free, amount),
         locked: current?.locked ?? '0',
       },
       updatedAt,
     );
   }
 
-  private parseAmount(amount: string): number {
-    const value = Number(amount);
-
-    if (!Number.isFinite(value) || value <= 0) {
-      throw new Error(`Invalid balance amount: ${amount}`);
-    }
-
-    return value;
-  }
-
-  private toNumber(amount: string): number {
-    const value = Number(amount);
-
-    if (!Number.isFinite(value) || value < 0) {
-      throw new Error(`Invalid stored balance: ${amount}`);
-    }
-
-    return value;
-  }
-
-  private formatAmount(amount: number): string {
-    return amount.toString();
-  }
 }
