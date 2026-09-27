@@ -2,6 +2,7 @@ import type { ExchangeAdapter } from '../exchange';
 import type { DatabaseAdapter } from '../../database/databaseAdapter';
 import type { ExchangeAccount } from '../account/exchangeAccount';
 import type { ExchangeBalanceMode } from '../account/balanceMode';
+import { createTestBalanceSource } from '../account/testBalanceSourceFactory';
 import { TestBalanceService } from '../account/testBalanceService';
 import { BalanceSourceRouter } from '../account/balanceSourceRouter';
 import type { BalanceSource } from '../account/balanceSource';
@@ -25,14 +26,7 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
     db: DatabaseAdapter,
     executionModeProvider?: ExecutionModeProvider,
   ) {
-    this.testBalanceSource = new TestBalanceService(db, 'mexc');
-
-    this.balanceSourceRouter = new BalanceSourceRouter(
-      new Map<ExchangeBalanceMode, BalanceSource>([
-        ['live', this.liveBalanceSource],
-        ['test', this.testBalanceSource],
-      ]),
-    );
+    this.testBalanceSource = createTestBalanceSource(db, this.id);
 
     this.balanceSourceRouter = new BalanceSourceRouter(
       new Map<ExchangeBalanceMode, BalanceSource>([
@@ -108,6 +102,22 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
 
   async getAccount(mode: ExchangeBalanceMode = 'live'): Promise<ExchangeAccount> {
     return this.balanceSourceRouter.getAccount(mode);
+  }
+
+  depositTestBalance(
+    asset: string,
+    amount: string,
+    updatedAt?: string,
+  ): void {
+    this.testBalanceSource.deposit(asset, amount, updatedAt);
+  }
+
+  withdrawTestBalance(
+    asset: string,
+    amount: string,
+    updatedAt?: string,
+  ): void {
+    this.testBalanceSource.withdraw(asset, amount, updatedAt);
   }
 
   async placeOrder(request: ExchangeOrderRequest): Promise<ExchangeOrder> {

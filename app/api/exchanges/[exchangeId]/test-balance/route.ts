@@ -20,8 +20,8 @@ export async function GET(
   const { exchangeId } = await context.params;
 
   return withApplicationContext(async (app) => {
-    const service = app.getTestBalanceService(exchangeId);
-    const account = await service.getAccount();
+    app.exchanges.loadEnabledExchanges();
+    const account = await app.exchanges.getAccount(exchangeId, 'test');
 
     return NextResponse.json({
       exchangeId,
@@ -65,15 +65,17 @@ export async function POST(
 
   try {
     return withApplicationContext(async (app) => {
-      const service = app.getTestBalanceService(exchangeId);
+      app.exchanges.loadEnabledExchanges();
+
+      const asset = body.asset.trim().toUpperCase();
 
       if (body.action === 'deposit') {
-        service.deposit(body.asset.trim().toUpperCase(), body.amount);
+        app.exchanges.depositTestBalance(exchangeId, asset, body.amount);
       } else {
-        service.withdraw(body.asset.trim().toUpperCase(), body.amount);
+        app.exchanges.withdrawTestBalance(exchangeId, asset, body.amount);
       }
 
-      const account = await service.getAccount();
+      const account = await app.exchanges.getAccount(exchangeId, 'test');
 
       return NextResponse.json({
         exchangeId,

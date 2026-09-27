@@ -49,6 +49,36 @@ export class ExchangeService {
     return this.executionModeService;
   }
 
+  depositTestBalance(
+    exchangeId: string,
+    asset: string,
+    amount: string,
+    updatedAt?: string,
+  ): void {
+    const adapter = this.registry.get(exchangeId);
+
+    if (!adapter) {
+      throw new Error(`Exchange not registered: ${exchangeId}`);
+    }
+
+    adapter.depositTestBalance(asset, amount, updatedAt);
+  }
+
+  withdrawTestBalance(
+    exchangeId: string,
+    asset: string,
+    amount: string,
+    updatedAt?: string,
+  ): void {
+    const adapter = this.registry.get(exchangeId);
+
+    if (!adapter) {
+      throw new Error(`Exchange not registered: ${exchangeId}`);
+    }
+
+    adapter.withdrawTestBalance(asset, amount, updatedAt);
+  }
+
   async getAccount(
     exchangeId: string,
     mode: ExchangeBalanceMode = 'live',

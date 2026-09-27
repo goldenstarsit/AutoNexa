@@ -1,4 +1,5 @@
 import type { ExchangeAccount } from './account/exchangeAccount';
+import type { TestBalanceOperations } from './account/testBalanceOperations';
 import type { ExchangeBalanceMode } from './account/balanceMode';
 import type { ExchangeOrder, ExchangeOrderRequest } from './order/exchangeOrder';
 import type { ExchangeSymbolInfo } from './market/exchangeMarket';
@@ -14,7 +15,7 @@ export interface ExchangeConfig {
   enabled: boolean;
 }
 
-export interface ExchangeAdapter {
+export interface ExchangeAdapter extends TestBalanceOperations {
   readonly id: ExchangeId;
   readonly name: string;
 
