@@ -7,7 +7,11 @@ export function validateMexcOrder(
 ): void {
   validatePositiveNumber(request.quantity, 'quantity');
 
-  if (request.type !== 'market' && request.type !== 'limit' && request.type !== 'makerOnly') {
+  if (
+    request.type !== 'market' &&
+    request.type !== 'limit' &&
+    request.type !== 'makerOnly'
+  ) {
     throw new Error(`Unsupported MEXC order type: ${request.type}`);
   }
 
@@ -17,6 +21,7 @@ export function validateMexcOrder(
     }
 
     validatePositiveNumber(request.price, 'price');
+
     validateDecimalPlaces(
       request.price,
       symbolInfo.quotePrecision,
@@ -29,6 +34,75 @@ export function validateMexcOrder(
     decimalPlaces(symbolInfo.baseSizePrecision),
     'quantity',
   );
+
+  if (compareDecimal(request.quantity, symbolInfo.baseSizePrecision) < 0) {
+    throw new Error(
+      `MEXC quantity must be at least ${symbolInfo.baseSizePrecision}`,
+    );
+  }
+
+  if (request.type !== 'market') {
+    const notional = multiplyDecimal(
+      request.quantity,
+      request.price!,
+    );
+
+    if (
+      compareDecimal(
+        notional,
+        symbolInfo.quoteAmountPrecision,
+      ) < 0
+    ) {
+      throw new Error(
+        `MEXC order value must be at least ${symbolInfo.quoteAmountPrecision}`,
+      );
+    }
+  }
+}
+
+function multiplyDecimal(left: string, right: string): string {
+  const [leftInteger, leftFraction = ''] = left.split('.');
+  const [rightInteger, rightFraction = ''] = right.split('.');
+  const leftDigits = `${leftInteger}${leftFraction}`;
+  const rightDigits = `${rightInteger}${rightFraction}`;
+  const scale = leftFraction.length + rightFraction.length;
+  const product = BigInt(leftDigits) * BigInt(rightDigits);
+  const value = product.toString();
+
+  if (scale === 0) {
+    return value;
+  }
+
+  const padded = value.padStart(scale + 1, '0');
+  const position = padded.length - scale;
+
+  return `${padded.slice(0, position)}.${padded.slice(position)}`;
+}
+
+function compareDecimal(left: string, right: string): number {
+  const [leftInteger, leftFraction = ''] = left.split('.');
+  const [rightInteger, rightFraction = ''] = right.split('.');
+  const leftNormalizedInteger = leftInteger.replace(/^0+(?=\d)/, '');
+  const rightNormalizedInteger = rightInteger.replace(/^0+(?=\d)/, '');
+  const scale = Math.max(leftFraction.length, rightFraction.length);
+
+  const leftNormalized = BigInt(
+    `${leftNormalizedInteger}${leftFraction.padEnd(scale, '0')}`,
+  );
+
+  const rightNormalized = BigInt(
+    `${rightNormalizedInteger}${rightFraction.padEnd(scale, '0')}`,
+  );
+
+  if (leftNormalized < rightNormalized) {
+    return -1;
+  }
+
+  if (leftNormalized > rightNormalized) {
+    return 1;
+  }
+
+  return 0;
 }
 
 function validatePositiveNumber(
