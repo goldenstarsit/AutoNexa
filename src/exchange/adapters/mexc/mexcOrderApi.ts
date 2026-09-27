@@ -1,5 +1,7 @@
 import type { ExchangeOrder, ExchangeOrderRequest } from '../../order/exchangeOrder';
 import { MexcPrivateApiClient } from './mexcPrivateApiClient';
+import { MexcMarketApi } from './mexcMarketApi';
+import { validateMexcOrder } from './mexcOrderValidator';
 import { normalizeMexcOrderStatus } from './mexcOrderStatus';
 import {
   normalizeMexcOrderType,
@@ -27,6 +29,7 @@ export class MexcOrderApi {
   };
   constructor(
     private readonly privateApiClient: MexcPrivateApiClient,
+    private readonly marketApi: MexcMarketApi,
   ) {}
 
   async getOrder(symbol: string, orderId: string): Promise<ExchangeOrder> {
@@ -142,6 +145,32 @@ export class MexcOrderApi {
   }
 
   async placeOrder(request: ExchangeOrderRequest): Promise<ExchangeOrder> {
+    const symbolInfo = await this.marketApi.getSymbolInfo(request.symbol);
+
+    if (!symbolInfo) {
+      throw new Error(`MEXC symbol not found: ${request.symbol.toUpperCase()}`);
+    }
+
+    validateMexcOrder(request, {
+      symbol: symbolInfo.symbol,
+      status: symbolInfo.status,
+      baseAsset: symbolInfo.baseAsset,
+      quoteAsset: symbolInfo.quoteAsset,
+      baseAssetPrecision: symbolInfo.baseAssetPrecision,
+      quotePrecision: symbolInfo.quotePrecision,
+      quoteAssetPrecision: symbolInfo.quoteAssetPrecision,
+      baseCommissionPrecision: symbolInfo.baseCommissionPrecision,
+      quoteCommissionPrecision: symbolInfo.quoteCommissionPrecision,
+      orderTypes: symbolInfo.orderTypes,
+      spotTradingAllowed: symbolInfo.isSpotTradingAllowed,
+      marginTradingAllowed: symbolInfo.isMarginTradingAllowed,
+      quoteAmountPrecision: symbolInfo.quoteAmountPrecision,
+      baseSizePrecision: symbolInfo.baseSizePrecision,
+      maxQuoteAmount: symbolInfo.maxQuoteAmount,
+      quoteAmountPrecisionMarket: symbolInfo.quoteAmountPrecisionMarket,
+      maxQuoteAmountMarket: symbolInfo.maxQuoteAmountMarket,
+    });
+
     const response = await this.privateApiClient.request<MexcOrderResponse>(
       'POST',
       '/api/v3/order',

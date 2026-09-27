@@ -21,11 +21,12 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
     this.privateApiClient,
   );
 
+  private readonly marketApi = new MexcMarketApi();
+
   private readonly orderApi = new MexcOrderApi(
     this.privateApiClient,
+    this.marketApi,
   );
-
-  private readonly marketApi = new MexcMarketApi();
 
   private readonly orderExecutionService = new OrderExecutionService(
     this.orderApi,
