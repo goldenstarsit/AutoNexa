@@ -32,12 +32,40 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
     this.orderApi,
   );
 
+  private health: ExchangeHealth = {
+    state: 'disconnected',
+    checkedAt: Date.now(),
+  };
+
   async connect(): Promise<void> {
-    // Connection lifecycle will be expanded in the MEXC integration milestone.
+    this.health = {
+      state: 'connecting',
+      checkedAt: Date.now(),
+    };
+
+    try {
+      await this.marketApi.getExchangeInfo();
+
+      this.health = {
+        state: 'connected',
+        checkedAt: Date.now(),
+      };
+    } catch (error) {
+      this.health = {
+        state: 'error',
+        checkedAt: Date.now(),
+        error: error instanceof Error ? error.message : String(error),
+      };
+
+      throw error;
+    }
   }
 
   async disconnect(): Promise<void> {
-    // Connection cleanup will be expanded in the MEXC integration milestone.
+    this.health = {
+      state: 'disconnected',
+      checkedAt: Date.now(),
+    };
   }
 
   async getAccount(): Promise<ExchangeAccount> {
@@ -126,22 +154,7 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
   }
 
   async getHealth(): Promise<ExchangeHealth> {
-    const checkedAt = Date.now();
-
-    try {
-      await this.marketApi.getExchangeInfo();
-
-      return {
-        state: 'connected',
-        checkedAt,
-      };
-    } catch (error) {
-      return {
-        state: 'error',
-        checkedAt,
-        error: error instanceof Error ? error.message : String(error),
-      };
-    }
+    return { ...this.health };
   }
 
   async getCapabilities(): Promise<ExchangeCapabilities> {
