@@ -1,6 +1,7 @@
 import type { ExchangeAccount } from './account/exchangeAccount';
 import type { ExchangeOrder, ExchangeOrderRequest } from './order/exchangeOrder';
 import type { ExchangeSymbolInfo } from './market/exchangeMarket';
+import type { ExchangeTradingRules } from './market/exchangeTradingRules';
 
 export type ExchangeId = string;
 
@@ -31,4 +32,5 @@ export interface ExchangeAdapter {
   ): Promise<ExchangeOrder[]>;
   getSymbolInfo(symbol: string): Promise<ExchangeSymbolInfo | undefined>;
   getSymbols(): Promise<ExchangeSymbolInfo[]>;
+  getTradingRules(symbol: string): Promise<ExchangeTradingRules | undefined>;
 }

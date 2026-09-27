@@ -11,7 +11,18 @@ export interface MexcExchangeInfoResponse {
     baseAsset: string;
     quoteAsset: string;
     baseAssetPrecision: number;
+    quotePrecision: number;
     quoteAssetPrecision: number;
+    baseCommissionPrecision: number;
+    quoteCommissionPrecision: number;
+    orderTypes: string[];
+    isSpotTradingAllowed: boolean;
+    isMarginTradingAllowed: boolean;
+    quoteAmountPrecision: string;
+    baseSizePrecision: string;
+    maxQuoteAmount: string;
+    quoteAmountPrecisionMarket: string;
+    maxQuoteAmountMarket: string;
   }>;
 }
 

@@ -2,6 +2,7 @@ import type { ExchangeAdapter } from '../exchange';
 import type { ExchangeAccount } from '../account/exchangeAccount';
 import type { ExchangeOrder, ExchangeOrderRequest } from '../order/exchangeOrder';
 import type { ExchangeSymbolInfo } from '../market/exchangeMarket';
+import type { ExchangeTradingRules } from '../market/exchangeTradingRules';
 import { MexcAccountApi } from './mexc/mexcAccountApi';
 import { MexcOrderApi } from './mexc/mexcOrderApi';
 import { MexcMarketApi } from './mexc/mexcMarketApi';
@@ -119,5 +120,33 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
       quoteAmountPrecisionMarket: symbol.quoteAmountPrecisionMarket,
       maxQuoteAmountMarket: symbol.maxQuoteAmountMarket,
     }));
+  }
+
+  async getTradingRules(
+    symbol: string,
+  ): Promise<ExchangeTradingRules | undefined> {
+    const info = await this.marketApi.getSymbolInfo(symbol);
+
+    if (!info) {
+      return undefined;
+    }
+
+    return {
+      symbol: info.symbol,
+      status: info.status,
+      orderTypes: info.orderTypes,
+      spotTradingAllowed: info.isSpotTradingAllowed,
+      marginTradingAllowed: info.isMarginTradingAllowed,
+      baseAssetPrecision: info.baseAssetPrecision,
+      quotePrecision: info.quotePrecision,
+      quoteAssetPrecision: info.quoteAssetPrecision,
+      baseCommissionPrecision: info.baseCommissionPrecision,
+      quoteCommissionPrecision: info.quoteCommissionPrecision,
+      quoteAmountPrecision: info.quoteAmountPrecision,
+      baseSizePrecision: info.baseSizePrecision,
+      maxQuoteAmount: info.maxQuoteAmount,
+      quoteAmountPrecisionMarket: info.quoteAmountPrecisionMarket,
+      maxQuoteAmountMarket: info.maxQuoteAmountMarket,
+    };
   }
 }
