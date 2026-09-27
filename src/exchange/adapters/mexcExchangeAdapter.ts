@@ -1,7 +1,8 @@
 import type { ExchangeAdapter } from '../exchange';
+import type { DatabaseAdapter } from '../../database/databaseAdapter';
 import type { ExchangeAccount } from '../account/exchangeAccount';
 import type { ExchangeBalanceMode } from '../account/balanceMode';
-import { GenericTestBalanceSource } from '../account/sources/genericTestBalanceSource';
+import { TestBalanceService } from '../account/testBalanceService';
 import { BalanceSourceRouter } from '../account/balanceSourceRouter';
 import type { BalanceSource } from '../account/balanceSource';
 import type { ExchangeOrder, ExchangeOrderRequest } from '../order/exchangeOrder';
@@ -20,7 +21,26 @@ import { MexcPrivateApiClient } from './mexc/mexcPrivateApiClient';
 export class MexcExchangeAdapter implements ExchangeAdapter {
   readonly id = 'mexc';
 
-  constructor(executionModeProvider?: ExecutionModeProvider) {
+  constructor(
+    db: DatabaseAdapter,
+    executionModeProvider?: ExecutionModeProvider,
+  ) {
+    this.testBalanceSource = new TestBalanceService(db, 'mexc');
+
+    this.balanceSourceRouter = new BalanceSourceRouter(
+      new Map<ExchangeBalanceMode, BalanceSource>([
+        ['live', this.liveBalanceSource],
+        ['test', this.testBalanceSource],
+      ]),
+    );
+
+    this.balanceSourceRouter = new BalanceSourceRouter(
+      new Map<ExchangeBalanceMode, BalanceSource>([
+        ['live', this.liveBalanceSource],
+        ['test', this.testBalanceSource],
+      ]),
+    );
+
     this.orderExecutionService = new OrderExecutionService(
       this.orderApi,
       executionModeProvider,
@@ -38,14 +58,8 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
     this.accountApi,
   );
 
-  private readonly testBalanceSource = new GenericTestBalanceSource();
-
-  private readonly balanceSourceRouter = new BalanceSourceRouter(
-    new Map<ExchangeBalanceMode, BalanceSource>([
-      ['live', this.liveBalanceSource],
-      ['test', this.testBalanceSource],
-    ]),
-  );
+  private readonly testBalanceSource: TestBalanceService;
+  private readonly balanceSourceRouter: BalanceSourceRouter;
 
   private readonly marketApi = new MexcMarketApi();
 

@@ -7,12 +7,14 @@ import { BalanceModeService } from './account/balanceModeService';
 import type { ExchangeBalanceMode } from './account/balanceMode';
 
 export class ExchangeService {
+  private readonly db: DatabaseAdapter;
   private readonly repository: ExchangeRepository;
   private readonly registry: ExchangeRegistry;
   private readonly executionModeService: ExecutionModeService;
   private readonly balanceModeService: BalanceModeService;
 
   constructor(db: DatabaseAdapter) {
+    this.db = db;
     this.repository = new ExchangeRepository(db);
     this.registry = new ExchangeRegistry();
     this.executionModeService = new ExecutionModeService(db);
@@ -29,6 +31,7 @@ export class ExchangeService {
         this.registry.register(
           createExchangeAdapter(
             exchange.id,
+            this.db,
             this.executionModeService,
           ),
         );
