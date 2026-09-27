@@ -1,7 +1,8 @@
 import type { DatabaseAdapter } from '../../database/databaseAdapter';
 import type { ExchangeAccount, ExchangeAssetBalance } from './exchangeAccount';
 import { TestBalanceRepository } from './testBalanceRepository';
-import type { TestBalanceSource } from './sources/testBalanceSource';
+import type { BalanceSource } from './balanceSource';
+import type { TestBalanceOperations } from './testBalanceOperations';
 import {
   addDecimalAmounts,
   compareDecimalAmounts,
@@ -9,7 +10,7 @@ import {
   validatePositiveDecimalAmount,
 } from './decimalAmount';
 
-export class TestBalanceService implements TestBalanceSource {
+export class TestBalanceService implements BalanceSource, TestBalanceOperations {
   readonly mode = 'test' as const;
 
   private readonly repository: TestBalanceRepository;
@@ -31,7 +32,7 @@ export class TestBalanceService implements TestBalanceSource {
     return this.repository.get(this.exchangeId, asset);
   }
 
-  deposit(
+  depositTestBalance(
     asset: string,
     amount: string,
     updatedAt: string = new Date().toISOString(),
@@ -52,7 +53,7 @@ export class TestBalanceService implements TestBalanceSource {
     );
   }
 
-  withdraw(
+  withdrawTestBalance(
     asset: string,
     amount: string,
     updatedAt: string = new Date().toISOString(),

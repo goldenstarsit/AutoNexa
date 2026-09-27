@@ -1,10 +1,11 @@
 import type { DatabaseAdapter } from '../../database/databaseAdapter';
-import type { TestBalanceSource } from './sources/testBalanceSource';
+import type { BalanceSource } from './balanceSource';
+import type { TestBalanceOperations } from './testBalanceOperations';
 import { TestBalanceService } from './testBalanceService';
 
 export function createTestBalanceSource(
   db: DatabaseAdapter,
   exchangeId: string,
-): TestBalanceSource {
+): BalanceSource & TestBalanceOperations {
   return new TestBalanceService(db, exchangeId);
 }

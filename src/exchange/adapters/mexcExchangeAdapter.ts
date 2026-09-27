@@ -3,7 +3,7 @@ import type { DatabaseAdapter } from '../../database/databaseAdapter';
 import type { ExchangeAccount } from '../account/exchangeAccount';
 import type { ExchangeBalanceMode } from '../account/balanceMode';
 import { createTestBalanceSource } from '../account/testBalanceSourceFactory';
-import type { TestBalanceSource } from '../account/sources/testBalanceSource';
+import type { TestBalanceOperations } from '../account/testBalanceOperations';
 import { BalanceSourceRouter } from '../account/balanceSourceRouter';
 import type { BalanceSource } from '../account/balanceSource';
 import type { ExchangeOrder, ExchangeOrderRequest } from '../order/exchangeOrder';
@@ -52,7 +52,7 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
     this.accountApi,
   );
 
-  private readonly testBalanceSource: TestBalanceSource;
+  private readonly testBalanceSource: BalanceSource & TestBalanceOperations;
   private readonly balanceSourceRouter: BalanceSourceRouter;
 
   private readonly marketApi = new MexcMarketApi();
@@ -109,7 +109,7 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
     amount: string,
     updatedAt?: string,
   ): void {
-    this.testBalanceSource.deposit(asset, amount, updatedAt);
+    this.testBalanceSource.depositTestBalance(asset, amount, updatedAt);
   }
 
   withdrawTestBalance(
@@ -117,7 +117,7 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
     amount: string,
     updatedAt?: string,
   ): void {
-    this.testBalanceSource.withdraw(asset, amount, updatedAt);
+    this.testBalanceSource.withdrawTestBalance(asset, amount, updatedAt);
   }
 
   async placeOrder(request: ExchangeOrderRequest): Promise<ExchangeOrder> {
