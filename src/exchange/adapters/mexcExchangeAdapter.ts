@@ -1,5 +1,9 @@
 import type { ExchangeAdapter } from '../exchange';
 import type { ExchangeAccount } from '../account/exchangeAccount';
+import type { ExchangeBalanceMode } from '../account/balanceMode';
+import { GenericTestBalanceSource } from '../account/sources/genericTestBalanceSource';
+import { BalanceSourceRouter } from '../account/balanceSourceRouter';
+import type { BalanceSource } from '../account/balanceSource';
 import type { ExchangeOrder, ExchangeOrderRequest } from '../order/exchangeOrder';
 import type { ExchangeSymbolInfo } from '../market/exchangeMarket';
 import type { ExchangeTradingRules } from '../market/exchangeTradingRules';
@@ -32,6 +36,15 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
 
   private readonly liveBalanceSource = new MexcLiveBalanceSource(
     this.accountApi,
+  );
+
+  private readonly testBalanceSource = new GenericTestBalanceSource();
+
+  private readonly balanceSourceRouter = new BalanceSourceRouter(
+    new Map<ExchangeBalanceMode, BalanceSource>([
+      ['live', this.liveBalanceSource],
+      ['test', this.testBalanceSource],
+    ]),
   );
 
   private readonly marketApi = new MexcMarketApi();
@@ -79,8 +92,8 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
     };
   }
 
-  async getAccount(): Promise<ExchangeAccount> {
-    return this.liveBalanceSource.getAccount();
+  async getAccount(mode: ExchangeBalanceMode = 'live'): Promise<ExchangeAccount> {
+    return this.balanceSourceRouter.getAccount(mode);
   }
 
   async placeOrder(request: ExchangeOrderRequest): Promise<ExchangeOrder> {

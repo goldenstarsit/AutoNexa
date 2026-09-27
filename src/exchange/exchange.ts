@@ -1,4 +1,5 @@
 import type { ExchangeAccount } from './account/exchangeAccount';
+import type { ExchangeBalanceMode } from './account/balanceMode';
 import type { ExchangeOrder, ExchangeOrderRequest } from './order/exchangeOrder';
 import type { ExchangeSymbolInfo } from './market/exchangeMarket';
 import type { ExchangeTradingRules } from './market/exchangeTradingRules';
@@ -19,7 +20,7 @@ export interface ExchangeAdapter {
 
   connect(): Promise<void>;
   disconnect(): Promise<void>;
-  getAccount(): Promise<ExchangeAccount>;
+  getAccount(mode?: ExchangeBalanceMode): Promise<ExchangeAccount>;
   placeOrder(request: ExchangeOrderRequest): Promise<ExchangeOrder>;
   getOrder(symbol: string, orderId: string): Promise<ExchangeOrder>;
   cancelOrder(symbol: string, orderId: string): Promise<ExchangeOrder>;
