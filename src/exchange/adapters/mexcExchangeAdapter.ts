@@ -3,7 +3,7 @@ import type { DatabaseAdapter } from '../../database/databaseAdapter';
 import type { ExchangeAccount } from '../account/exchangeAccount';
 import type { ExchangeBalanceMode } from '../account/balanceMode';
 import { createTestBalanceSource } from '../account/testBalanceSourceFactory';
-import { TestBalanceService } from '../account/testBalanceService';
+import type { TestBalanceSource } from '../account/sources/testBalanceSource';
 import { BalanceSourceRouter } from '../account/balanceSourceRouter';
 import type { BalanceSource } from '../account/balanceSource';
 import type { ExchangeOrder, ExchangeOrderRequest } from '../order/exchangeOrder';
@@ -52,7 +52,7 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
     this.accountApi,
   );
 
-  private readonly testBalanceSource: TestBalanceService;
+  private readonly testBalanceSource: TestBalanceSource;
   private readonly balanceSourceRouter: BalanceSourceRouter;
 
   private readonly marketApi = new MexcMarketApi();
