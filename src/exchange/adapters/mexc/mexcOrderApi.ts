@@ -1,21 +1,10 @@
 import type { ExchangeOrder, ExchangeOrderRequest } from '../../order/exchangeOrder';
 import { MexcPrivateApiClient } from './mexcPrivateApiClient';
 import { normalizeMexcOrderStatus } from './mexcOrderStatus';
-
-function normalizeMexcOrderType(
-  type: string,
-): ExchangeOrder['type'] {
-  switch (type.toUpperCase()) {
-    case 'LIMIT':
-      return 'limit';
-    case 'MARKET':
-      return 'market';
-    case 'LIMIT_MAKER':
-      return 'makerOnly';
-    default:
-      throw new Error(`Unsupported MEXC order type: ${type}`);
-  }
-}
+import {
+  normalizeMexcOrderType,
+  toMexcOrderType,
+} from './mexcOrderType';
 
 export interface MexcOrderResponse {
   symbol: string;
@@ -159,7 +148,7 @@ export class MexcOrderApi {
       {
         symbol: request.symbol.toUpperCase(),
         side: request.side.toUpperCase(),
-        type: request.type === 'makerOnly' ? 'LIMIT_MAKER' : request.type.toUpperCase(),
+        type: toMexcOrderType(request.type),
         quantity: request.quantity,
         ...(request.price ? { price: request.price } : {}),
         ...(request.clientOrderId
