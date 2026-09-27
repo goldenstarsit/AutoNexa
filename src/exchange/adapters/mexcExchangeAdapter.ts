@@ -9,10 +9,18 @@ import { MexcAccountApi } from './mexc/mexcAccountApi';
 import { MexcOrderApi } from './mexc/mexcOrderApi';
 import { MexcMarketApi } from './mexc/mexcMarketApi';
 import { OrderExecutionService } from '../order/orderExecutionService';
+import type { ExecutionModeProvider } from '../order/executionModeProvider';
 import { MexcPrivateApiClient } from './mexc/mexcPrivateApiClient';
 
 export class MexcExchangeAdapter implements ExchangeAdapter {
   readonly id = 'mexc';
+
+  constructor(executionModeProvider?: ExecutionModeProvider) {
+    this.orderExecutionService = new OrderExecutionService(
+      this.orderApi,
+      executionModeProvider,
+    );
+  }
   readonly name = 'MEXC';
 
   private readonly privateApiClient = new MexcPrivateApiClient();
@@ -28,9 +36,7 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
     this.marketApi,
   );
 
-  private readonly orderExecutionService = new OrderExecutionService(
-    this.orderApi,
-  );
+  private readonly orderExecutionService: OrderExecutionService;
 
   private health: ExchangeHealth = {
     state: 'disconnected',

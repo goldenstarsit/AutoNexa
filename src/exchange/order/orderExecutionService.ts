@@ -9,6 +9,7 @@ import type {
   OrderExecutionResult,
 } from './orderExecutionResult';
 import type { OrderExecutionCapabilities } from './orderExecutionCapabilities';
+import type { ExecutionModeProvider } from './executionModeProvider';
 
 export interface OrderExecutionAdapter {
   readonly executionCapabilities: OrderExecutionCapabilities;
@@ -16,7 +17,10 @@ export interface OrderExecutionAdapter {
 }
 
 export class OrderExecutionService {
-  constructor(private readonly adapter: OrderExecutionAdapter) {}
+  constructor(
+    private readonly adapter: OrderExecutionAdapter,
+    private readonly executionModeProvider?: ExecutionModeProvider,
+  ) {}
 
   async execute(request: ExchangeOrderRequest): Promise<ExchangeOrder> {
     const result = await this.executeWithResult(request);
@@ -31,21 +35,42 @@ export class OrderExecutionService {
   async executeWithResult(
     request: ExchangeOrderRequest,
   ): Promise<OrderExecutionResult> {
-    const plan = createOrderExecutionPlan(request);
-
-    if (request.executionMode === 'makerOnly' && !this.adapter.executionCapabilities.maker) {
-      throw new Error('Maker-only execution is not supported by this exchange adapter');
+    if (
+      this.executionModeProvider &&
+      !this.executionModeProvider.isEnabled(request.executionMode)
+    ) {
+      throw new Error(
+        `Execution mode is disabled: ${request.executionMode}`,
+      );
     }
 
-    if (request.executionMode === 'takerOnly' && !this.adapter.executionCapabilities.taker) {
-      throw new Error('Taker-only execution is not supported by this exchange adapter');
+    const plan = createOrderExecutionPlan(request);
+
+    if (
+      request.executionMode === 'makerOnly' &&
+      !this.adapter.executionCapabilities.maker
+    ) {
+      throw new Error(
+        'Maker-only execution is not supported by this exchange adapter',
+      );
+    }
+
+    if (
+      request.executionMode === 'takerOnly' &&
+      !this.adapter.executionCapabilities.taker
+    ) {
+      throw new Error(
+        'Taker-only execution is not supported by this exchange adapter',
+      );
     }
 
     if (
       request.executionMode === 'hybrid' &&
       !this.adapter.executionCapabilities.hybrid
     ) {
-      throw new Error('Hybrid execution is not supported by this exchange adapter');
+      throw new Error(
+        'Hybrid execution is not supported by this exchange adapter',
+      );
     }
 
     if (plan.mode !== 'hybrid') {
