@@ -42,48 +42,6 @@ export class ExecutionModeRepository extends BaseRepository {
     return row ? this.toRecord(row) : undefined;
   }
 
-  getAll(): ExecutionModeRecord[] {
-    return this.db
-      .all<ExecutionModeRow>(
-        `
-          SELECT id, name, enabled, created_at, updated_at
-          FROM execution_modes
-          ORDER BY id
-        `,
-      )
-      .map((row) => this.toRecord(row));
-  }
-
-  getEnabled(): ExecutionModeRecord[] {
-    return this.db
-      .all<ExecutionModeRow>(
-        `
-          SELECT id, name, enabled, created_at, updated_at
-          FROM execution_modes
-          WHERE enabled = 1
-          ORDER BY id
-        `,
-      )
-      .map((row) => this.toRecord(row));
-  }
-
-  setEnabled(
-    id: ExchangeOrderExecutionMode,
-    enabled: boolean,
-    updatedAt: string,
-  ): void {
-    this.db.run(
-      `
-        UPDATE execution_modes
-        SET enabled = ?, updated_at = ?
-        WHERE id = ?
-      `,
-      enabled ? 1 : 0,
-      updatedAt,
-      id,
-    );
-  }
-
   private toRecord(row: ExecutionModeRow): ExecutionModeRecord {
     if (!EXECUTION_MODE_IDS.has(row.id)) {
       throw new Error(`Unsupported execution mode: ${row.id}`);
