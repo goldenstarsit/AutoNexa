@@ -10,6 +10,7 @@ import { MexcOrderApi } from './mexc/mexcOrderApi';
 import { MexcMarketApi } from './mexc/mexcMarketApi';
 import { OrderExecutionService } from '../order/orderExecutionService';
 import type { ExecutionModeProvider } from '../order/executionModeProvider';
+import { MexcLiveBalanceSource } from '../account/sources/mexcLiveBalanceSource';
 import { MexcPrivateApiClient } from './mexc/mexcPrivateApiClient';
 
 export class MexcExchangeAdapter implements ExchangeAdapter {
@@ -27,6 +28,10 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
 
   private readonly accountApi = new MexcAccountApi(
     this.privateApiClient,
+  );
+
+  private readonly liveBalanceSource = new MexcLiveBalanceSource(
+    this.accountApi,
   );
 
   private readonly marketApi = new MexcMarketApi();
@@ -75,7 +80,7 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
   }
 
   async getAccount(): Promise<ExchangeAccount> {
-    return this.accountApi.getAccount();
+    return this.liveBalanceSource.getAccount();
   }
 
   async placeOrder(request: ExchangeOrderRequest): Promise<ExchangeOrder> {

@@ -1,0 +1,24 @@
+import type { ExchangeAccount } from './exchangeAccount';
+import type { ExchangeBalanceMode } from './balanceMode';
+import type { BalanceSource } from './balanceSource';
+import type { BalanceSourceProvider } from './balanceSourceProvider';
+
+export class BalanceSourceRouter implements BalanceSourceProvider {
+  constructor(
+    private readonly sources: ReadonlyMap<ExchangeBalanceMode, BalanceSource>,
+  ) {}
+
+  getSource(mode: ExchangeBalanceMode): BalanceSource {
+    const source = this.sources.get(mode);
+
+    if (!source) {
+      throw new Error(`Balance source not configured for mode: ${mode}`);
+    }
+
+    return source;
+  }
+
+  async getAccount(mode: ExchangeBalanceMode): Promise<ExchangeAccount> {
+    return this.getSource(mode).getAccount();
+  }
+}
