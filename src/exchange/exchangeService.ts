@@ -53,9 +53,6 @@ export class ExchangeService {
     return this.registry;
   }
 
-  getExecutionModeService(): ExecutionModeService {
-    return this.executionModeService;
-  }
 
   depositTestBalance(
     exchangeId: string,
