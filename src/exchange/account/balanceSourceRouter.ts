@@ -1,9 +1,8 @@
 import type { ExchangeAccount } from './exchangeAccount';
 import type { ExchangeBalanceMode } from './balanceMode';
 import type { BalanceSource } from './balanceSource';
-import type { BalanceSourceProvider } from './balanceSourceProvider';
 
-export class BalanceSourceRouter implements BalanceSourceProvider {
+export class BalanceSourceRouter {
   constructor(
     private readonly sources: ReadonlyMap<ExchangeBalanceMode, BalanceSource>,
   ) {}
