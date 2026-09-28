@@ -23,6 +23,10 @@ interface BalanceModeRow {
 export class BalanceModeRepository {
   constructor(public readonly db: DatabaseAdapter) {}
 
+  isEnabled(id: ExchangeBalanceMode): boolean {
+    return this.getById(id)?.enabled === true;
+  }
+
   getById(id: ExchangeBalanceMode): BalanceModeRecord | undefined {
     const row = this.db.get<BalanceModeRow>(
       `

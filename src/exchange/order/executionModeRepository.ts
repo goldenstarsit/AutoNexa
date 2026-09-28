@@ -1,5 +1,6 @@
 import type { DatabaseAdapter } from '../../database/databaseAdapter';
 import type { ExchangeOrderExecutionMode } from './exchangeOrder';
+import type { ExecutionModeProvider } from './executionModeProvider';
 
 export interface ExecutionModeRecord {
   id: ExchangeOrderExecutionMode;
@@ -23,8 +24,12 @@ const EXECUTION_MODE_IDS: ReadonlySet<string> = new Set([
   'hybrid',
 ]);
 
-export class ExecutionModeRepository {
+export class ExecutionModeRepository implements ExecutionModeProvider {
   constructor(public readonly db: DatabaseAdapter) {}
+
+  isEnabled(id: ExchangeOrderExecutionMode): boolean {
+    return this.getById(id)?.enabled === true;
+  }
 
   getById(id: ExchangeOrderExecutionMode): ExecutionModeRecord | undefined {
     const row = this.db.get<ExecutionModeRow>(
