@@ -49,10 +49,6 @@ export class ExchangeService {
     return this.registry.get(exchangeId);
   }
 
-  getRegistry(): ExchangeRegistry {
-    return this.registry;
-  }
-
 
   depositTestBalance(
     exchangeId: string,
