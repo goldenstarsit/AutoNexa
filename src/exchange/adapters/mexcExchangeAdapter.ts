@@ -14,7 +14,7 @@ import type { ExchangeHealth } from '../exchangeHealth';
 import { MexcAccountApi } from './mexc/mexcAccountApi';
 import { MexcOrderApi } from './mexc/mexcOrderApi';
 import { MexcMarketApi } from './mexc/mexcMarketApi';
-import { mapMexcSymbolInfo } from './mexc/mexcMarketMapper';
+import { mapDefinedMexcSymbolInfo, mapMexcSymbolInfo } from './mexc/mexcMarketMapper';
 import { OrderExecutionService } from '../order/orderExecutionService';
 import type { ExecutionModeProvider } from '../order/executionModeProvider';
 import { MexcLiveBalanceSource } from '../account/sources/mexcLiveBalanceSource';
@@ -157,9 +157,7 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
   async getSymbols(): Promise<ExchangeSymbolInfo[]> {
     const info = await this.marketApi.getExchangeInfo();
 
-    return info.symbols
-      .map((symbol) => mapMexcSymbolInfo(symbol))
-      .filter((symbol): symbol is ExchangeSymbolInfo => symbol !== undefined);
+    return info.symbols.map((symbol) => mapDefinedMexcSymbolInfo(symbol));
   }
 
   async getHealth(): Promise<ExchangeHealth> {
