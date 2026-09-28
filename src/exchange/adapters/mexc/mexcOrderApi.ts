@@ -1,6 +1,7 @@
 import type { ExchangeOrder, ExchangeOrderRequest } from '../../order/exchangeOrder';
 import { MexcPrivateApiClient } from './mexcPrivateApiClient';
 import { MexcMarketApi } from './mexcMarketApi';
+import { mapMexcSymbolInfo } from './mexcMarketMapper';
 import { validateMexcOrder } from './mexcOrderValidator';
 import { normalizeMexcOrderStatus } from './mexcOrderStatus';
 import {
@@ -151,26 +152,13 @@ export class MexcOrderApi {
       throw new Error(`MEXC symbol not found: ${request.symbol.toUpperCase()}`);
     }
 
-    validateMexcOrder(request, {
-      symbol: symbolInfo.symbol,
-      status: symbolInfo.status,
-      baseAsset: symbolInfo.baseAsset,
-      quoteAsset: symbolInfo.quoteAsset,
-      baseAssetPrecision: symbolInfo.baseAssetPrecision,
-      quotePrecision: symbolInfo.quotePrecision,
-      quoteAssetPrecision: symbolInfo.quoteAssetPrecision,
-      baseCommissionPrecision: symbolInfo.baseCommissionPrecision,
-      quoteCommissionPrecision: symbolInfo.quoteCommissionPrecision,
-      orderTypes: symbolInfo.orderTypes,
-      spotTradingAllowed: symbolInfo.isSpotTradingAllowed,
-      marginTradingAllowed: symbolInfo.isMarginTradingAllowed,
-      quoteAmountPrecision: symbolInfo.quoteAmountPrecision,
-      baseSizePrecision: symbolInfo.baseSizePrecision,
-      maxQuoteAmount: symbolInfo.maxQuoteAmount,
-      quoteAmountPrecisionMarket: symbolInfo.quoteAmountPrecisionMarket,
-      maxQuoteAmountMarket: symbolInfo.maxQuoteAmountMarket,
-    });
+    const exchangeSymbolInfo = mapMexcSymbolInfo(symbolInfo);
 
+    if (!exchangeSymbolInfo) {
+      throw new Error(`MEXC symbol not found: ${request.symbol.toUpperCase()}`);
+    }
+
+    validateMexcOrder(request, exchangeSymbolInfo);
     const response = await this.privateApiClient.request<MexcOrderResponse>(
       'POST',
       '/api/v3/order',

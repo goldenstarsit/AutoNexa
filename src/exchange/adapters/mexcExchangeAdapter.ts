@@ -14,6 +14,7 @@ import type { ExchangeHealth } from '../exchangeHealth';
 import { MexcAccountApi } from './mexc/mexcAccountApi';
 import { MexcOrderApi } from './mexc/mexcOrderApi';
 import { MexcMarketApi } from './mexc/mexcMarketApi';
+import { mapMexcSymbolInfo } from './mexc/mexcMarketMapper';
 import { OrderExecutionService } from '../order/orderExecutionService';
 import type { ExecutionModeProvider } from '../order/executionModeProvider';
 import { MexcLiveBalanceSource } from '../account/sources/mexcLiveBalanceSource';
@@ -147,45 +148,17 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
     return this.orderApi.getOrderHistory(symbol, options);
   }
 
-  private mapSymbolInfo(
-    info: Awaited<ReturnType<MexcMarketApi['getSymbolInfo']>>,
-  ): ExchangeSymbolInfo | undefined {
-    if (!info) {
-      return undefined;
-    }
-
-    return {
-      symbol: info.symbol,
-      status: info.status,
-      baseAsset: info.baseAsset,
-      quoteAsset: info.quoteAsset,
-      baseAssetPrecision: info.baseAssetPrecision,
-      quotePrecision: info.quotePrecision,
-      quoteAssetPrecision: info.quoteAssetPrecision,
-      baseCommissionPrecision: info.baseCommissionPrecision,
-      quoteCommissionPrecision: info.quoteCommissionPrecision,
-      orderTypes: info.orderTypes,
-      spotTradingAllowed: info.isSpotTradingAllowed,
-      marginTradingAllowed: info.isMarginTradingAllowed,
-      quoteAmountPrecision: info.quoteAmountPrecision,
-      baseSizePrecision: info.baseSizePrecision,
-      maxQuoteAmount: info.maxQuoteAmount,
-      quoteAmountPrecisionMarket: info.quoteAmountPrecisionMarket,
-      maxQuoteAmountMarket: info.maxQuoteAmountMarket,
-    };
-  }
-
   async getSymbolInfo(
     symbol: string,
   ): Promise<ExchangeSymbolInfo | undefined> {
-    return this.mapSymbolInfo(await this.marketApi.getSymbolInfo(symbol));
+    return mapMexcSymbolInfo(await this.marketApi.getSymbolInfo(symbol));
   }
 
   async getSymbols(): Promise<ExchangeSymbolInfo[]> {
     const info = await this.marketApi.getExchangeInfo();
 
     return info.symbols
-      .map((symbol) => this.mapSymbolInfo(symbol))
+      .map((symbol) => mapMexcSymbolInfo(symbol))
       .filter((symbol): symbol is ExchangeSymbolInfo => symbol !== undefined);
   }
 
