@@ -150,7 +150,10 @@ function validatePositiveNumber(
   value: string,
   field: string,
 ): void {
-  if (!/^(?:\d+\.?\d*|\.\d+)$/.test(value) || Number(value) <= 0) {
+  if (
+    !/^(?:\d+\.?\d*|\.\d+)$/.test(value) ||
+    compareDecimal(value, '0') <= 0
+  ) {
     throw new Error(`MEXC ${field} must be a positive number`);
   }
 }
