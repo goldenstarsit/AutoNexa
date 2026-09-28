@@ -25,7 +25,4 @@ export class ExchangeRegistry {
     return this.adapters.has(id);
   }
 
-  all(): ExchangeAdapter[] {
-    return [...this.adapters.values()];
-  }
 }
