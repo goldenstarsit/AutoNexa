@@ -15,6 +15,15 @@ export function validateMexcOrder(
     throw new Error(`Unsupported MEXC order type: ${request.type}`);
   }
 
+  const mexcOrderType =
+    request.type === 'makerOnly' ? 'LIMIT_MAKER' : request.type.toUpperCase();
+
+  if (!symbolInfo.orderTypes.includes(mexcOrderType)) {
+    throw new Error(
+      `MEXC symbol does not support order type: ${mexcOrderType}`,
+    );
+  }
+
   if (request.type !== 'market') {
     if (request.price === undefined) {
       throw new Error(`${request.type} order requires a price`);
@@ -69,7 +78,6 @@ export function validateMexcOrder(
         `MEXC order value must not exceed ${symbolInfo.maxQuoteAmount}`,
       );
     }
-  }
 }
 
 function multiplyDecimal(left: string, right: string): string {
@@ -143,4 +151,6 @@ function validateDecimalPlaces(
 function decimalPlaces(value: string): number {
   const [, decimals = ''] = value.split('.');
   return decimals.length;
+}
+
 }
