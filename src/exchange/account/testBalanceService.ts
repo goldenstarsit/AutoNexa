@@ -1,5 +1,5 @@
 import type { DatabaseAdapter } from '../../database/databaseAdapter';
-import type { ExchangeAccount, ExchangeAssetBalance } from './exchangeAccount';
+import type { ExchangeAccount } from './exchangeAccount';
 import { TestBalanceRepository } from './testBalanceRepository';
 import type { BalanceSource } from './balanceSource';
 import type { TestBalanceOperations } from './testBalanceOperations';
@@ -24,10 +24,6 @@ export class TestBalanceService implements BalanceSource, TestBalanceOperations 
     return {
       balances: this.repository.getAll(this.exchangeId),
     };
-  }
-
-  getBalance(asset: string): ExchangeAssetBalance | undefined {
-    return this.repository.get(this.exchangeId, asset);
   }
 
   depositTestBalance(
