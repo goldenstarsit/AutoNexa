@@ -39,48 +39,6 @@ export class BalanceModeRepository extends BaseRepository {
     return row ? this.toRecord(row) : undefined;
   }
 
-  getAll(): BalanceModeRecord[] {
-    return this.db
-      .all<BalanceModeRow>(
-        `
-          SELECT id, name, enabled, created_at, updated_at
-          FROM balance_modes
-          ORDER BY id
-        `,
-      )
-      .map((row) => this.toRecord(row));
-  }
-
-  getEnabled(): BalanceModeRecord[] {
-    return this.db
-      .all<BalanceModeRow>(
-        `
-          SELECT id, name, enabled, created_at, updated_at
-          FROM balance_modes
-          WHERE enabled = 1
-          ORDER BY id
-        `,
-      )
-      .map((row) => this.toRecord(row));
-  }
-
-  setEnabled(
-    id: ExchangeBalanceMode,
-    enabled: boolean,
-    updatedAt: string,
-  ): void {
-    this.db.run(
-      `
-        UPDATE balance_modes
-        SET enabled = ?, updated_at = ?
-        WHERE id = ?
-      `,
-      enabled ? 1 : 0,
-      updatedAt,
-      id,
-    );
-  }
-
   private toRecord(row: BalanceModeRow): BalanceModeRecord {
     if (!EXCHANGE_BALANCE_MODES.has(row.id)) {
       throw new Error(`Unsupported balance mode: ${row.id}`);
