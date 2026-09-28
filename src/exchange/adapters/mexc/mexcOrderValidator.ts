@@ -50,6 +50,12 @@ export function validateMexcOrder(
     );
   }
 
+  if (!isDecimalMultiple(request.quantity, symbolInfo.baseSizePrecision)) {
+    throw new Error(
+      `MEXC quantity must be a multiple of ${symbolInfo.baseSizePrecision}`,
+    );
+  }
+
   if (request.type !== 'market') {
     const notional = multiplyDecimal(
       request.quantity,
@@ -97,6 +103,21 @@ function multiplyDecimal(left: string, right: string): string {
   const position = padded.length - scale;
 
   return `${padded.slice(0, position)}.${padded.slice(position)}`;
+}
+
+function isDecimalMultiple(value: string, step: string): boolean {
+  const [, valueFraction = ''] = value.split('.');
+  const [, stepFraction = ''] = step.split('.');
+  const scale = Math.max(valueFraction.length, stepFraction.length);
+
+  const valueInteger = BigInt(
+    `${value.split('.')[0]}${valueFraction.padEnd(scale, '0')}`,
+  );
+  const stepInteger = BigInt(
+    `${step.split('.')[0]}${stepFraction.padEnd(scale, '0')}`,
+  );
+
+  return valueInteger % stepInteger === BigInt(0);
 }
 
 function compareDecimal(left: string, right: string): number {
