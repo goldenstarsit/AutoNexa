@@ -38,6 +38,19 @@ export function validateMexcOrder(
     );
   }
 
+  validatePositiveNumber(
+    symbolInfo.baseSizePrecision,
+    'baseSizePrecision',
+  );
+  validatePositiveNumber(
+    symbolInfo.quoteAmountPrecision,
+    'quoteAmountPrecision',
+  );
+
+  if (symbolInfo.maxQuoteAmount) {
+    validatePositiveNumber(symbolInfo.maxQuoteAmount, 'maxQuoteAmount');
+  }
+
   validateDecimalPlaces(
     request.quantity,
     decimalPlaces(symbolInfo.baseSizePrecision),
