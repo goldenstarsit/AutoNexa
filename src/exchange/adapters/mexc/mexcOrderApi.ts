@@ -22,6 +22,19 @@ export interface MexcOrderResponse {
   side: string;
 }
 
+function normalizeMexcOrderSide(
+  side: string,
+): ExchangeOrder['side'] {
+  switch (side.toUpperCase()) {
+    case 'BUY':
+      return 'buy';
+    case 'SELL':
+      return 'sell';
+    default:
+      throw new Error(`Unsupported MEXC order side: ${side}`);
+  }
+}
+
 export class MexcOrderApi {
   readonly executionCapabilities = {
     maker: true,
@@ -47,7 +60,7 @@ export class MexcOrderApi {
       orderId: response.orderId,
       clientOrderId: response.clientOrderId,
       symbol: response.symbol,
-      side: response.side.toLowerCase() as ExchangeOrder['side'],
+      side: normalizeMexcOrderSide(response.side),
       type: normalizeMexcOrderType(response.type),
       status: normalizeMexcOrderStatus(
         response.status as Parameters<typeof normalizeMexcOrderStatus>[0],
@@ -71,7 +84,7 @@ export class MexcOrderApi {
       orderId: order.orderId,
       clientOrderId: order.clientOrderId,
       symbol: order.symbol,
-      side: order.side.toLowerCase() as ExchangeOrder['side'],
+      side: normalizeMexcOrderSide(order.side),
       type: normalizeMexcOrderType(order.type),
       status: normalizeMexcOrderStatus(
         order.status as Parameters<typeof normalizeMexcOrderStatus>[0],
@@ -96,7 +109,7 @@ export class MexcOrderApi {
       orderId: response.orderId,
       clientOrderId: response.clientOrderId,
       symbol: response.symbol,
-      side: response.side.toLowerCase() as ExchangeOrder['side'],
+      side: normalizeMexcOrderSide(response.side),
       type: normalizeMexcOrderType(response.type),
       status: normalizeMexcOrderStatus(
         response.status as Parameters<typeof normalizeMexcOrderStatus>[0],
@@ -134,7 +147,7 @@ export class MexcOrderApi {
       orderId: order.orderId,
       clientOrderId: order.clientOrderId,
       symbol: order.symbol,
-      side: order.side.toLowerCase() as ExchangeOrder['side'],
+      side: normalizeMexcOrderSide(order.side),
       type: normalizeMexcOrderType(order.type),
       status: normalizeMexcOrderStatus(
         order.status as Parameters<typeof normalizeMexcOrderStatus>[0],
@@ -174,7 +187,7 @@ export class MexcOrderApi {
       orderId: response.orderId,
       clientOrderId: response.clientOrderId,
       symbol: response.symbol,
-      side: response.side.toLowerCase() as ExchangeOrder['side'],
+      side: normalizeMexcOrderSide(response.side),
       type: request.type,
       status: normalizeMexcOrderStatus(response.status as Parameters<typeof normalizeMexcOrderStatus>[0]),
       quantity: response.origQty,
