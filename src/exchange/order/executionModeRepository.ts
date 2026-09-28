@@ -1,5 +1,4 @@
 import type { DatabaseAdapter } from '../../database/databaseAdapter';
-import { BaseRepository } from '../../repositories/baseRepository';
 import type { ExchangeOrderExecutionMode } from './exchangeOrder';
 
 export interface ExecutionModeRecord {
@@ -24,10 +23,8 @@ const EXECUTION_MODE_IDS: ReadonlySet<string> = new Set([
   'hybrid',
 ]);
 
-export class ExecutionModeRepository extends BaseRepository {
-  constructor(db: DatabaseAdapter) {
-    super(db);
-  }
+export class ExecutionModeRepository {
+  constructor(public readonly db: DatabaseAdapter) {}
 
   getById(id: ExchangeOrderExecutionMode): ExecutionModeRecord | undefined {
     const row = this.db.get<ExecutionModeRow>(

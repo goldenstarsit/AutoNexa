@@ -1,5 +1,4 @@
 import type { DatabaseAdapter } from '../database/databaseAdapter';
-import { BaseRepository } from '../repositories/baseRepository';
 
 export interface ExchangeRecord {
   id: string;
@@ -17,10 +16,8 @@ interface ExchangeRow {
   updated_at: string;
 }
 
-export class ExchangeRepository extends BaseRepository {
-  constructor(db: DatabaseAdapter) {
-    super(db);
-  }
+export class ExchangeRepository {
+  constructor(public readonly db: DatabaseAdapter) {}
 
   getAll(): ExchangeRecord[] {
     return this.db

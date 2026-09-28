@@ -1,5 +1,4 @@
 import type { DatabaseAdapter } from '../../database/databaseAdapter';
-import { BaseRepository } from '../../repositories/baseRepository';
 import {
   EXCHANGE_BALANCE_MODES,
   type ExchangeBalanceMode,
@@ -21,10 +20,8 @@ interface BalanceModeRow {
   updated_at: string;
 }
 
-export class BalanceModeRepository extends BaseRepository {
-  constructor(db: DatabaseAdapter) {
-    super(db);
-  }
+export class BalanceModeRepository {
+  constructor(public readonly db: DatabaseAdapter) {}
 
   getById(id: ExchangeBalanceMode): BalanceModeRecord | undefined {
     const row = this.db.get<BalanceModeRow>(
