@@ -28,6 +28,7 @@ export interface MexcExchangeInfoResponse {
 
 export class MexcMarketApi {
   private readonly httpClient: ExchangeHttpClient;
+  private exchangeInfo?: MexcExchangeInfoResponse;
 
   constructor(
     httpClient: ExchangeHttpClient = new FetchExchangeHttpClient(
@@ -38,13 +39,22 @@ export class MexcMarketApi {
   }
 
   async getExchangeInfo(): Promise<MexcExchangeInfoResponse> {
+    if (this.exchangeInfo) {
+      return this.exchangeInfo;
+    }
+
     const response =
       await this.httpClient.request<MexcExchangeInfoResponse>({
         method: 'GET',
         path: '/api/v3/exchangeInfo',
       });
 
-    return response.data;
+    this.exchangeInfo = response.data;
+    return this.exchangeInfo;
+  }
+
+  invalidateExchangeInfo(): void {
+    this.exchangeInfo = undefined;
   }
 
   async getSymbolInfo(
