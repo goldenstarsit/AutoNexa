@@ -147,11 +147,9 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
     return this.orderApi.getOrderHistory(symbol, options);
   }
 
-  async getSymbolInfo(
-    symbol: string,
-  ): Promise<ExchangeSymbolInfo | undefined> {
-    const info = await this.marketApi.getSymbolInfo(symbol);
-
+  private mapSymbolInfo(
+    info: Awaited<ReturnType<MexcMarketApi['getSymbolInfo']>>,
+  ): ExchangeSymbolInfo | undefined {
     if (!info) {
       return undefined;
     }
@@ -177,28 +175,18 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
     };
   }
 
+  async getSymbolInfo(
+    symbol: string,
+  ): Promise<ExchangeSymbolInfo | undefined> {
+    return this.mapSymbolInfo(await this.marketApi.getSymbolInfo(symbol));
+  }
+
   async getSymbols(): Promise<ExchangeSymbolInfo[]> {
     const info = await this.marketApi.getExchangeInfo();
 
-    return info.symbols.map((symbol) => ({
-      symbol: symbol.symbol,
-      status: symbol.status,
-      baseAsset: symbol.baseAsset,
-      quoteAsset: symbol.quoteAsset,
-      baseAssetPrecision: symbol.baseAssetPrecision,
-      quotePrecision: symbol.quotePrecision,
-      quoteAssetPrecision: symbol.quoteAssetPrecision,
-      baseCommissionPrecision: symbol.baseCommissionPrecision,
-      quoteCommissionPrecision: symbol.quoteCommissionPrecision,
-      orderTypes: symbol.orderTypes,
-      spotTradingAllowed: symbol.isSpotTradingAllowed,
-      marginTradingAllowed: symbol.isMarginTradingAllowed,
-      quoteAmountPrecision: symbol.quoteAmountPrecision,
-      baseSizePrecision: symbol.baseSizePrecision,
-      maxQuoteAmount: symbol.maxQuoteAmount,
-      quoteAmountPrecisionMarket: symbol.quoteAmountPrecisionMarket,
-      maxQuoteAmountMarket: symbol.maxQuoteAmountMarket,
-    }));
+    return info.symbols
+      .map((symbol) => this.mapSymbolInfo(symbol))
+      .filter((symbol): symbol is ExchangeSymbolInfo => symbol !== undefined);
   }
 
   async getHealth(): Promise<ExchangeHealth> {
@@ -229,7 +217,7 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
   async getTradingRules(
     symbol: string,
   ): Promise<ExchangeTradingRules | undefined> {
-    const info = await this.marketApi.getSymbolInfo(symbol);
+    const info = await this.getSymbolInfo(symbol);
 
     if (!info) {
       return undefined;
@@ -239,8 +227,8 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
       symbol: info.symbol,
       status: info.status,
       orderTypes: info.orderTypes,
-      spotTradingAllowed: info.isSpotTradingAllowed,
-      marginTradingAllowed: info.isMarginTradingAllowed,
+      spotTradingAllowed: info.spotTradingAllowed,
+      marginTradingAllowed: info.marginTradingAllowed,
       baseAssetPrecision: info.baseAssetPrecision,
       quotePrecision: info.quotePrecision,
       quoteAssetPrecision: info.quoteAssetPrecision,
