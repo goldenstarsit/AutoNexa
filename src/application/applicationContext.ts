@@ -1,4 +1,4 @@
-import { createRepositoryDatabase } from '../repositories/repositoryFactory';
+import { createDatabase } from '../database/database';
 import type { DatabaseAdapter } from '../database/databaseAdapter';
 import { ExchangeService } from '../exchange/exchangeService';
 
@@ -7,7 +7,7 @@ export class ApplicationContext {
   readonly exchanges: ExchangeService;
 
   constructor() {
-    this.db = createRepositoryDatabase();
+    this.db = createDatabase();
     this.exchanges = new ExchangeService(this.db);
   }
 
