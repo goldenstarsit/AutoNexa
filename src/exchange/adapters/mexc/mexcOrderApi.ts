@@ -1,7 +1,7 @@
 import type { ExchangeOrder, ExchangeOrderRequest } from '../../order/exchangeOrder';
 import { MexcPrivateApiClient } from './mexcPrivateApiClient';
 import { MexcMarketApi } from './mexcMarketApi';
-import { mapMexcSymbolInfo } from './mexcMarketMapper';
+import { mapDefinedMexcSymbolInfo } from './mexcMarketMapper';
 import { validateMexcOrder } from './mexcOrderValidator';
 import { normalizeMexcOrderStatus } from './mexcOrderStatus';
 import {
@@ -152,11 +152,7 @@ export class MexcOrderApi {
       throw new Error(`MEXC symbol not found: ${request.symbol.toUpperCase()}`);
     }
 
-    const exchangeSymbolInfo = mapMexcSymbolInfo(symbolInfo);
-
-    if (!exchangeSymbolInfo) {
-      throw new Error(`MEXC symbol not found: ${request.symbol.toUpperCase()}`);
-    }
+    const exchangeSymbolInfo = mapDefinedMexcSymbolInfo(symbolInfo);
 
     validateMexcOrder(request, exchangeSymbolInfo);
     const response = await this.privateApiClient.request<MexcOrderResponse>(

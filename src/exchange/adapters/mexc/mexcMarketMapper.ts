@@ -10,6 +10,12 @@ export function mapMexcSymbolInfo(
     return undefined;
   }
 
+  return mapDefinedMexcSymbolInfo(info);
+}
+
+export function mapDefinedMexcSymbolInfo(
+  info: MexcSymbolInfo,
+): ExchangeSymbolInfo {
   return {
     symbol: info.symbol,
     status: info.status,
