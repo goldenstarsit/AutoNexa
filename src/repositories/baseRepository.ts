@@ -1,7 +1,5 @@
 import type { DatabaseAdapter } from '../database/databaseAdapter';
-import type { Repository } from './repository';
-
-export abstract class BaseRepository implements Repository {
+export abstract class BaseRepository {
   constructor(
     public readonly db: DatabaseAdapter,
   ) {}
