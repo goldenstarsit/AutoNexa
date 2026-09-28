@@ -12,7 +12,7 @@ import { normalizeExchangeError } from '../../exchangeErrorNormalizer';
 
 export class MexcPrivateApiClient {
   private readonly httpClient: ExchangeHttpClient;
-  private readonly requestBuilder: MexcPrivateRequestBuilder;
+  private requestBuilder: MexcPrivateRequestBuilder | undefined;
   private readonly rateLimiter: ExchangeRateLimiter;
   private readonly retryController: ExchangeRetryController;
 
@@ -31,15 +31,9 @@ export class MexcPrivateApiClient {
         backoffMultiplier: 2,
       }),
   ) {
-    const credentials = getMexcCredentials();
-
     this.httpClient = httpClient;
     this.rateLimiter = rateLimiter;
     this.retryController = retryController;
-    this.requestBuilder = new MexcPrivateRequestBuilder(
-      credentials.apiKey,
-      new MexcSigner(credentials.apiSecret),
-    );
   }
 
   async request<T = unknown>(
@@ -47,6 +41,15 @@ export class MexcPrivateApiClient {
     path: string,
     params: Record<string, string | number | boolean> = {},
   ): Promise<T> {
+    if (!this.requestBuilder) {
+      const credentials = getMexcCredentials();
+
+      this.requestBuilder = new MexcPrivateRequestBuilder(
+        credentials.apiKey,
+        new MexcSigner(credentials.apiSecret),
+      );
+    }
+
     const signedRequest = this.requestBuilder.build(params);
     let attempt = 1;
 

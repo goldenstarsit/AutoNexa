@@ -72,6 +72,11 @@ export class ExchangeService {
     adapter.withdrawTestBalance(asset, amount, updatedAt);
   }
 
+  async getTradingRules(exchangeId: string, symbol: string) {
+    const adapter = this.getAdapter(exchangeId);
+    return adapter.getTradingRules(symbol);
+  }
+
   async getAccount(
     exchangeId: string,
     mode: ExchangeBalanceMode = 'live',
