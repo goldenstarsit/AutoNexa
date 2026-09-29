@@ -72,6 +72,14 @@ export class ExchangeService {
     adapter.withdrawTestBalance(asset, amount, updatedAt);
   }
 
+  async placeOrder(
+    exchangeId: string,
+    request: import('./order/exchangeOrder').ExchangeOrderRequest,
+  ) {
+    const adapter = this.getAdapter(exchangeId);
+    return adapter.placeOrder(request);
+  }
+
   async getTradingRules(exchangeId: string, symbol: string) {
     const adapter = this.getAdapter(exchangeId);
     return adapter.getTradingRules(symbol);
