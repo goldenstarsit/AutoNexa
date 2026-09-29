@@ -14,6 +14,7 @@ import type { ExchangeHealth } from '../exchangeHealth';
 import { MexcAccountApi } from './mexc/mexcAccountApi';
 import { MexcOrderApi } from './mexc/mexcOrderApi';
 import { MexcMarketApi } from './mexc/mexcMarketApi';
+import { MexcTickerApi } from './mexc/mexcTickerApi';
 import { mapDefinedMexcSymbolInfo, mapMexcSymbolInfo } from './mexc/mexcMarketMapper';
 import { OrderExecutionService } from '../order/orderExecutionService';
 import type { ExecutionModeProvider } from '../order/executionModeProvider';
@@ -57,6 +58,7 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
   private readonly balanceSourceRouter: BalanceSourceRouter;
 
   private readonly marketApi = new MexcMarketApi();
+  private readonly tickerApi = new MexcTickerApi();
 
   private readonly orderApi = new MexcOrderApi(
     this.privateApiClient,
@@ -183,6 +185,16 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
         ),
       ],
     };
+  }
+
+  async getCurrentPrice(symbol: string): Promise<string> {
+    const ticker = await this.tickerApi.getPrice(symbol);
+
+    if (!ticker.price || ticker.price === '0') {
+      throw new Error(`Current price is unavailable: ${this.id}:${symbol}`);
+    }
+
+    return ticker.price;
   }
 
   async getTradingRules(

@@ -77,6 +77,11 @@ export class ExchangeService {
     return adapter.getTradingRules(symbol);
   }
 
+  async getCurrentPrice(exchangeId: string, symbol: string) {
+    const adapter = this.getAdapter(exchangeId);
+    return adapter.getCurrentPrice(symbol);
+  }
+
   async getAccount(
     exchangeId: string,
     mode: ExchangeBalanceMode = 'live',
