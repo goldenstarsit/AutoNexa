@@ -1,10 +1,11 @@
 import type { DatabaseAdapter } from '../../database/databaseAdapter';
+import type { ExchangeTrade } from '../../exchange/trade/exchangeTrade';
 import type {
   ExchangeOrder,
   ExchangeOrderRequest,
 } from '../../exchange/order/exchangeOrder';
-import type { ExchangeTrade } from '../../exchange/trade/exchangeTrade';
 import { ExchangeService } from '../../exchange/exchangeService';
+import { calculateWeightedAverageTradePrice } from '../../exchange/trade/exchangeTradeFillCalculator';
 import { DcaConfigurationService } from './dcaConfigurationService';
 import { DcaCycleService } from './dcaCycleService';
 import { DcaTradingRuleResolver } from './dcaTradingRuleResolver';
@@ -142,7 +143,7 @@ export class DcaInitialOrderService {
       }
 
       const initialEntryPrice =
-        calculateWeightedAveragePrice(trades);
+        calculateWeightedAverageTradePrice(trades);
 
       const activeCycle = this.cycleService.recordInitialEntryPrice(
         cycle.id,
@@ -164,113 +165,4 @@ export class DcaInitialOrderService {
   private isZeroOrNegative(value: string): boolean {
     return value.trim() === '' || /^0+(?:\.0+)?$/.test(value.trim());
   }
-}
-
-function calculateWeightedAveragePrice(
-  trades: ExchangeTrade[],
-): string {
-  let totalQuantity = '0';
-  let totalQuoteQuantity = '0';
-
-  for (const trade of trades) {
-    if (
-      trade.side !== 'buy' ||
-      !isPositiveDecimal(trade.quantity) ||
-      !isPositiveDecimal(trade.quoteQuantity)
-    ) {
-      throw new Error(
-        `Invalid initial DCA trade fill: ${trade.tradeId}`,
-      );
-    }
-
-    totalQuantity = addDecimal(totalQuantity, trade.quantity);
-    totalQuoteQuantity = addDecimal(
-      totalQuoteQuantity,
-      trade.quoteQuantity,
-    );
-  }
-
-  if (isZeroDecimal(totalQuantity)) {
-    throw new Error('Initial DCA fills have zero total quantity');
-  }
-
-  return divideDecimal(totalQuoteQuantity, totalQuantity);
-}
-
-function isPositiveDecimal(value: string): boolean {
-  return (
-    /^[0-9]+(?:\.[0-9]+)?$/.test(value.trim()) &&
-    !isZeroDecimal(value)
-  );
-}
-
-function isZeroDecimal(value: string): boolean {
-  return /^0+(?:\.0+)?$/.test(value.trim());
-}
-
-function addDecimal(a: string, b: string): string {
-  const [aInteger, aFraction = ''] = normalizeDecimal(a);
-  const [bInteger, bFraction = ''] = normalizeDecimal(b);
-  const scale = Math.max(aFraction.length, bFraction.length);
-  const aScaled = BigInt(`${aInteger}${aFraction.padEnd(scale, '0')}`);
-  const bScaled = BigInt(`${bInteger}${bFraction.padEnd(scale, '0')}`);
-  const sum = aScaled + bScaled;
-  const text = sum.toString().padStart(scale + 1, '0');
-
-  if (scale === 0) {
-    return text;
-  }
-
-  const integerPart = text.slice(0, -scale) || '0';
-  const fractionPart = text.slice(-scale).replace(/0+$/, '');
-
-  return fractionPart
-    ? `${integerPart}.${fractionPart}`
-    : integerPart;
-}
-
-function divideDecimal(dividend: string, divisor: string): string {
-  const [dividendInteger, dividendFraction = ''] =
-    normalizeDecimal(dividend);
-  const [divisorInteger, divisorFraction = ''] =
-    normalizeDecimal(divisor);
-
-  const dividendScale = dividendFraction.length;
-  const divisorScale = divisorFraction.length;
-
-  const dividendDigits = BigInt(
-    `${dividendInteger}${dividendFraction}`,
-  );
-  const divisorDigits = BigInt(
-    `${divisorInteger}${divisorFraction}`,
-  );
-
-  if (divisorDigits === BigInt(0)) {
-    throw new Error('Cannot divide by zero');
-  }
-
-  const scale = 18;
-  const numerator =
-    dividendDigits * BigInt(10) ** BigInt(scale + divisorScale);
-  const denominator =
-    divisorDigits * BigInt(10) ** BigInt(dividendScale);
-  const quotient = numerator / denominator;
-  const text = quotient.toString().padStart(scale + 1, '0');
-  const integerPart = text.slice(0, -scale) || '0';
-  const fractionPart = text.slice(-scale).replace(/0+$/, '');
-
-  return fractionPart
-    ? `${integerPart}.${fractionPart}`
-    : integerPart;
-}
-
-function normalizeDecimal(value: string): [string, string] {
-  const normalized = value.trim();
-
-  if (!/^[0-9]+(?:\.[0-9]+)?$/.test(normalized)) {
-    throw new Error(`Invalid decimal value: ${value}`);
-  }
-
-  const [integerPart, fractionPart = ''] = normalized.split('.');
-  return [integerPart.replace(/^0+(?=\d)/, '') || '0', fractionPart];
 }
