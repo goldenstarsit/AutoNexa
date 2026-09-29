@@ -7,6 +7,7 @@ import { executionModesMigration } from './005_execution_modes';
 import { balanceModesMigration } from './006_balance_modes';
 import { testBalancesMigration } from './007_test_balances';
 import { dcaConfigurationsMigration } from './008_dca_configurations';
+import { dcaCyclesMigration } from './009_dca_cycles';
 
 export const migrations: Migration[] = [
   initialMigration,
@@ -17,4 +18,5 @@ export const migrations: Migration[] = [
   balanceModesMigration,
   testBalancesMigration,
   dcaConfigurationsMigration,
+  dcaCyclesMigration,
 ];
