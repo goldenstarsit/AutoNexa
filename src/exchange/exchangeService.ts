@@ -5,6 +5,7 @@ import { createExchangeAdapter } from './exchangeAdapterFactory';
 import { ExecutionModeRepository } from './order/executionModeRepository';
 import { BalanceModeRepository } from './account/balanceModeRepository';
 import type { ExchangeBalanceMode } from './account/balanceMode';
+import type { ExchangeTrade } from './trade/exchangeTrade';
 
 export class ExchangeService {
   private readonly db: DatabaseAdapter;
@@ -78,6 +79,15 @@ export class ExchangeService {
   ) {
     const adapter = this.getAdapter(exchangeId);
     return adapter.placeOrder(request);
+  }
+
+  async getOrderTrades(
+    exchangeId: string,
+    symbol: string,
+    orderId: string,
+  ): Promise<ExchangeTrade[]> {
+    const adapter = this.getAdapter(exchangeId);
+    return adapter.getOrderTrades(symbol, orderId);
   }
 
   async getTradingRules(exchangeId: string, symbol: string) {

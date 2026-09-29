@@ -1,4 +1,5 @@
 import type { ExchangeOrder, ExchangeOrderRequest } from '../../order/exchangeOrder';
+import type { ExchangeTrade } from '../../trade/exchangeTrade';
 import { MexcPrivateApiClient } from './mexcPrivateApiClient';
 import { MexcMarketApi } from './mexcMarketApi';
 import { mapDefinedMexcSymbolInfo } from './mexcMarketMapper';
@@ -8,6 +9,17 @@ import {
   normalizeMexcOrderType,
   toMexcOrderType,
 } from './mexcOrderType';
+
+export interface MexcTradeResponse {
+  id: string;
+  orderId: string;
+  symbol: string;
+  price: string;
+  qty: string;
+  quoteQty: string;
+  time: number;
+  isBuyer: boolean;
+}
 
 export interface MexcOrderResponse {
   symbol: string;
@@ -69,6 +81,32 @@ export class MexcOrderApi {
       executedQuantity: response.executedQty,
       price: response.price,
     };
+  }
+
+  async getOrderTrades(
+    symbol: string,
+    orderId: string,
+  ): Promise<ExchangeTrade[]> {
+    const response =
+      await this.privateApiClient.request<MexcTradeResponse[]>(
+        'GET',
+        '/api/v3/myTrades',
+        {
+          symbol: symbol.toUpperCase(),
+          orderId,
+        },
+      );
+
+    return response.map((trade) => ({
+      tradeId: trade.id,
+      orderId: trade.orderId,
+      symbol: trade.symbol,
+      side: trade.isBuyer ? 'buy' : 'sell',
+      price: trade.price,
+      quantity: trade.qty,
+      quoteQuantity: trade.quoteQty,
+      timestamp: trade.time,
+    }));
   }
 
   async getOpenOrders(symbol?: string): Promise<ExchangeOrder[]> {

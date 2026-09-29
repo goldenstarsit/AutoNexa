@@ -7,6 +7,7 @@ import type { TestBalanceOperations } from '../account/testBalanceOperations';
 import { BalanceSourceRouter } from '../account/balanceSourceRouter';
 import type { BalanceSource } from '../account/balanceSource';
 import type { ExchangeOrder, ExchangeOrderRequest } from '../order/exchangeOrder';
+import type { ExchangeTrade } from '../trade/exchangeTrade';
 import type { ExchangeSymbolInfo } from '../market/exchangeMarket';
 import type { ExchangeTradingRules } from '../market/exchangeTradingRules';
 import type { ExchangeCapabilities } from '../exchangeCapabilities';
@@ -129,6 +130,13 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
 
   async getOrder(symbol: string, orderId: string): Promise<ExchangeOrder> {
     return this.orderApi.getOrder(symbol, orderId);
+  }
+
+  async getOrderTrades(
+    symbol: string,
+    orderId: string,
+  ): Promise<ExchangeTrade[]> {
+    return this.orderApi.getOrderTrades(symbol, orderId);
   }
 
   async cancelOrder(symbol: string, orderId: string): Promise<ExchangeOrder> {

@@ -2,6 +2,7 @@ import type { ExchangeAccount } from './account/exchangeAccount';
 import type { TestBalanceOperations } from './account/testBalanceOperations';
 import type { ExchangeBalanceMode } from './account/balanceMode';
 import type { ExchangeOrder, ExchangeOrderRequest } from './order/exchangeOrder';
+import type { ExchangeTrade } from './trade/exchangeTrade';
 import type { ExchangeSymbolInfo } from './market/exchangeMarket';
 import type { ExchangeTradingRules } from './market/exchangeTradingRules';
 import type { ExchangeCapabilities } from './exchangeCapabilities';
@@ -24,6 +25,7 @@ export interface ExchangeAdapter extends TestBalanceOperations {
   getAccount(mode?: ExchangeBalanceMode): Promise<ExchangeAccount>;
   placeOrder(request: ExchangeOrderRequest): Promise<ExchangeOrder>;
   getOrder(symbol: string, orderId: string): Promise<ExchangeOrder>;
+  getOrderTrades(symbol: string, orderId: string): Promise<ExchangeTrade[]>;
   cancelOrder(symbol: string, orderId: string): Promise<ExchangeOrder>;
   getOpenOrders(symbol?: string): Promise<ExchangeOrder[]>;
   getOrderHistory(
