@@ -200,6 +200,57 @@ export class DcaOrderRepository {
     });
   }
 
+  getFillsByCycle(cycleId: string): DcaRuntimeOrderFillRecord[] {
+    const rows = this.db.all<{
+      id: string;
+      dca_runtime_order_id: string;
+      exchange_trade_id: string;
+      exchange_order_id: string;
+      symbol: string;
+      side: ExchangeTrade['side'];
+      price: string;
+      quantity: string;
+      quote_quantity: string;
+      trade_timestamp: number;
+      created_at: string;
+    }>(
+      `
+        SELECT
+          fills.id,
+          fills.dca_runtime_order_id,
+          fills.exchange_trade_id,
+          fills.exchange_order_id,
+          fills.symbol,
+          fills.side,
+          fills.price,
+          fills.quantity,
+          fills.quote_quantity,
+          fills.trade_timestamp,
+          fills.created_at
+        FROM dca_runtime_order_fills AS fills
+        INNER JOIN dca_runtime_orders AS orders
+          ON orders.id = fills.dca_runtime_order_id
+        WHERE orders.dca_cycle_id = ?
+        ORDER BY fills.trade_timestamp ASC, fills.exchange_trade_id ASC
+      `,
+      cycleId,
+    );
+
+    return rows.map((row) => ({
+      id: row.id,
+      dcaRuntimeOrderId: row.dca_runtime_order_id,
+      exchangeTradeId: row.exchange_trade_id,
+      exchangeOrderId: row.exchange_order_id,
+      symbol: row.symbol,
+      side: row.side,
+      price: row.price,
+      quantity: row.quantity,
+      quoteQuantity: row.quote_quantity,
+      tradeTimestamp: row.trade_timestamp,
+      createdAt: row.created_at,
+    }));
+  }
+
   getFills(runtimeOrderId: string): DcaRuntimeOrderFillRecord[] {
     const rows = this.db.all<{
       id: string;

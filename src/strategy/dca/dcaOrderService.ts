@@ -1,6 +1,10 @@
 import type { DatabaseAdapter } from '../../database/databaseAdapter';
 import type { ExchangeOrder, ExchangeOrderRequest } from '../../exchange/order/exchangeOrder';
 import type { ExchangeTrade } from '../../exchange/trade/exchangeTrade';
+import {
+  calculateTradeFillTotals,
+  combineTradeFillTotals,
+} from '../../exchange/trade/exchangeTradeFillCalculator';
 import { ExchangeService } from '../../exchange/exchangeService';
 import { DcaConfigurationService } from './dcaConfigurationService';
 import { DcaCycleService } from './dcaCycleService';
@@ -181,6 +185,60 @@ export class DcaOrderService {
         : [];
 
     this.orderRepository.saveFills(runtimeOrder.id, trades);
+
+    if (trades.length > 0) {
+      const cycle = this.cycleService.getCurrent(
+        preparation.configurationId,
+      );
+
+      if (!cycle || cycle.id !== preparation.cycleId) {
+        throw new Error(
+          `DCA cycle is not current: ${preparation.cycleId}`,
+        );
+      }
+
+      if (!cycle.entryQuantity || !cycle.entryQuoteQuantity) {
+        throw new Error(
+          `DCA cycle has no initial entry totals: ${preparation.cycleId}`,
+        );
+      }
+
+      const cycleFills =
+        this.orderRepository.getFillsByCycle(
+          preparation.cycleId,
+        );
+
+      const dcaTrades: ExchangeTrade[] = cycleFills.map(
+        (fill) => ({
+          tradeId: fill.exchangeTradeId,
+          orderId: fill.exchangeOrderId,
+          symbol: fill.symbol,
+          side: fill.side,
+          price: fill.price,
+          quantity: fill.quantity,
+          quoteQuantity: fill.quoteQuantity,
+          timestamp: fill.tradeTimestamp,
+        }),
+      );
+
+      const dcaTotals =
+        calculateTradeFillTotals(dcaTrades);
+
+      const combinedTotals = combineTradeFillTotals(
+        {
+          quantity: cycle.entryQuantity,
+          quoteQuantity: cycle.entryQuoteQuantity,
+        },
+        dcaTotals,
+      );
+
+      this.cycleService.recordDcaEntryTotals(
+        preparation.cycleId,
+        combinedTotals.quantity,
+        combinedTotals.quoteQuantity,
+        combinedTotals.averagePrice,
+      );
+    }
 
     return {
       order,

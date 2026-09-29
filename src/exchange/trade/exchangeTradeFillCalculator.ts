@@ -1,20 +1,23 @@
 import type { ExchangeTrade } from './exchangeTrade';
 
-export function calculateWeightedAverageTradePrice(
+export interface TradeFillTotals {
+  quantity: string;
+  quoteQuantity: string;
+  averagePrice: string;
+}
+
+export function calculateTradeFillTotals(
   trades: ExchangeTrade[],
-): string {
+): TradeFillTotals {
   if (trades.length === 0) {
-    throw new Error('Cannot calculate average price without trade fills');
+    throw new Error('Cannot calculate fill totals without trade fills');
   }
 
   let totalQuantity = '0';
   let totalQuoteQuantity = '0';
 
   for (const trade of trades) {
-    if (
-      trade.side !== 'buy' &&
-      trade.side !== 'sell'
-    ) {
+    if (trade.side !== 'buy' && trade.side !== 'sell') {
       throw new Error(
         `Invalid trade side: ${trade.tradeId}`,
       );
@@ -40,7 +43,47 @@ export function calculateWeightedAverageTradePrice(
     throw new Error('Trade fills have zero total quantity');
   }
 
-  return divideDecimal(totalQuoteQuantity, totalQuantity);
+  return {
+    quantity: totalQuantity,
+    quoteQuantity: totalQuoteQuantity,
+    averagePrice: divideDecimal(
+      totalQuoteQuantity,
+      totalQuantity,
+    ),
+  };
+}
+
+export function combineTradeFillTotals(
+  initial: Pick<TradeFillTotals, 'quantity' | 'quoteQuantity'>,
+  additional: Pick<TradeFillTotals, 'quantity' | 'quoteQuantity'>,
+): TradeFillTotals {
+  const quantity = addDecimal(
+    initial.quantity,
+    additional.quantity,
+  );
+  const quoteQuantity = addDecimal(
+    initial.quoteQuantity,
+    additional.quoteQuantity,
+  );
+
+  if (isZeroDecimal(quantity)) {
+    throw new Error('Combined trade fills have zero total quantity');
+  }
+
+  return {
+    quantity,
+    quoteQuantity,
+    averagePrice: divideDecimal(
+      quoteQuantity,
+      quantity,
+    ),
+  };
+}
+
+export function calculateWeightedAverageTradePrice(
+  trades: ExchangeTrade[],
+): string {
+  return calculateTradeFillTotals(trades).averagePrice;
 }
 
 function isPositiveDecimal(value: string): boolean {

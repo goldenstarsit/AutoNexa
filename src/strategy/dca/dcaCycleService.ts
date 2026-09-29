@@ -5,6 +5,12 @@ import {
   type DcaCycleRecord,
 } from './dcaCycleRepository';
 
+export interface DcaInitialEntryTotals {
+  quantity: string;
+  quoteQuantity: string;
+  averagePrice: string;
+}
+
 export class DcaCycleService {
   private readonly configurationService: DcaConfigurationService;
   private readonly repository: DcaCycleRepository;
@@ -48,11 +54,47 @@ export class DcaCycleService {
 
   recordInitialEntryPrice(
     cycleId: string,
-    initialEntryPrice: string,
+    entry: DcaInitialEntryTotals,
   ): DcaCycleRecord {
     return this.repository.setInitialEntryPrice(
       cycleId,
-      initialEntryPrice,
+      entry.averagePrice,
+    ).id
+      ? this.repository.setEntryTotals(
+          cycleId,
+          entry.quantity,
+          entry.quoteQuantity,
+          entry.averagePrice,
+        )
+      : this.repository.setInitialEntryPrice(
+          cycleId,
+          entry.averagePrice,
+        );
+  }
+
+  recordDcaEntryTotals(
+    cycleId: string,
+    quantity: string,
+    quoteQuantity: string,
+    averagePrice: string,
+  ): DcaCycleRecord {
+    const cycle = this.repository.getById(cycleId);
+
+    if (!cycle) {
+      throw new Error(`DCA cycle not found: ${cycleId}`);
+    }
+
+    if (!cycle.entryQuantity || !cycle.entryQuoteQuantity) {
+      throw new Error(
+        `DCA cycle has no initial entry totals: ${cycleId}`,
+      );
+    }
+
+    return this.repository.setEntryTotals(
+      cycleId,
+      quantity,
+      quoteQuantity,
+      averagePrice,
     );
   }
 

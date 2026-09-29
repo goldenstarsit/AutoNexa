@@ -5,7 +5,7 @@ import type {
   ExchangeOrderRequest,
 } from '../../exchange/order/exchangeOrder';
 import { ExchangeService } from '../../exchange/exchangeService';
-import { calculateWeightedAverageTradePrice } from '../../exchange/trade/exchangeTradeFillCalculator';
+import { calculateTradeFillTotals } from '../../exchange/trade/exchangeTradeFillCalculator';
 import { DcaConfigurationService } from './dcaConfigurationService';
 import { DcaCycleService } from './dcaCycleService';
 import { DcaTradingRuleResolver } from './dcaTradingRuleResolver';
@@ -142,19 +142,18 @@ export class DcaInitialOrderService {
         );
       }
 
-      const initialEntryPrice =
-        calculateWeightedAverageTradePrice(trades);
+      const initialEntry = calculateTradeFillTotals(trades);
 
       const activeCycle = this.cycleService.recordInitialEntryPrice(
         cycle.id,
-        initialEntryPrice,
+        initialEntry,
       );
 
       return {
         cycleId: activeCycle.id,
         order,
         trades,
-        initialEntryPrice,
+        initialEntryPrice: initialEntry.averagePrice,
       };
     } catch (error) {
       this.cycleService.stopCycle(cycle.id);
