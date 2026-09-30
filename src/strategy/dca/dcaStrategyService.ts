@@ -65,6 +65,7 @@ export class DcaStrategyService {
       balanceModes,
       exchanges,
       executionModes,
+      this.getConfigurationModel,
     );
     this.orderService = new DcaOrderService(
       db,
