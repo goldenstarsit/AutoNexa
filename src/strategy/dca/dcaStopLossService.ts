@@ -6,7 +6,6 @@ import type { StrategyTypeModelSelector } from '../../domain/strategy/strategyTy
 import type { DcaConfigurationModel } from '../../domain/strategy/dca/dcaConfigurationModel';
 import type { ExchangeOrder } from '../../exchange/order/exchangeOrder';
 import type { ExchangeTrade } from '../../exchange/trade/exchangeTrade';
-import { DcaConfigurationService } from './dcaConfigurationService';
 import { DcaCycleService } from './dcaCycleService';
 import { DcaExitOrderRepository } from './dcaExitOrderRepository';
 import {
@@ -29,7 +28,6 @@ export interface DcaStopLossExecution extends DcaStopLossServiceResult {
 }
 
 export class DcaStopLossService {
-  private readonly configurationService: DcaConfigurationService;
   private readonly getConfigurationModel: (
     configurationId: string,
   ) => DcaConfigurationModel | undefined;
@@ -51,13 +49,6 @@ export class DcaStopLossService {
   ) {
     this.getConfigurationModel = getConfigurationModel;
 
-    this.configurationService = new DcaConfigurationService(
-      db,
-      strategyTypes,
-      balanceModes,
-      exchanges,
-      executionModes,
-    );
     this.cycleService = new DcaCycleService(
       db,
       strategyTypes,
@@ -207,7 +198,7 @@ export class DcaStopLossService {
   }
 
   private async prepareEvaluation(configurationId: string) {
-    const configuration = this.configurationService.getById(configurationId);
+    const configuration = this.getConfigurationModel(configurationId);
 
     if (!configuration) {
       throw new Error(

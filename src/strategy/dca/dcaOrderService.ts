@@ -10,7 +10,6 @@ import {
   calculateTradeFillTotals,
   combineTradeFillTotals,
 } from '../../exchange/trade/exchangeTradeFillCalculator';
-import { DcaConfigurationService } from './dcaConfigurationService';
 import { DcaCycleService } from './dcaCycleService';
 import { DcaTradingRuleResolver } from './dcaTradingRuleResolver';
 import {
@@ -34,7 +33,6 @@ export interface DcaOrderPreparation {
 }
 
 export class DcaOrderService {
-  private readonly configurationService: DcaConfigurationService;
   private readonly getConfigurationModel: (
     configurationId: string,
   ) => DcaConfigurationModel | undefined;
@@ -57,13 +55,6 @@ export class DcaOrderService {
   ) {
     this.getConfigurationModel = getConfigurationModel;
 
-    this.configurationService = new DcaConfigurationService(
-      db,
-      strategyTypes,
-      balanceModes,
-      exchanges,
-      executionModes,
-    );
     this.cycleService = new DcaCycleService(
       db,
       strategyTypes,
@@ -85,7 +76,7 @@ export class DcaOrderService {
     level: number,
   ): Promise<DcaOrderPreparation> {
     const configuration =
-      this.configurationService.getById(configurationId);
+      this.getConfigurationModel(configurationId);
 
     if (!configuration) {
       throw new Error(

@@ -6,7 +6,6 @@ import type { StrategyTypeModelSelector } from '../../domain/strategy/strategyTy
 import type { DcaConfigurationModel } from '../../domain/strategy/dca/dcaConfigurationModel';
 import type { ExchangeOrder } from '../../exchange/order/exchangeOrder';
 import type { ExchangeTrade } from '../../exchange/trade/exchangeTrade';
-import { DcaConfigurationService } from './dcaConfigurationService';
 import { DcaCycleService } from './dcaCycleService';
 import { DcaExitOrderRepository } from './dcaExitOrderRepository';
 import {
@@ -32,7 +31,6 @@ export interface DcaTakeProfitExecution extends DcaTakeProfitServiceResult {
 }
 
 export class DcaTakeProfitService {
-  private readonly configurationService: DcaConfigurationService;
   private readonly getConfigurationModel: (
     configurationId: string,
   ) => DcaConfigurationModel | undefined;
@@ -54,13 +52,6 @@ export class DcaTakeProfitService {
   ) {
     this.getConfigurationModel = getConfigurationModel;
 
-    this.configurationService = new DcaConfigurationService(
-      db,
-      strategyTypes,
-      balanceModes,
-      exchanges,
-      executionModes,
-    );
     this.cycleService = new DcaCycleService(
       db,
       strategyTypes,
@@ -215,7 +206,7 @@ export class DcaTakeProfitService {
 
   private async prepareEvaluation(configurationId: string) {
     const configuration =
-      this.configurationService.getById(configurationId);
+      this.getConfigurationModel(configurationId);
 
     if (!configuration) {
       throw new Error(
