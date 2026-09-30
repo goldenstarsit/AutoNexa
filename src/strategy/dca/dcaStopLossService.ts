@@ -31,6 +31,7 @@ export class DcaStopLossService {
   private readonly configurationService: DcaConfigurationService;
   private readonly cycleService: DcaCycleService;
   private readonly exchanges: ExchangeModelSelector;
+  private readonly executionModes: ExecutionModeModelSelector;
   private readonly exitOrderRepository: DcaExitOrderRepository;
 
   constructor(
@@ -55,6 +56,7 @@ export class DcaStopLossService {
       executionModes,
     );
     this.exchanges = exchanges;
+    this.executionModes = executionModes;
     this.exitOrderRepository = new DcaExitOrderRepository(db);
   }
 
@@ -123,17 +125,9 @@ export class DcaStopLossService {
       );
     }
 
-    const executionMode = context.configuration.executionModeId;
+    const executionMode = this.executionModes.get(context.configuration.executionModeId).id;
 
-    if (
-      executionMode !== 'makerOnly' &&
-      executionMode !== 'takerOnly' &&
-      executionMode !== 'hybrid'
-    ) {
-      throw new Error(
-        `Unsupported DCA execution mode: ${executionMode}`,
-      );
-    }
+    this.executionModes.get(executionMode);
 
     const request: import('../../exchange/order/exchangeOrder').ExchangeOrderRequest = {
       symbol: context.configuration.symbol,

@@ -37,6 +37,7 @@ export class DcaOrderService {
   private readonly cycleService: DcaCycleService;
   private readonly tradingRuleResolver: DcaTradingRuleResolver;
   private readonly exchanges: ExchangeModelSelector;
+  private readonly executionModes: ExecutionModeModelSelector;
   private readonly orderRepository: DcaOrderRepository;
 
   constructor(
@@ -62,6 +63,7 @@ export class DcaOrderService {
     );
     this.tradingRuleResolver = new DcaTradingRuleResolver(exchanges);
     this.exchanges = exchanges;
+    this.executionModes = executionModes;
     this.orderRepository = new DcaOrderRepository(db);
   }
 
@@ -119,17 +121,9 @@ export class DcaOrderService {
       );
     }
 
-    const executionMode = configuration.executionModeId;
+    const executionMode = this.executionModes.get(configuration.executionModeId).id;
 
-    if (
-      executionMode !== 'makerOnly' &&
-      executionMode !== 'takerOnly' &&
-      executionMode !== 'hybrid'
-    ) {
-      throw new Error(
-        `Unsupported DCA execution mode: ${executionMode}`,
-      );
-    }
+    this.executionModes.get(executionMode);
 
     const rules = await this.tradingRuleResolver.resolve(
       configuration.exchangeId,
