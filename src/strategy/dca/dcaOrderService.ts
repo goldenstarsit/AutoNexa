@@ -184,6 +184,7 @@ export class DcaOrderService {
             preparation.exchangeId,
             preparation.symbol,
             order.orderId,
+            preparation.balanceMode,
           )
         : [];
 

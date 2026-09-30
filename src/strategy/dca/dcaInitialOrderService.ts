@@ -134,9 +134,10 @@ export class DcaInitialOrderService {
       }
 
       const trades = await this.exchangeService.getOrderTrades(
-        cycle.dcaConfigurationId,
+        preparation.exchangeId,
         order.symbol,
         order.orderId,
+        preparation.balanceMode,
       );
 
       if (trades.length === 0) {
