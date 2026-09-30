@@ -8,6 +8,8 @@ import { ExecutionModeModelRegistry } from '../domain/execution/executionModeMod
 import { ExecutionModeRepository } from '../exchange/order/executionModeRepository';
 import type { ExecutionModeModelSelector } from '../domain/execution/executionModeModel';
 import { StrategyTypeModelRegistry } from '../domain/strategy/dcaStrategyTypeModel';
+import { DcaStrategyModelRegistry } from '../strategy/dca/models/dcaStrategyModel';
+import type { DcaStrategyModel } from '../domain/strategy/dca/dcaStrategyModel';
 import type { StrategyTypeModelSelector } from '../domain/strategy/strategyTypeModel';
 import { DcaStrategyService } from '../strategy/dca/dcaStrategyService';
 
@@ -18,6 +20,7 @@ export class ApplicationContext {
   readonly balanceModes: BalanceModeModelSelector;
   readonly executionModes: ExecutionModeModelSelector;
   readonly strategyTypes: StrategyTypeModelSelector;
+  readonly dcaStrategyModel: DcaStrategyModel;
   readonly dcaStrategy: DcaStrategyService;
 
   constructor() {
@@ -42,8 +45,16 @@ export class ApplicationContext {
     );
 
 
-    this.strategyTypes = new StrategyTypeModelRegistry(
+    this.dcaStrategyModel = new DcaStrategyModelRegistry(
+      this.database,
+      this.balanceModes,
+      this.exchangeModels,
+      this.executionModes,
       () => this.dcaStrategy,
+    ).get('dca');
+
+    this.strategyTypes = new StrategyTypeModelRegistry(
+      () => this.dcaStrategyModel,
     );
 
     this.dcaStrategy = new DcaStrategyService(

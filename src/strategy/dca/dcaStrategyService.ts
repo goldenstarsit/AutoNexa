@@ -2,6 +2,7 @@ import type { DatabaseModel } from '../../domain/database/databaseModel';
 import type { BalanceModeModelSelector } from '../../domain/balance/balanceModeModel';
 import type { ExchangeModelSelector } from '../../domain/exchange/exchangeModel';
 import type { ExecutionModeModelSelector } from '../../domain/execution/executionModeModel';
+import type { DcaConfigurationModel } from '../../domain/strategy/dca/dcaConfigurationModel';
 import type { StrategyTypeModelSelector } from '../../domain/strategy/strategyTypeModel';
 import { DcaConfigurationService } from './dcaConfigurationService';
 import { DcaCycleService } from './dcaCycleService';
@@ -46,9 +47,9 @@ export class DcaStrategyService {
   constructor(
     private readonly db: DatabaseModel,
     strategyTypes: StrategyTypeModelSelector,
-    balanceModes: BalanceModeModelSelector,
-    exchanges: ExchangeModelSelector,
-    executionModes: ExecutionModeModelSelector,
+    private readonly balanceModes: BalanceModeModelSelector,
+    private readonly exchanges: ExchangeModelSelector,
+    private readonly executionModes: ExecutionModeModelSelector,
   ) {
     this.configurationService = new DcaConfigurationService(
       db,
@@ -95,9 +96,27 @@ export class DcaStrategyService {
     );
   }
 
+  private getConfiguration(
+    configurationId: string,
+  ): DcaConfigurationModel | undefined {
+    const record = this.configurationService.getById(configurationId);
+
+    if (!record) {
+      return undefined;
+    }
+
+    return {
+      ...record,
+      strategyTypeId: 'dca',
+      balanceMode: this.balanceModes.get(record.balanceModeId),
+      exchange: this.exchanges.get(record.exchangeId),
+      executionMode: this.executionModes.get(record.executionModeId),
+      orders: record.orders,
+    };
+  }
+
   async start(configurationId: string): Promise<DcaStrategyStartResult> {
-    const configuration =
-      this.configurationService.getById(configurationId);
+    const configuration = this.getConfiguration(configurationId);
 
     if (!configuration) {
       throw new Error(`DCA configuration not found: ${configurationId}`);
@@ -130,8 +149,7 @@ export class DcaStrategyService {
   async process(
     configurationId: string,
   ): Promise<DcaStrategyProcessResult> {
-    const configuration =
-      this.configurationService.getById(configurationId);
+    const configuration = this.getConfiguration(configurationId);
 
     if (!configuration) {
       throw new Error(`DCA configuration not found: ${configurationId}`);
@@ -193,7 +211,7 @@ export class DcaStrategyService {
 
     const levels = calculateDcaTriggerLevels(
       cycle.initialEntryPrice,
-      configuration.orders,
+      [...configuration.orders],
     );
 
     const reachedDcaLevels = evaluateDcaLevels(

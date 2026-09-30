@@ -1,30 +1,31 @@
-import type { DcaStrategyService } from '../../strategy/dca/dcaStrategyService';
-import type { StrategyTypeId, StrategyTypeModel, StrategyTypeModelSelector } from './strategyTypeModel';
+import type {
+  StrategyTypeId,
+  StrategyTypeModel,
+  StrategyTypeModelSelector,
+} from './strategyTypeModel';
+import type { DcaStrategyModel } from './dca/dcaStrategyModel';
 
-export interface DcaStrategyModel extends StrategyTypeModel {
+export interface DcaStrategyTypeModel extends StrategyTypeModel {
   readonly id: 'dca';
-  readonly service: DcaStrategyService;
+  readonly strategy: DcaStrategyModel;
 }
 
-export class DcaStrategyTypeModel implements DcaStrategyModel {
+export class DcaStrategyTypeModelImpl implements DcaStrategyTypeModel {
   readonly id = 'dca' as const;
   readonly name = 'DCA';
   readonly enabled = true;
 
-  constructor(
-    private readonly strategyFactory: () => DcaStrategyService,
-  ) {}
-
-  get service(): DcaStrategyService {
-    return this.strategyFactory();
-  }
+  constructor(readonly strategy: DcaStrategyModel) {}
 }
 
 export class StrategyTypeModelRegistry implements StrategyTypeModelSelector {
   private readonly models = new Map<StrategyTypeId, StrategyTypeModel>();
 
-  constructor(strategyFactory: () => DcaStrategyService) {
-    const dca = new DcaStrategyTypeModel(strategyFactory);
+  constructor(dcaStrategy: DcaStrategyModel | (() => DcaStrategyModel)) {
+    const strategy =
+      typeof dcaStrategy === 'function' ? dcaStrategy() : dcaStrategy;
+
+    const dca = new DcaStrategyTypeModelImpl(strategy);
     this.models.set(dca.id, dca);
   }
 
