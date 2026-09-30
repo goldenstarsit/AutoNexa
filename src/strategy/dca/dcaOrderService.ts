@@ -2,7 +2,6 @@ import type { DatabaseModel } from '../../domain/database/databaseModel';
 import type { BalanceModeModelSelector } from '../../domain/balance/balanceModeModel';
 import type { ExchangeModelSelector } from '../../domain/exchange/exchangeModel';
 import type { ExecutionModeModelSelector } from '../../domain/execution/executionModeModel';
-import type { StrategyTypeModelSelector } from '../../domain/strategy/strategyTypeModel';
 import type { DcaConfigurationModel } from '../../domain/strategy/dca/dcaConfigurationModel';
 import type { ExchangeOrder, ExchangeOrderRequest } from '../../exchange/order/exchangeOrder';
 import type { ExchangeTrade } from '../../exchange/trade/exchangeTrade';
@@ -45,7 +44,6 @@ export class DcaOrderService {
 
   constructor(
     private readonly db: DatabaseModel,
-    strategyTypes: StrategyTypeModelSelector,
     balanceModes: BalanceModeModelSelector,
     exchanges: ExchangeModelSelector,
     executionModes: ExecutionModeModelSelector,
@@ -57,7 +55,6 @@ export class DcaOrderService {
 
     this.cycleService = new DcaCycleService(
       db,
-      strategyTypes,
       balanceModes,
       exchanges,
       executionModes,

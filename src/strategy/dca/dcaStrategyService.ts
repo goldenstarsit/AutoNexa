@@ -3,7 +3,6 @@ import type { BalanceModeModelSelector } from '../../domain/balance/balanceModeM
 import type { ExchangeModelSelector } from '../../domain/exchange/exchangeModel';
 import type { ExecutionModeModelSelector } from '../../domain/execution/executionModeModel';
 import type { DcaConfigurationModel } from '../../domain/strategy/dca/dcaConfigurationModel';
-import type { StrategyTypeModelSelector } from '../../domain/strategy/strategyTypeModel';
 import { DcaCycleService } from './dcaCycleService';
 import { DcaInitialOrderService } from './dcaInitialOrderService';
 import { DcaOrderRepository } from './dcaOrderRepository';
@@ -44,7 +43,6 @@ export class DcaStrategyService {
 
   constructor(
     private readonly db: DatabaseModel,
-    strategyTypes: StrategyTypeModelSelector,
     balanceModes: BalanceModeModelSelector,
     exchanges: ExchangeModelSelector,
     executionModes: ExecutionModeModelSelector,
@@ -54,7 +52,6 @@ export class DcaStrategyService {
   ) {
     this.cycleService = new DcaCycleService(
       db,
-      strategyTypes,
       balanceModes,
       exchanges,
       executionModes,
@@ -62,7 +59,6 @@ export class DcaStrategyService {
     );
     this.initialOrderService = new DcaInitialOrderService(
       db,
-      strategyTypes,
       balanceModes,
       exchanges,
       executionModes,
@@ -70,7 +66,6 @@ export class DcaStrategyService {
     );
     this.orderService = new DcaOrderService(
       db,
-      strategyTypes,
       balanceModes,
       exchanges,
       executionModes,
@@ -79,7 +74,6 @@ export class DcaStrategyService {
     this.orderRepository = new DcaOrderRepository(db);
     this.takeProfitService = new DcaTakeProfitService(
       db,
-      strategyTypes,
       balanceModes,
       exchanges,
       executionModes,
@@ -87,7 +81,6 @@ export class DcaStrategyService {
     );
     this.stopLossService = new DcaStopLossService(
       db,
-      strategyTypes,
       balanceModes,
       exchanges,
       executionModes,
