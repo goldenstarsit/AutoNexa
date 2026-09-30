@@ -1,7 +1,10 @@
 import type { DatabaseAdapter } from '../../database/databaseAdapter';
+import type { BalanceModeModelSelector } from '../../domain/balance/balanceModeModel';
+import type { ExchangeModelSelector } from '../../domain/exchange/exchangeModel';
+import type { ExecutionModeModelSelector } from '../../domain/execution/executionModeModel';
+import type { StrategyTypeModelSelector } from '../../domain/strategy/strategyTypeModel';
 import type { ExchangeOrder } from '../../exchange/order/exchangeOrder';
 import type { ExchangeTrade } from '../../exchange/trade/exchangeTrade';
-import { ExchangeService } from '../../exchange/exchangeService';
 import { DcaConfigurationService } from './dcaConfigurationService';
 import { DcaCycleService } from './dcaCycleService';
 import { DcaExitOrderRepository } from './dcaExitOrderRepository';
@@ -27,13 +30,31 @@ export interface DcaStopLossExecution extends DcaStopLossServiceResult {
 export class DcaStopLossService {
   private readonly configurationService: DcaConfigurationService;
   private readonly cycleService: DcaCycleService;
-  private readonly exchangeService: ExchangeService;
+  private readonly exchanges: ExchangeModelSelector;
   private readonly exitOrderRepository: DcaExitOrderRepository;
 
-  constructor(private readonly db: DatabaseAdapter) {
-    this.configurationService = new DcaConfigurationService(db);
-    this.cycleService = new DcaCycleService(db);
-    this.exchangeService = new ExchangeService(db);
+  constructor(
+    private readonly db: DatabaseAdapter,
+    strategyTypes: StrategyTypeModelSelector,
+    balanceModes: BalanceModeModelSelector,
+    exchanges: ExchangeModelSelector,
+    executionModes: ExecutionModeModelSelector,
+  ) {
+    this.configurationService = new DcaConfigurationService(
+      db,
+      strategyTypes,
+      balanceModes,
+      exchanges,
+      executionModes,
+    );
+    this.cycleService = new DcaCycleService(
+      db,
+      strategyTypes,
+      balanceModes,
+      exchanges,
+      executionModes,
+    );
+    this.exchanges = exchanges;
     this.exitOrderRepository = new DcaExitOrderRepository(db);
   }
 
@@ -122,8 +143,11 @@ export class DcaStopLossService {
       quantity: context.cycle.entryQuantity,
     };
 
-    const order = await this.exchangeService.placeOrder(
+    const exchange = this.exchanges.get(
       context.configuration.exchangeId,
+    );
+
+    const order = await exchange.adapter.placeOrder(
       request,
       context.configuration.balanceModeId as 'live' | 'test',
     );
@@ -148,8 +172,7 @@ export class DcaStopLossService {
       );
     }
 
-    const trades = await this.exchangeService.getOrderTrades(
-      context.configuration.exchangeId,
+    const trades = await exchange.adapter.getOrderTrades(
       context.configuration.symbol,
       order.orderId,
       context.configuration.balanceModeId as 'live' | 'test',
@@ -212,8 +235,8 @@ export class DcaStopLossService {
       );
     }
 
-    const currentPrice = await this.exchangeService.getCurrentPrice(
-      configuration.exchangeId,
+    const exchange = this.exchanges.get(configuration.exchangeId);
+    const currentPrice = await exchange.getCurrentPrice(
       configuration.symbol,
     );
 

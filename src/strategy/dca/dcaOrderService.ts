@@ -1,11 +1,14 @@
 import type { DatabaseAdapter } from '../../database/databaseAdapter';
+import type { BalanceModeModelSelector } from '../../domain/balance/balanceModeModel';
+import type { ExchangeModelSelector } from '../../domain/exchange/exchangeModel';
+import type { ExecutionModeModelSelector } from '../../domain/execution/executionModeModel';
+import type { StrategyTypeModelSelector } from '../../domain/strategy/strategyTypeModel';
 import type { ExchangeOrder, ExchangeOrderRequest } from '../../exchange/order/exchangeOrder';
 import type { ExchangeTrade } from '../../exchange/trade/exchangeTrade';
 import {
   calculateTradeFillTotals,
   combineTradeFillTotals,
 } from '../../exchange/trade/exchangeTradeFillCalculator';
-import { ExchangeService } from '../../exchange/exchangeService';
 import { DcaConfigurationService } from './dcaConfigurationService';
 import { DcaCycleService } from './dcaCycleService';
 import { DcaTradingRuleResolver } from './dcaTradingRuleResolver';
@@ -33,14 +36,32 @@ export class DcaOrderService {
   private readonly configurationService: DcaConfigurationService;
   private readonly cycleService: DcaCycleService;
   private readonly tradingRuleResolver: DcaTradingRuleResolver;
-  private readonly exchangeService: ExchangeService;
+  private readonly exchanges: ExchangeModelSelector;
   private readonly orderRepository: DcaOrderRepository;
 
-  constructor(private readonly db: DatabaseAdapter) {
-    this.configurationService = new DcaConfigurationService(db);
-    this.cycleService = new DcaCycleService(db);
-    this.tradingRuleResolver = new DcaTradingRuleResolver(db);
-    this.exchangeService = new ExchangeService(db);
+  constructor(
+    private readonly db: DatabaseAdapter,
+    strategyTypes: StrategyTypeModelSelector,
+    balanceModes: BalanceModeModelSelector,
+    exchanges: ExchangeModelSelector,
+    executionModes: ExecutionModeModelSelector,
+  ) {
+    this.configurationService = new DcaConfigurationService(
+      db,
+      strategyTypes,
+      balanceModes,
+      exchanges,
+      executionModes,
+    );
+    this.cycleService = new DcaCycleService(
+      db,
+      strategyTypes,
+      balanceModes,
+      exchanges,
+      executionModes,
+    );
+    this.tradingRuleResolver = new DcaTradingRuleResolver(exchanges);
+    this.exchanges = exchanges;
     this.orderRepository = new DcaOrderRepository(db);
   }
 
@@ -115,11 +136,10 @@ export class DcaOrderService {
       configuration.symbol,
     );
 
-    const currentPrice =
-      await this.exchangeService.getCurrentPrice(
-        configuration.exchangeId,
-        configuration.symbol,
-      );
+    const exchange = this.exchanges.get(configuration.exchangeId);
+    const currentPrice = await exchange.getCurrentPrice(
+      configuration.symbol,
+    );
 
     const request: ExchangeOrderRequest = {
       symbol: configuration.symbol,
@@ -163,8 +183,9 @@ export class DcaOrderService {
       );
     }
 
-    const order = await this.exchangeService.placeOrder(
-      preparation.exchangeId,
+    const exchange = this.exchanges.get(preparation.exchangeId);
+
+    const order = await exchange.adapter.placeOrder(
       preparation.request,
       preparation.balanceMode,
     );
@@ -180,8 +201,7 @@ export class DcaOrderService {
 
     const trades =
       order.executedQuantity !== '0'
-        ? await this.exchangeService.getOrderTrades(
-            preparation.exchangeId,
+        ? await exchange.adapter.getOrderTrades(
             preparation.symbol,
             order.orderId,
             preparation.balanceMode,

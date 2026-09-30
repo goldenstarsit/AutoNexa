@@ -1,5 +1,5 @@
 import type { ExchangeTradingRules } from '../../exchange/market/exchangeTradingRules';
-import { ExchangeService } from '../../exchange/exchangeService';
+import type { ExchangeModelSelector } from '../../domain/exchange/exchangeModel';
 
 export interface DcaTradingRuleResolution {
   rules: ExchangeTradingRules;
@@ -8,20 +8,16 @@ export interface DcaTradingRuleResolution {
 }
 
 export class DcaTradingRuleResolver {
-  private readonly exchangeService: ExchangeService;
-
-  constructor(db: ConstructorParameters<typeof ExchangeService>[0]) {
-    this.exchangeService = new ExchangeService(db);
-  }
+  constructor(
+    private readonly exchanges: ExchangeModelSelector,
+  ) {}
 
   async resolve(
     exchangeId: string,
     symbol: string,
   ): Promise<DcaTradingRuleResolution> {
-    const rules = await this.exchangeService.getTradingRules(
-      exchangeId,
-      symbol,
-    );
+    const exchange = this.exchanges.get(exchangeId);
+    const rules = await exchange.getTradingRules(symbol);
 
     if (!rules) {
       throw new Error(
@@ -43,10 +39,7 @@ export class DcaTradingRuleResolver {
       );
     }
 
-    const price = await this.exchangeService.getCurrentPrice(
-      exchangeId,
-      symbol,
-    );
+    const price = await exchange.getCurrentPrice(symbol);
 
     if (!price || price === '0') {
       throw new Error(

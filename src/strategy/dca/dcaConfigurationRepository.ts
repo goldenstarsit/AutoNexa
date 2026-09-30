@@ -127,6 +127,32 @@ export class DcaConfigurationRepository {
     return row ? this.toRecord(row) : undefined;
   }
 
+  updateRuntimeSettings(
+    id: string,
+    balanceModeId: string,
+    enabled: boolean,
+  ): void {
+    const now = new Date().toISOString();
+
+    const result = this.db.run(
+      `
+        UPDATE dca_configurations
+        SET balance_mode_id = ?,
+            enabled = ?,
+            updated_at = ?
+        WHERE id = ?
+      `,
+      balanceModeId,
+      enabled ? 1 : 0,
+      now,
+      id,
+    );
+
+    if (result.changes !== 1) {
+      throw new Error(`DCA configuration not found: ${id}`);
+    }
+  }
+
   getOrders(id: string): DcaConfigurationOrderRecord[] {
     return this.db
       .all<DcaConfigurationOrderRow>(

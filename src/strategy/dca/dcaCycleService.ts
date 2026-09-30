@@ -1,4 +1,8 @@
 import type { DatabaseAdapter } from '../../database/databaseAdapter';
+import type { BalanceModeModelSelector } from '../../domain/balance/balanceModeModel';
+import type { ExchangeModelSelector } from '../../domain/exchange/exchangeModel';
+import type { ExecutionModeModelSelector } from '../../domain/execution/executionModeModel';
+import type { StrategyTypeModelSelector } from '../../domain/strategy/strategyTypeModel';
 import { DcaConfigurationService } from './dcaConfigurationService';
 import {
   DcaCycleRepository,
@@ -15,8 +19,20 @@ export class DcaCycleService {
   private readonly configurationService: DcaConfigurationService;
   private readonly repository: DcaCycleRepository;
 
-  constructor(private readonly db: DatabaseAdapter) {
-    this.configurationService = new DcaConfigurationService(db);
+  constructor(
+    private readonly db: DatabaseAdapter,
+    strategyTypes: StrategyTypeModelSelector,
+    balanceModes: BalanceModeModelSelector,
+    exchanges: ExchangeModelSelector,
+    executionModes: ExecutionModeModelSelector,
+  ) {
+    this.configurationService = new DcaConfigurationService(
+      db,
+      strategyTypes,
+      balanceModes,
+      exchanges,
+      executionModes,
+    );
     this.repository = new DcaCycleRepository(db);
   }
 

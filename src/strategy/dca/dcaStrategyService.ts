@@ -1,4 +1,8 @@
 import type { DatabaseAdapter } from '../../database/databaseAdapter';
+import type { BalanceModeModelSelector } from '../../domain/balance/balanceModeModel';
+import type { ExchangeModelSelector } from '../../domain/exchange/exchangeModel';
+import type { ExecutionModeModelSelector } from '../../domain/execution/executionModeModel';
+import type { StrategyTypeModelSelector } from '../../domain/strategy/strategyTypeModel';
 import { DcaConfigurationService } from './dcaConfigurationService';
 import { DcaCycleService } from './dcaCycleService';
 import { DcaInitialOrderService } from './dcaInitialOrderService';
@@ -39,14 +43,56 @@ export class DcaStrategyService {
   private readonly takeProfitService: DcaTakeProfitService;
   private readonly stopLossService: DcaStopLossService;
 
-  constructor(private readonly db: DatabaseAdapter) {
-    this.configurationService = new DcaConfigurationService(db);
-    this.cycleService = new DcaCycleService(db);
-    this.initialOrderService = new DcaInitialOrderService(db);
-    this.orderService = new DcaOrderService(db);
+  constructor(
+    private readonly db: DatabaseAdapter,
+    strategyTypes: StrategyTypeModelSelector,
+    balanceModes: BalanceModeModelSelector,
+    exchanges: ExchangeModelSelector,
+    executionModes: ExecutionModeModelSelector,
+  ) {
+    this.configurationService = new DcaConfigurationService(
+      db,
+      strategyTypes,
+      balanceModes,
+      exchanges,
+      executionModes,
+    );
+    this.cycleService = new DcaCycleService(
+      db,
+      strategyTypes,
+      balanceModes,
+      exchanges,
+      executionModes,
+    );
+    this.initialOrderService = new DcaInitialOrderService(
+      db,
+      strategyTypes,
+      balanceModes,
+      exchanges,
+      executionModes,
+    );
+    this.orderService = new DcaOrderService(
+      db,
+      strategyTypes,
+      balanceModes,
+      exchanges,
+      executionModes,
+    );
     this.orderRepository = new DcaOrderRepository(db);
-    this.takeProfitService = new DcaTakeProfitService(db);
-    this.stopLossService = new DcaStopLossService(db);
+    this.takeProfitService = new DcaTakeProfitService(
+      db,
+      strategyTypes,
+      balanceModes,
+      exchanges,
+      executionModes,
+    );
+    this.stopLossService = new DcaStopLossService(
+      db,
+      strategyTypes,
+      balanceModes,
+      exchanges,
+      executionModes,
+    );
   }
 
   async start(configurationId: string): Promise<DcaStrategyStartResult> {
