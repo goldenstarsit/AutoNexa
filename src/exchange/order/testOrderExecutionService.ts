@@ -107,47 +107,11 @@ export class TestOrderExecutionService {
       this.repository.saveTrades([trade]);
 
       if (request.side === 'buy') {
-        const nextQuoteBalance = subtractDecimalAmounts(available, quoteQuantity);
-        const baseAccount = this.db.get<{ free: string; locked: string }>(
-          `
-            SELECT free, locked
-            FROM test_balances
-            WHERE exchange_id = ?
-              AND asset = ?
-          `,
-          this.exchangeId,
-          baseAsset,
-        );
-
-        const nextBaseBalance = addDecimalAmounts(baseAccount?.free ?? '0', quantity);
-
-        this.balanceService.depositTestBalance(baseAsset, nextBaseBalance, now);
         this.balanceService.withdrawTestBalance(quoteAsset, quoteQuantity, now);
-
-        if (compareDecimalAmounts(nextQuoteBalance, '0') === 0) {
-          this.balanceService.withdrawTestBalance(quoteAsset, available, now);
-        }
+        this.balanceService.depositTestBalance(baseAsset, quantity, now);
       } else {
-        const nextBaseBalance = subtractDecimalAmounts(available, quantity);
-        const quoteAccount = this.db.get<{ free: string; locked: string }>(
-          `
-            SELECT free, locked
-            FROM test_balances
-            WHERE exchange_id = ?
-              AND asset = ?
-          `,
-          this.exchangeId,
-          quoteAsset,
-        );
-
-        const nextQuoteBalance = addDecimalAmounts(quoteAccount?.free ?? '0', quoteQuantity);
-
         this.balanceService.withdrawTestBalance(baseAsset, quantity, now);
-        this.balanceService.depositTestBalance(quoteAsset, nextQuoteBalance, now);
-
-        if (compareDecimalAmounts(nextBaseBalance, '0') === 0) {
-          this.balanceService.withdrawTestBalance(baseAsset, available, now);
-        }
+        this.balanceService.depositTestBalance(quoteAsset, quoteQuantity, now);
       }
     });
 
@@ -165,31 +129,3 @@ export class TestOrderExecutionService {
   }
 }
 
-function subtractDecimalAmounts(left: string, right: string): string {
-  const leftParts = left.split('.');
-  const rightParts = right.split('.');
-  const scale = Math.max(leftParts[1]?.length ?? 0, rightParts[1]?.length ?? 0);
-  const factor = 10n ** BigInt(scale);
-
-  const toInteger = (value: string): bigint => {
-    const [whole, fraction = ''] = value.split('.');
-    return BigInt(whole) * factor + BigInt((fraction + '0'.repeat(scale)).slice(0, scale) || '0');
-  };
-
-  const result = toInteger(left) - toInteger(right);
-
-  if (result < 0n) {
-    throw new Error(`Decimal subtraction would become negative: ${left} - ${right}`);
-  }
-
-  const negative = result < 0n;
-  const absolute = negative ? -result : result;
-  const whole = absolute / factor;
-  const fraction = absolute % factor;
-
-  if (scale === 0) {
-    return `${negative ? '-' : ''}${whole}`;
-  }
-
-  return `${negative ? '-' : ''}${whole}.${fraction.toString().padStart(scale, '0').replace(/0+$/, '') || '0'}`;
-}
