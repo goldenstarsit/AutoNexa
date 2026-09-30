@@ -4,7 +4,6 @@ import type { ExchangeModelSelector } from '../../domain/exchange/exchangeModel'
 import type { ExecutionModeModelSelector } from '../../domain/execution/executionModeModel';
 import type { DcaConfigurationModel } from '../../domain/strategy/dca/dcaConfigurationModel';
 import type { StrategyTypeModelSelector } from '../../domain/strategy/strategyTypeModel';
-import { DcaConfigurationService } from './dcaConfigurationService';
 import { DcaCycleService } from './dcaCycleService';
 import { DcaInitialOrderService } from './dcaInitialOrderService';
 import { DcaOrderRepository } from './dcaOrderRepository';
@@ -36,7 +35,6 @@ export interface DcaStrategyProcessResult {
 }
 
 export class DcaStrategyService {
-  private readonly configurationService: DcaConfigurationService;
   private readonly cycleService: DcaCycleService;
   private readonly initialOrderService: DcaInitialOrderService;
   private readonly orderService: DcaOrderService;
@@ -54,13 +52,6 @@ export class DcaStrategyService {
       configurationId: string,
     ) => DcaConfigurationModel | undefined,
   ) {
-    this.configurationService = new DcaConfigurationService(
-      db,
-      strategyTypes,
-      balanceModes,
-      exchanges,
-      executionModes,
-    );
     this.cycleService = new DcaCycleService(
       db,
       strategyTypes,
