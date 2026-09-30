@@ -58,6 +58,7 @@ export class DcaStrategyService {
       balanceModes,
       exchanges,
       executionModes,
+      this.getConfigurationModel,
     );
     this.initialOrderService = new DcaInitialOrderService(
       db,
@@ -73,6 +74,7 @@ export class DcaStrategyService {
       balanceModes,
       exchanges,
       executionModes,
+      this.getConfigurationModel,
     );
     this.orderRepository = new DcaOrderRepository(db);
     this.takeProfitService = new DcaTakeProfitService(
@@ -81,6 +83,7 @@ export class DcaStrategyService {
       balanceModes,
       exchanges,
       executionModes,
+      this.getConfigurationModel,
     );
     this.stopLossService = new DcaStopLossService(
       db,
@@ -88,6 +91,7 @@ export class DcaStrategyService {
       balanceModes,
       exchanges,
       executionModes,
+      this.getConfigurationModel,
     );
   }
 

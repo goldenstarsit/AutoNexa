@@ -3,6 +3,7 @@ import type { BalanceModeModelSelector } from '../../domain/balance/balanceModeM
 import type { ExchangeModelSelector } from '../../domain/exchange/exchangeModel';
 import type { ExecutionModeModelSelector } from '../../domain/execution/executionModeModel';
 import type { StrategyTypeModelSelector } from '../../domain/strategy/strategyTypeModel';
+import type { DcaConfigurationModel } from '../../domain/strategy/dca/dcaConfigurationModel';
 import type { ExchangeOrder, ExchangeOrderRequest } from '../../exchange/order/exchangeOrder';
 import type { ExchangeTrade } from '../../exchange/trade/exchangeTrade';
 import {
@@ -34,6 +35,9 @@ export interface DcaOrderPreparation {
 
 export class DcaOrderService {
   private readonly configurationService: DcaConfigurationService;
+  private readonly getConfigurationModel: (
+    configurationId: string,
+  ) => DcaConfigurationModel | undefined;
   private readonly cycleService: DcaCycleService;
   private readonly tradingRuleResolver: DcaTradingRuleResolver;
   private readonly balanceModes: BalanceModeModelSelector;
@@ -47,7 +51,12 @@ export class DcaOrderService {
     balanceModes: BalanceModeModelSelector,
     exchanges: ExchangeModelSelector,
     executionModes: ExecutionModeModelSelector,
+    getConfigurationModel: (
+      configurationId: string,
+    ) => DcaConfigurationModel | undefined,
   ) {
+    this.getConfigurationModel = getConfigurationModel;
+
     this.configurationService = new DcaConfigurationService(
       db,
       strategyTypes,
@@ -61,6 +70,7 @@ export class DcaOrderService {
       balanceModes,
       exchanges,
       executionModes,
+      this.getConfigurationModel,
     );
     this.tradingRuleResolver = new DcaTradingRuleResolver(exchanges);
     this.balanceModes = balanceModes;

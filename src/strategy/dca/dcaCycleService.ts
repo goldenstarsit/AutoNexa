@@ -3,7 +3,7 @@ import type { BalanceModeModelSelector } from '../../domain/balance/balanceModeM
 import type { ExchangeModelSelector } from '../../domain/exchange/exchangeModel';
 import type { ExecutionModeModelSelector } from '../../domain/execution/executionModeModel';
 import type { StrategyTypeModelSelector } from '../../domain/strategy/strategyTypeModel';
-import { DcaConfigurationService } from './dcaConfigurationService';
+import type { DcaConfigurationModel } from '../../domain/strategy/dca/dcaConfigurationModel';
 import {
   DcaCycleRepository,
   type DcaCycleRecord,
@@ -16,7 +16,9 @@ export interface DcaInitialEntryTotals {
 }
 
 export class DcaCycleService {
-  private readonly configurationService: DcaConfigurationService;
+  private readonly getConfigurationModel: (
+    configurationId: string,
+  ) => DcaConfigurationModel | undefined;
   private readonly repository: DcaCycleRepository;
 
   constructor(
@@ -25,20 +27,17 @@ export class DcaCycleService {
     balanceModes: BalanceModeModelSelector,
     exchanges: ExchangeModelSelector,
     executionModes: ExecutionModeModelSelector,
+    getConfigurationModel: (
+      configurationId: string,
+    ) => DcaConfigurationModel | undefined,
   ) {
-    this.configurationService = new DcaConfigurationService(
-      db,
-      strategyTypes,
-      balanceModes,
-      exchanges,
-      executionModes,
-    );
+    this.getConfigurationModel = getConfigurationModel;
     this.repository = new DcaCycleRepository(db);
   }
 
   startCycle(configurationId: string): DcaCycleRecord {
     const configuration =
-      this.configurationService.getById(configurationId);
+      this.getConfigurationModel(configurationId);
 
     if (!configuration) {
       throw new Error(

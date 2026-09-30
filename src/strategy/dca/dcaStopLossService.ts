@@ -3,6 +3,7 @@ import type { BalanceModeModelSelector } from '../../domain/balance/balanceModeM
 import type { ExchangeModelSelector } from '../../domain/exchange/exchangeModel';
 import type { ExecutionModeModelSelector } from '../../domain/execution/executionModeModel';
 import type { StrategyTypeModelSelector } from '../../domain/strategy/strategyTypeModel';
+import type { DcaConfigurationModel } from '../../domain/strategy/dca/dcaConfigurationModel';
 import type { ExchangeOrder } from '../../exchange/order/exchangeOrder';
 import type { ExchangeTrade } from '../../exchange/trade/exchangeTrade';
 import { DcaConfigurationService } from './dcaConfigurationService';
@@ -29,6 +30,9 @@ export interface DcaStopLossExecution extends DcaStopLossServiceResult {
 
 export class DcaStopLossService {
   private readonly configurationService: DcaConfigurationService;
+  private readonly getConfigurationModel: (
+    configurationId: string,
+  ) => DcaConfigurationModel | undefined;
   private readonly cycleService: DcaCycleService;
   private readonly balanceModes: BalanceModeModelSelector;
   private readonly exchanges: ExchangeModelSelector;
@@ -41,7 +45,12 @@ export class DcaStopLossService {
     balanceModes: BalanceModeModelSelector,
     exchanges: ExchangeModelSelector,
     executionModes: ExecutionModeModelSelector,
+    getConfigurationModel: (
+      configurationId: string,
+    ) => DcaConfigurationModel | undefined,
   ) {
+    this.getConfigurationModel = getConfigurationModel;
+
     this.configurationService = new DcaConfigurationService(
       db,
       strategyTypes,
@@ -55,6 +64,7 @@ export class DcaStopLossService {
       balanceModes,
       exchanges,
       executionModes,
+      this.getConfigurationModel,
     );
     this.balanceModes = balanceModes;
     this.exchanges = exchanges;

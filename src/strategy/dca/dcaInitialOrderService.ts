@@ -62,6 +62,7 @@ export class DcaInitialOrderService {
       balanceModes,
       exchanges,
       executionModes,
+      this.getConfigurationModel,
     );
   }
 
