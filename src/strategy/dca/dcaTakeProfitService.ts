@@ -150,7 +150,7 @@ export class DcaTakeProfitService {
       context.configuration.exchangeId,
     );
 
-    const order = await exchange.adapter.placeOrder(
+    const order = await exchange.placeOrder(
       request,
       this.balanceModes.get(context.configuration.balanceModeId).id,
     );
@@ -175,7 +175,7 @@ export class DcaTakeProfitService {
       );
     }
 
-    const trades = await exchange.adapter.getOrderTrades(
+    const trades = await exchange.getOrderTrades(
       context.configuration.symbol,
       order.orderId,
       this.balanceModes.get(context.configuration.balanceModeId).id,

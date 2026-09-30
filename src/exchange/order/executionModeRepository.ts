@@ -1,6 +1,6 @@
 import type { DatabaseModel } from '../../domain/database/databaseModel';
 import type { ExchangeOrderExecutionMode } from './exchangeOrder';
-import type { ExecutionModeProvider } from './executionModeProvider';
+import type { ExecutionModeProvider } from '../../domain/execution/executionModeProvider';
 
 export interface ExecutionModeRecord {
   id: ExchangeOrderExecutionMode;

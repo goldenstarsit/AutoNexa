@@ -1,7 +1,10 @@
-import type { ExchangeOrderExecutionMode } from '../../exchange/order/exchangeOrder';
+export type ExecutionModeId =
+  | 'makerOnly'
+  | 'takerOnly'
+  | 'hybrid';
 
 export interface ExecutionModeModel {
-  readonly id: ExchangeOrderExecutionMode;
+  readonly id: ExecutionModeId;
   readonly name: string;
   readonly enabled: boolean;
   execute<T>(operation: {

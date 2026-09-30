@@ -1,7 +1,7 @@
-import type { DatabaseAdapter } from '../../database/databaseAdapter';
+import type { DatabaseModel } from '../database/databaseModel';
 import { MexcExchangeAdapter } from '../../exchange/adapters/mexcExchangeAdapter';
-import type { ExchangeId } from '../../exchange/exchange';
-import type { ExecutionModeProvider } from '../../exchange/order/executionModeProvider';
+import type { ExchangeId } from './exchangeModel';
+import type { ExecutionModeProvider } from '../execution/executionModeProvider';
 import type { ExchangeModel, ExchangeModelSelector } from './exchangeModel';
 
 export class MexcExchangeModel implements ExchangeModel {
@@ -9,13 +9,28 @@ export class MexcExchangeModel implements ExchangeModel {
   readonly name = 'MEXC';
   readonly enabled = true;
 
-  readonly adapter: MexcExchangeAdapter;
+  private readonly adapter: MexcExchangeAdapter;
 
   constructor(
-    db: DatabaseAdapter,
+    db: DatabaseModel,
     executionModeProvider?: ExecutionModeProvider,
   ) {
     this.adapter = new MexcExchangeAdapter(db, executionModeProvider);
+  }
+
+  placeOrder(
+    request: Parameters<MexcExchangeAdapter['placeOrder']>[0],
+    mode?: Parameters<MexcExchangeAdapter['placeOrder']>[1],
+  ) {
+    return this.adapter.placeOrder(request, mode);
+  }
+
+  getOrderTrades(
+    symbol: Parameters<MexcExchangeAdapter['getOrderTrades']>[0],
+    orderId: Parameters<MexcExchangeAdapter['getOrderTrades']>[1],
+    mode?: Parameters<MexcExchangeAdapter['getOrderTrades']>[2],
+  ) {
+    return this.adapter.getOrderTrades(symbol, orderId, mode);
   }
 
   getTradingRules(symbol: string) {
@@ -43,7 +58,7 @@ export class ExchangeModelRegistry implements ExchangeModelSelector {
   private readonly models = new Map<ExchangeId, ExchangeModel>();
 
   constructor(
-    db: DatabaseAdapter,
+    db: DatabaseModel,
     executionModeProvider?: ExecutionModeProvider,
   ) {
     const mexc = new MexcExchangeModel(db, executionModeProvider);

@@ -18,7 +18,7 @@ import { MexcMarketApi } from './mexc/mexcMarketApi';
 import { MexcTickerApi } from './mexc/mexcTickerApi';
 import { mapDefinedMexcSymbolInfo, mapMexcSymbolInfo } from './mexc/mexcMarketMapper';
 import { OrderExecutionService } from '../order/orderExecutionService';
-import type { ExecutionModeProvider } from '../order/executionModeProvider';
+import type { ExecutionModeProvider } from '../../domain/execution/executionModeProvider';
 import { MexcLiveBalanceSource } from '../account/sources/mexcLiveBalanceSource';
 import { MexcPrivateApiClient } from './mexc/mexcPrivateApiClient';
 import { TestOrderExecutionService } from '../order/testOrderExecutionService';

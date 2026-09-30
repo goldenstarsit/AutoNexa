@@ -181,7 +181,7 @@ export class DcaOrderService {
 
     const exchange = this.exchanges.get(preparation.exchangeId);
 
-    const order = await exchange.adapter.placeOrder(
+    const order = await exchange.placeOrder(
       preparation.request,
       preparation.balanceMode,
     );
@@ -197,7 +197,7 @@ export class DcaOrderService {
 
     const trades =
       order.executedQuantity !== '0'
-        ? await exchange.adapter.getOrderTrades(
+        ? await exchange.getOrderTrades(
             preparation.symbol,
             order.orderId,
             preparation.balanceMode,

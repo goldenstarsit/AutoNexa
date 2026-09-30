@@ -1,6 +1,6 @@
 import type { ExchangeAdapter } from './exchange';
 import type { DatabaseModel } from '../domain/database/databaseModel';
-import type { ExecutionModeProvider } from './order/executionModeProvider';
+import type { ExecutionModeProvider } from '../domain/execution/executionModeProvider';
 import { MexcExchangeAdapter } from './adapters/mexcExchangeAdapter';
 
 export function createExchangeAdapter(

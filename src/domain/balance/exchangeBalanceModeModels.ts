@@ -1,12 +1,12 @@
 import type { ExchangeBalanceMode } from '../../exchange/account/balanceMode';
 import type { BalanceSource } from '../../exchange/account/balanceSource';
 import type { TestBalanceOperations } from '../../exchange/account/testBalanceOperations';
-import type { ExchangeAdapter } from '../../exchange/exchange';
+import type { ExchangeModel } from '../exchange/exchangeModel';
 import type { BalanceModeModel, BalanceModeModelSelector } from './balanceModeModel';
 
 class ExchangeBalanceSource implements BalanceSource {
   constructor(
-    private readonly exchange: ExchangeAdapter,
+    private readonly exchange: ExchangeModel,
     private readonly mode: ExchangeBalanceMode,
   ) {}
 
@@ -39,7 +39,7 @@ export class ExchangeBalanceModeModelRegistry
 {
   private readonly models = new Map<ExchangeBalanceMode, BalanceModeModel>();
 
-  constructor(exchange: ExchangeAdapter) {
+  constructor(exchange: ExchangeModel) {
     const liveSource = new ExchangeBalanceSource(exchange, 'live');
     const testSource = new ExchangeBalanceSource(exchange, 'test');
 

@@ -125,7 +125,7 @@ export class DcaInitialOrderService {
 
     const exchange = this.exchanges.get(preparation.exchangeId);
 
-    return exchange.adapter.placeOrder(
+    return exchange.placeOrder(
       preparation.request,
       preparation.balanceMode,
     );
@@ -140,7 +140,7 @@ export class DcaInitialOrderService {
       const preparation = await this.prepare(configurationId);
       const exchange = this.exchanges.get(preparation.exchangeId);
 
-      const order = await exchange.adapter.placeOrder(
+      const order = await exchange.placeOrder(
         preparation.request,
         preparation.balanceMode,
       );
@@ -157,7 +157,7 @@ export class DcaInitialOrderService {
         );
       }
 
-      const trades = await exchange.adapter.getOrderTrades(
+      const trades = await exchange.getOrderTrades(
         order.symbol,
         order.orderId,
         preparation.balanceMode,

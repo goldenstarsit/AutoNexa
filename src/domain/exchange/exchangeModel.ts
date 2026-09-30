@@ -1,25 +1,43 @@
-import type { ExchangeAdapter, ExchangeId } from '../../exchange/exchange';
-import type { ExchangeTradingRules } from '../../exchange/market/exchangeTradingRules';
+import type { ExchangeAccount } from '../../exchange/account/exchangeAccount';
+import type { ExchangeBalanceMode } from '../../exchange/account/balanceMode';
 import type { TestBalanceOperations } from '../../exchange/account/testBalanceOperations';
+import type {
+  ExchangeOrder,
+  ExchangeOrderRequest,
+} from '../../exchange/order/exchangeOrder';
+import type { ExchangeTrade } from '../../exchange/trade/exchangeTrade';
+import type { ExchangeTradingRules } from '../../exchange/market/exchangeTradingRules';
+
+export type ExchangeId = string;
 
 export interface ExchangeModel {
   readonly id: ExchangeId;
   readonly name: string;
   readonly enabled: boolean;
-  readonly adapter: ExchangeAdapter;
-  getTradingRules(symbol: string): Promise<ExchangeTradingRules | undefined>;
+
+  getTradingRules(
+    symbol: string,
+  ): Promise<ExchangeTradingRules | undefined>;
+
   getCurrentPrice(symbol: string): Promise<string>;
+
   getAccount(
-    mode?: 'live' | 'test',
-  ): ReturnType<ExchangeAdapter['getAccount']>;
-  depositTestBalance(
-    asset: string,
-    amount: string,
-  ): ReturnType<TestBalanceOperations['depositTestBalance']>;
-  withdrawTestBalance(
-    asset: string,
-    amount: string,
-  ): ReturnType<TestBalanceOperations['withdrawTestBalance']>;
+    mode?: ExchangeBalanceMode,
+  ): Promise<ExchangeAccount>;
+
+  placeOrder(
+    request: ExchangeOrderRequest,
+    mode?: ExchangeBalanceMode,
+  ): Promise<ExchangeOrder>;
+
+  getOrderTrades(
+    symbol: string,
+    orderId: string,
+    mode?: ExchangeBalanceMode,
+  ): Promise<ExchangeTrade[]>;
+
+  depositTestBalance: TestBalanceOperations['depositTestBalance'];
+  withdrawTestBalance: TestBalanceOperations['withdrawTestBalance'];
 }
 
 export interface ExchangeModelSelector {

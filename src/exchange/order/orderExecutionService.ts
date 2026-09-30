@@ -9,7 +9,7 @@ import type {
   OrderExecutionResult,
 } from './orderExecutionResult';
 import type { OrderExecutionCapabilities } from './orderExecutionCapabilities';
-import type { ExecutionModeProvider } from './executionModeProvider';
+import type { ExecutionModeProvider } from '../../domain/execution/executionModeProvider';
 
 export interface OrderExecutionAdapter {
   readonly executionCapabilities: OrderExecutionCapabilities;
