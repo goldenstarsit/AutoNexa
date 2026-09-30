@@ -34,6 +34,19 @@ export function subtractDecimalAmounts(
   );
 }
 
+export function multiplyDecimalAmounts(
+  left: string,
+  right: string,
+): string {
+  const a = normalizeDecimal(left);
+  const b = normalizeDecimal(right);
+
+  return formatDecimal(
+    multiplyIntegerStrings(a.digits, b.digits),
+    a.scale + b.scale,
+  );
+}
+
 export function compareDecimalAmounts(
   left: string,
   right: string,
@@ -132,6 +145,28 @@ function subtractIntegerStrings(
   }
 
   return result.replace(/^0+(?=\d)/, '');
+}
+
+function multiplyIntegerStrings(left: string, right: string): string {
+  if (left === '0' || right === '0') {
+    return '0';
+  }
+
+  const result = Array(left.length + right.length).fill(0) as number[];
+
+  for (let i = left.length - 1; i >= 0; i -= 1) {
+    for (let j = right.length - 1; j >= 0; j -= 1) {
+      const index = i + j + 1;
+      const product =
+        (left.charCodeAt(i) - 48) * (right.charCodeAt(j) - 48) +
+        result[index];
+
+      result[index] = product % 10;
+      result[index - 1] += Math.floor(product / 10);
+    }
+  }
+
+  return result.join('').replace(/^0+(?=\d)/, '');
 }
 
 function compareIntegerStrings(

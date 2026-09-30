@@ -119,7 +119,12 @@ export class DcaInitialOrderService {
     const cycle = this.cycleService.startCycle(configurationId);
 
     try {
-      const order = await this.execute(configurationId);
+      const preparation = await this.prepare(configurationId);
+      const order = await this.exchangeService.placeOrder(
+        preparation.exchangeId,
+        preparation.request,
+        preparation.balanceMode,
+      );
 
       if (order.status !== 'filled') {
         throw new Error(
