@@ -76,18 +76,30 @@ export class ExchangeService {
   async placeOrder(
     exchangeId: string,
     request: import('./order/exchangeOrder').ExchangeOrderRequest,
+    mode: ExchangeBalanceMode = 'live',
   ) {
     const adapter = this.getAdapter(exchangeId);
-    return adapter.placeOrder(request);
+
+    if (!this.balanceModeRepository.isEnabled(mode)) {
+      throw new Error(`Balance mode is disabled: ${mode}`);
+    }
+
+    return adapter.placeOrder(request, mode);
   }
 
   async getOrderTrades(
     exchangeId: string,
     symbol: string,
     orderId: string,
+    mode: ExchangeBalanceMode = 'live',
   ): Promise<ExchangeTrade[]> {
     const adapter = this.getAdapter(exchangeId);
-    return adapter.getOrderTrades(symbol, orderId);
+
+    if (!this.balanceModeRepository.isEnabled(mode)) {
+      throw new Error(`Balance mode is disabled: ${mode}`);
+    }
+
+    return adapter.getOrderTrades(symbol, orderId, mode);
   }
 
   async getTradingRules(exchangeId: string, symbol: string) {

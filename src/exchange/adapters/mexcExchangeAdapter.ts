@@ -21,6 +21,7 @@ import { OrderExecutionService } from '../order/orderExecutionService';
 import type { ExecutionModeProvider } from '../order/executionModeProvider';
 import { MexcLiveBalanceSource } from '../account/sources/mexcLiveBalanceSource';
 import { MexcPrivateApiClient } from './mexc/mexcPrivateApiClient';
+import { TestOrderExecutionService } from '../order/testOrderExecutionService';
 
 export class MexcExchangeAdapter implements ExchangeAdapter {
   readonly id = 'mexc';
@@ -41,6 +42,20 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
     this.orderExecutionService = new OrderExecutionService(
       this.orderApi,
       executionModeProvider,
+    );
+    this.testOrderExecutionService = new TestOrderExecutionService(
+      db,
+      this.id,
+      {
+        getCurrentPrice: (symbol) => this.getCurrentPrice(symbol),
+        getSymbolInfo: async (symbol) => {
+          const info = await this.getSymbolInfo(symbol);
+          if (!info) {
+            throw new Error(`MEXC symbol not found: ${symbol}`);
+          }
+          return info;
+        },
+      },
     );
   }
   readonly name = 'MEXC';
@@ -67,6 +82,7 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
   );
 
   private readonly orderExecutionService: OrderExecutionService;
+  private readonly testOrderExecutionService: TestOrderExecutionService;
 
   private health: ExchangeHealth = {
     state: 'disconnected',
@@ -124,7 +140,14 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
     this.testBalanceSource.withdrawTestBalance(asset, amount, updatedAt);
   }
 
-  async placeOrder(request: ExchangeOrderRequest): Promise<ExchangeOrder> {
+  async placeOrder(
+    request: ExchangeOrderRequest,
+    mode: ExchangeBalanceMode = 'live',
+  ): Promise<ExchangeOrder> {
+    if (mode === 'test') {
+      return this.testOrderExecutionService.execute(request);
+    }
+
     return this.orderExecutionService.execute(request);
   }
 
@@ -135,7 +158,12 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
   async getOrderTrades(
     symbol: string,
     orderId: string,
+    mode: ExchangeBalanceMode = 'live',
   ): Promise<ExchangeTrade[]> {
+    if (mode === 'test') {
+      return this.testOrderExecutionService.getTrades(symbol, orderId);
+    }
+
     return this.orderApi.getOrderTrades(symbol, orderId);
   }
 

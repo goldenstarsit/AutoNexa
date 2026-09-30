@@ -23,9 +23,9 @@ export interface ExchangeAdapter extends TestBalanceOperations {
   connect(): Promise<void>;
   disconnect(): Promise<void>;
   getAccount(mode?: ExchangeBalanceMode): Promise<ExchangeAccount>;
-  placeOrder(request: ExchangeOrderRequest): Promise<ExchangeOrder>;
+  placeOrder(request: ExchangeOrderRequest, mode?: ExchangeBalanceMode): Promise<ExchangeOrder>;
   getOrder(symbol: string, orderId: string): Promise<ExchangeOrder>;
-  getOrderTrades(symbol: string, orderId: string): Promise<ExchangeTrade[]>;
+  getOrderTrades(symbol: string, orderId: string, mode?: ExchangeBalanceMode): Promise<ExchangeTrade[]>;
   cancelOrder(symbol: string, orderId: string): Promise<ExchangeOrder>;
   getOpenOrders(symbol?: string): Promise<ExchangeOrder[]>;
   getOrderHistory(

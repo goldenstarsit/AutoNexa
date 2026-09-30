@@ -1,13 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../database/databaseAdapter';
 import type { ExchangeSymbolInfo } from '../market/exchangeMarket';
+import type { ExchangeTrade } from '../trade/exchangeTrade';
 import type {
   ExchangeOrder,
   ExchangeOrderRequest,
   ExchangeOrderStatus,
 } from './exchangeOrder';
 import { TestBalanceService } from '../account/testBalanceService';
-import { addDecimalAmounts, compareDecimalAmounts, multiplyDecimalAmounts } from '../account/decimalAmount';
+import { compareDecimalAmounts, multiplyDecimalAmounts } from '../account/decimalAmount';
 import { TestOrderRepository, type TestOrderRecord, type TestOrderTradeRecord } from './testOrderRepository';
 
 export interface TestOrderExecutionMarket {
@@ -126,6 +127,30 @@ export class TestOrderExecutionService {
       executedQuantity: quantity,
       price: currentPrice,
     };
+  }
+
+  async getTrades(symbol: string, orderId: string): Promise<ExchangeTrade[]> {
+    const trades = this.repository.getTrades(orderId);
+
+    if (trades.length > 0) {
+      return trades.map((trade) => ({
+        tradeId: trade.exchangeTradeId,
+        orderId: trade.exchangeOrderId,
+        symbol: trade.symbol,
+        side: trade.side,
+        price: trade.price,
+        quantity: trade.quantity,
+        quoteQuantity: trade.quoteQuantity,
+        timestamp: trade.tradeTimestamp,
+      }));
+    }
+
+    const order = this.repository.getOrder(orderId);
+    if (!order || order.symbol.toUpperCase() !== symbol.toUpperCase()) {
+      throw new Error(`Test order not found: ${symbol}:${orderId}`);
+    }
+
+    return [];
   }
 }
 
