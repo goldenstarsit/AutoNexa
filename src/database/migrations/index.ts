@@ -10,6 +10,7 @@ import { dcaConfigurationsMigration } from './008_dca_configurations';
 import { dcaCyclesMigration } from './009_dca_cycles';
 import { dcaRuntimeOrdersMigration } from './010_dca_runtime_orders';
 import { dcaCycleEntryTotalsMigration } from './011_dca_cycle_entry_totals';
+import { testOrdersMigration } from './012_test_orders';
 
 export const migrations: Migration[] = [
   initialMigration,
