@@ -19,6 +19,7 @@ export interface DcaOrderPreparation {
   cycleId: string;
   symbol: string;
   exchangeId: string;
+  balanceMode: 'live' | 'test';
   level: number;
   dcaOrderId: string;
   dropPercent: string;
@@ -133,6 +134,7 @@ export class DcaOrderService {
       cycleId: cycle.id,
       symbol: configuration.symbol,
       exchangeId: configuration.exchangeId,
+      balanceMode: configuration.balanceModeId as 'live' | 'test',
       level: order.level,
       dcaOrderId: order.dcaOrderId,
       dropPercent: order.dropPercent,
@@ -164,6 +166,7 @@ export class DcaOrderService {
     const order = await this.exchangeService.placeOrder(
       preparation.exchangeId,
       preparation.request,
+      preparation.balanceMode,
     );
 
     const runtimeOrder = this.orderRepository.saveOrder(

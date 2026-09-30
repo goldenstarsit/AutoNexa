@@ -14,6 +14,7 @@ export interface DcaInitialOrderPreparation {
   configurationId: string;
   symbol: string;
   exchangeId: string;
+  balanceMode: 'live' | 'test';
   executionMode: ExchangeOrderRequest['executionMode'];
   quantity: string;
   currentPrice: string;
@@ -92,6 +93,7 @@ export class DcaInitialOrderService {
       configurationId: configuration.id,
       symbol: configuration.symbol,
       exchangeId: configuration.exchangeId,
+      balanceMode: configuration.balanceModeId as 'live' | 'test',
       executionMode,
       quantity: rules.minimumQuantity,
       currentPrice,
@@ -107,6 +109,7 @@ export class DcaInitialOrderService {
     return this.exchangeService.placeOrder(
       preparation.exchangeId,
       preparation.request,
+      preparation.balanceMode,
     );
   }
 
