@@ -47,9 +47,12 @@ export class DcaStrategyService {
   constructor(
     private readonly db: DatabaseModel,
     strategyTypes: StrategyTypeModelSelector,
-    private readonly balanceModes: BalanceModeModelSelector,
-    private readonly exchanges: ExchangeModelSelector,
-    private readonly executionModes: ExecutionModeModelSelector,
+    balanceModes: BalanceModeModelSelector,
+    exchanges: ExchangeModelSelector,
+    executionModes: ExecutionModeModelSelector,
+    private readonly getConfigurationModel: (
+      configurationId: string,
+    ) => DcaConfigurationModel | undefined,
   ) {
     this.configurationService = new DcaConfigurationService(
       db,
@@ -96,27 +99,8 @@ export class DcaStrategyService {
     );
   }
 
-  private getConfiguration(
-    configurationId: string,
-  ): DcaConfigurationModel | undefined {
-    const record = this.configurationService.getById(configurationId);
-
-    if (!record) {
-      return undefined;
-    }
-
-    return {
-      ...record,
-      strategyTypeId: 'dca',
-      balanceMode: this.balanceModes.get(record.balanceModeId),
-      exchange: this.exchanges.get(record.exchangeId),
-      executionMode: this.executionModes.get(record.executionModeId),
-      orders: record.orders,
-    };
-  }
-
   async start(configurationId: string): Promise<DcaStrategyStartResult> {
-    const configuration = this.getConfiguration(configurationId);
+    const configuration = this.getConfigurationModel(configurationId);
 
     if (!configuration) {
       throw new Error(`DCA configuration not found: ${configurationId}`);
@@ -149,7 +133,7 @@ export class DcaStrategyService {
   async process(
     configurationId: string,
   ): Promise<DcaStrategyProcessResult> {
-    const configuration = this.getConfiguration(configurationId);
+    const configuration = this.getConfigurationModel(configurationId);
 
     if (!configuration) {
       throw new Error(`DCA configuration not found: ${configurationId}`);

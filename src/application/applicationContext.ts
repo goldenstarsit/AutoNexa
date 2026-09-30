@@ -63,6 +63,8 @@ export class ApplicationContext {
       this.balanceModes,
       this.exchangeModels,
       this.executionModes,
+      (configurationId) =>
+        this.dcaStrategyModel.getConfiguration(configurationId),
     );
   }
 
