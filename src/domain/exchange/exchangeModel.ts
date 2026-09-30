@@ -1,6 +1,5 @@
 import type { ExchangeAccount } from '../../exchange/account/exchangeAccount';
-import type { ExchangeBalanceMode } from '../../exchange/account/balanceMode';
-import type { TestBalanceOperations } from '../../exchange/account/testBalanceOperations';
+import type { BalanceModeId, TestBalanceOperationsModel } from '../balance/balanceModeModel';
 import type {
   ExchangeOrder,
   ExchangeOrderRequest,
@@ -22,22 +21,22 @@ export interface ExchangeModel {
   getCurrentPrice(symbol: string): Promise<string>;
 
   getAccount(
-    mode?: ExchangeBalanceMode,
+    mode?: BalanceModeId,
   ): Promise<ExchangeAccount>;
 
   placeOrder(
     request: ExchangeOrderRequest,
-    mode?: ExchangeBalanceMode,
+    mode?: BalanceModeId,
   ): Promise<ExchangeOrder>;
 
   getOrderTrades(
     symbol: string,
     orderId: string,
-    mode?: ExchangeBalanceMode,
+    mode?: BalanceModeId,
   ): Promise<ExchangeTrade[]>;
 
-  depositTestBalance: TestBalanceOperations['depositTestBalance'];
-  withdrawTestBalance: TestBalanceOperations['withdrawTestBalance'];
+  depositTestBalance: TestBalanceOperationsModel['depositTestBalance'];
+  withdrawTestBalance: TestBalanceOperationsModel['withdrawTestBalance'];
 }
 
 export interface ExchangeModelSelector {

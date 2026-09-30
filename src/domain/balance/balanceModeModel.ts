@@ -1,13 +1,31 @@
-import type { ExchangeBalanceMode } from '../../exchange/account/balanceMode';
-import type { BalanceSource } from '../../exchange/account/balanceSource';
-import type { TestBalanceOperations } from '../../exchange/account/testBalanceOperations';
+import type { ExchangeAccount } from '../../exchange/account/exchangeAccount';
+
+export type BalanceModeId = 'live' | 'test';
+
+export interface BalanceSourceModel {
+  getAccount(): Promise<ExchangeAccount>;
+}
+
+export interface TestBalanceOperationsModel {
+  depositTestBalance(
+    asset: string,
+    amount: string,
+    updatedAt?: string,
+  ): void;
+
+  withdrawTestBalance(
+    asset: string,
+    amount: string,
+    updatedAt?: string,
+  ): void;
+}
 
 export interface BalanceModeModel {
-  readonly id: ExchangeBalanceMode;
+  readonly id: BalanceModeId;
   readonly name: string;
   readonly enabled: boolean;
-  readonly source: BalanceSource;
-  readonly testOperations?: TestBalanceOperations;
+  readonly source: BalanceSourceModel;
+  readonly testOperations?: TestBalanceOperationsModel;
 }
 
 export interface BalanceModeModelSelector {
