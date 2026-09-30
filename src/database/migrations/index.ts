@@ -24,4 +24,5 @@ export const migrations: Migration[] = [
   dcaCyclesMigration,
   dcaRuntimeOrdersMigration,
   dcaCycleEntryTotalsMigration,
+  testOrdersMigration,
 ];
