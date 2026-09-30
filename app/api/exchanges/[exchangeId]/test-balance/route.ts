@@ -20,7 +20,7 @@ export async function GET(
   const { exchangeId } = await context.params;
 
   return withApplicationContext(async (app) => {
-    const account = await app.exchanges.getAccount(exchangeId, 'test');
+    const account = await app.exchangeModels.get(exchangeId).getAccount('test');
 
     return NextResponse.json({
       exchangeId,
@@ -67,12 +67,12 @@ export async function POST(
       const asset = body.asset.trim().toUpperCase();
 
       if (body.action === 'deposit') {
-        app.exchanges.depositTestBalance(exchangeId, asset, body.amount);
+        app.exchangeModels.get(exchangeId).depositTestBalance(asset, body.amount);
       } else {
-        app.exchanges.withdrawTestBalance(exchangeId, asset, body.amount);
+        app.exchangeModels.get(exchangeId).withdrawTestBalance(asset, body.amount);
       }
 
-      const account = await app.exchanges.getAccount(exchangeId, 'test');
+      const account = await app.exchangeModels.get(exchangeId).getAccount('test');
 
       return NextResponse.json({
         exchangeId,

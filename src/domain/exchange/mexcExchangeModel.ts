@@ -25,6 +25,18 @@ export class MexcExchangeModel implements ExchangeModel {
   getCurrentPrice(symbol: string) {
     return this.adapter.getCurrentPrice(symbol);
   }
+
+  getAccount(mode?: 'live' | 'test') {
+    return this.adapter.getAccount(mode);
+  }
+
+  depositTestBalance(asset: string, amount: string) {
+    return this.adapter.depositTestBalance(asset, amount);
+  }
+
+  withdrawTestBalance(asset: string, amount: string) {
+    return this.adapter.withdrawTestBalance(asset, amount);
+  }
 }
 
 export class ExchangeModelRegistry implements ExchangeModelSelector {

@@ -46,3 +46,5 @@ data/
 .env
 
 !.env.example
+
+autonexa-runtime-test.log

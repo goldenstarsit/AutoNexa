@@ -33,6 +33,7 @@ export interface DcaTakeProfitExecution extends DcaTakeProfitServiceResult {
 export class DcaTakeProfitService {
   private readonly configurationService: DcaConfigurationService;
   private readonly cycleService: DcaCycleService;
+  private readonly balanceModes: BalanceModeModelSelector;
   private readonly exchanges: ExchangeModelSelector;
   private readonly executionModes: ExecutionModeModelSelector;
   private readonly exitOrderRepository: DcaExitOrderRepository;
@@ -58,6 +59,7 @@ export class DcaTakeProfitService {
       exchanges,
       executionModes,
     );
+    this.balanceModes = balanceModes;
     this.exchanges = exchanges;
     this.executionModes = executionModes;
     this.exitOrderRepository = new DcaExitOrderRepository(db);
@@ -150,7 +152,7 @@ export class DcaTakeProfitService {
 
     const order = await exchange.adapter.placeOrder(
       request,
-      context.configuration.balanceModeId as 'live' | 'test',
+      this.balanceModes.get(context.configuration.balanceModeId).id,
     );
 
     const runtimeOrder = this.exitOrderRepository.saveOrder(
@@ -176,7 +178,7 @@ export class DcaTakeProfitService {
     const trades = await exchange.adapter.getOrderTrades(
       context.configuration.symbol,
       order.orderId,
-      context.configuration.balanceModeId as 'live' | 'test',
+      this.balanceModes.get(context.configuration.balanceModeId).id,
     );
 
     if (trades.length === 0) {

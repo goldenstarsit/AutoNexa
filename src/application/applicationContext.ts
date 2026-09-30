@@ -9,7 +9,6 @@ import type { ExecutionModeModelSelector } from '../domain/execution/executionMo
 import { StrategyTypeModelRegistry } from '../domain/strategy/dcaStrategyTypeModel';
 import type { StrategyTypeModelSelector } from '../domain/strategy/strategyTypeModel';
 import { DcaStrategyService } from '../strategy/dca/dcaStrategyService';
-import { ExchangeService } from '../exchange/exchangeService';
 
 export class ApplicationContext {
   readonly database: DatabaseModel;
@@ -18,7 +17,6 @@ export class ApplicationContext {
   readonly balanceModes: BalanceModeModelSelector;
   readonly executionModes: ExecutionModeModelSelector;
   readonly strategyTypes: StrategyTypeModelSelector;
-  readonly exchanges: ExchangeService;
   readonly dcaStrategy: DcaStrategyService;
 
   constructor() {
@@ -37,7 +35,6 @@ export class ApplicationContext {
 
     this.executionModes = new ExecutionModeModelRegistry();
 
-    this.exchanges = new ExchangeService(this.database.adapter);
 
     this.strategyTypes = new StrategyTypeModelRegistry(
       () => this.dcaStrategy,

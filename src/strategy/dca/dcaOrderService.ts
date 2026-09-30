@@ -36,6 +36,7 @@ export class DcaOrderService {
   private readonly configurationService: DcaConfigurationService;
   private readonly cycleService: DcaCycleService;
   private readonly tradingRuleResolver: DcaTradingRuleResolver;
+  private readonly balanceModes: BalanceModeModelSelector;
   private readonly exchanges: ExchangeModelSelector;
   private readonly executionModes: ExecutionModeModelSelector;
   private readonly orderRepository: DcaOrderRepository;
@@ -62,6 +63,7 @@ export class DcaOrderService {
       executionModes,
     );
     this.tradingRuleResolver = new DcaTradingRuleResolver(exchanges);
+    this.balanceModes = balanceModes;
     this.exchanges = exchanges;
     this.executionModes = executionModes;
     this.orderRepository = new DcaOrderRepository(db);
@@ -148,7 +150,7 @@ export class DcaOrderService {
       cycleId: cycle.id,
       symbol: configuration.symbol,
       exchangeId: configuration.exchangeId,
-      balanceMode: configuration.balanceModeId as 'live' | 'test',
+      balanceMode: this.balanceModes.get(configuration.balanceModeId).id,
       level: order.level,
       dcaOrderId: order.dcaOrderId,
       dropPercent: order.dropPercent,

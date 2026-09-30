@@ -34,6 +34,7 @@ export interface DcaInitialOrderExecution {
 export class DcaInitialOrderService {
   private readonly configurationService: DcaConfigurationService;
   private readonly tradingRuleResolver: DcaTradingRuleResolver;
+  private readonly balanceModes: BalanceModeModelSelector;
   private readonly exchanges: ExchangeModelSelector;
   private readonly executionModes: ExecutionModeModelSelector;
   private readonly cycleService: DcaCycleService;
@@ -53,6 +54,7 @@ export class DcaInitialOrderService {
       executionModes,
     );
     this.tradingRuleResolver = new DcaTradingRuleResolver(exchanges);
+    this.balanceModes = balanceModes;
     this.exchanges = exchanges;
     this.executionModes = executionModes;
     this.cycleService = new DcaCycleService(
@@ -108,7 +110,7 @@ export class DcaInitialOrderService {
       configurationId: configuration.id,
       symbol: configuration.symbol,
       exchangeId: configuration.exchangeId,
-      balanceMode: configuration.balanceModeId as 'live' | 'test',
+      balanceMode: this.balanceModes.get(configuration.balanceModeId).id,
       executionMode,
       quantity: rules.minimumQuantity,
       currentPrice,
