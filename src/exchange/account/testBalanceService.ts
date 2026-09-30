@@ -1,4 +1,4 @@
-import type { DatabaseAdapter } from '../../database/databaseAdapter';
+import type { DatabaseModel } from '../../domain/database/databaseModel';
 import type { ExchangeAccount } from './exchangeAccount';
 import { TestBalanceRepository } from './testBalanceRepository';
 import type { BalanceSource } from './balanceSource';
@@ -14,7 +14,7 @@ export class TestBalanceService implements BalanceSource, TestBalanceOperations 
   private readonly repository: TestBalanceRepository;
 
   constructor(
-    db: DatabaseAdapter,
+    db: DatabaseModel,
     private readonly exchangeId: string,
   ) {
     this.repository = new TestBalanceRepository(db);

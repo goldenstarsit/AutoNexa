@@ -1,4 +1,4 @@
-import type { DatabaseAdapter } from '../../database/databaseAdapter';
+import type { DatabaseModel } from '../../domain/database/databaseModel';
 import {
   EXCHANGE_BALANCE_MODES,
   type ExchangeBalanceMode,
@@ -21,7 +21,7 @@ interface BalanceModeRow {
 }
 
 export class BalanceModeRepository {
-  constructor(public readonly db: DatabaseAdapter) {}
+  constructor(public readonly db: DatabaseModel) {}
 
   isEnabled(id: ExchangeBalanceMode): boolean {
     return this.getById(id)?.enabled === true;

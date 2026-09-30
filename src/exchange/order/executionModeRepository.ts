@@ -1,4 +1,4 @@
-import type { DatabaseAdapter } from '../../database/databaseAdapter';
+import type { DatabaseModel } from '../../domain/database/databaseModel';
 import type { ExchangeOrderExecutionMode } from './exchangeOrder';
 import type { ExecutionModeProvider } from './executionModeProvider';
 
@@ -25,7 +25,7 @@ const EXECUTION_MODE_IDS: ReadonlySet<string> = new Set([
 ]);
 
 export class ExecutionModeRepository implements ExecutionModeProvider {
-  constructor(public readonly db: DatabaseAdapter) {}
+  constructor(public readonly db: DatabaseModel) {}
 
   isEnabled(id: ExchangeOrderExecutionMode): boolean {
     return this.getById(id)?.enabled === true;

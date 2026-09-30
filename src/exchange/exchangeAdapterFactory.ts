@@ -1,11 +1,11 @@
 import type { ExchangeAdapter } from './exchange';
-import type { DatabaseAdapter } from '../database/databaseAdapter';
+import type { DatabaseModel } from '../domain/database/databaseModel';
 import type { ExecutionModeProvider } from './order/executionModeProvider';
 import { MexcExchangeAdapter } from './adapters/mexcExchangeAdapter';
 
 export function createExchangeAdapter(
   exchangeId: string,
-  db: DatabaseAdapter,
+  db: DatabaseModel,
   executionModeProvider?: ExecutionModeProvider,
 ): ExchangeAdapter {
   switch (exchangeId) {

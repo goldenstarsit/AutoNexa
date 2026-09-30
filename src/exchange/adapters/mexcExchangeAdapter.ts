@@ -1,5 +1,5 @@
 import type { ExchangeAdapter } from '../exchange';
-import type { DatabaseAdapter } from '../../database/databaseAdapter';
+import type { DatabaseModel } from '../../domain/database/databaseModel';
 import type { ExchangeAccount } from '../account/exchangeAccount';
 import type { ExchangeBalanceMode } from '../account/balanceMode';
 import { TestBalanceService } from '../account/testBalanceService';
@@ -27,7 +27,7 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
   readonly id = 'mexc';
 
   constructor(
-    db: DatabaseAdapter,
+    db: DatabaseModel,
     executionModeProvider?: ExecutionModeProvider,
   ) {
     this.testBalanceSource = new TestBalanceService(db, this.id);

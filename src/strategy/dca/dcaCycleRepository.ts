@@ -1,4 +1,4 @@
-import type { DatabaseAdapter } from '../../database/databaseAdapter';
+import type { DatabaseModel } from '../../domain/database/databaseModel';
 
 export type DcaCycleStatus =
   | 'pending'
@@ -33,7 +33,7 @@ interface DcaCycleRow {
 }
 
 export class DcaCycleRepository {
-  constructor(private readonly db: DatabaseAdapter) {}
+  constructor(private readonly db: DatabaseModel) {}
 
   create(
     id: string,
@@ -267,7 +267,7 @@ export class DcaCycleRepository {
 }
 
 function dbRun(
-  db: DatabaseAdapter,
+  db: DatabaseModel,
   sql: string,
   ...params: unknown[]
 ): void {

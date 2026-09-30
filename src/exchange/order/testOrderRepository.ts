@@ -1,4 +1,4 @@
-import type { DatabaseAdapter } from '../../database/databaseAdapter';
+import type { DatabaseModel } from '../../domain/database/databaseModel';
 import type { ExchangeOrderStatus, ExchangeOrderType, ExchangeOrderExecutionMode, ExchangeOrderSide } from './exchangeOrder';
 
 export interface TestOrderRecord {
@@ -99,7 +99,7 @@ function mapTrade(row: TestOrderTradeRow): TestOrderTradeRecord {
 }
 
 export class TestOrderRepository {
-  constructor(private readonly db: DatabaseAdapter) {}
+  constructor(private readonly db: DatabaseModel) {}
 
   saveOrder(order: TestOrderRecord): void {
     this.db.run(

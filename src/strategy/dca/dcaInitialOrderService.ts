@@ -1,4 +1,4 @@
-import type { DatabaseAdapter } from '../../database/databaseAdapter';
+import type { DatabaseModel } from '../../domain/database/databaseModel';
 import type { BalanceModeModelSelector } from '../../domain/balance/balanceModeModel';
 import type { ExchangeModelSelector } from '../../domain/exchange/exchangeModel';
 import type { ExecutionModeModelSelector } from '../../domain/execution/executionModeModel';
@@ -40,7 +40,7 @@ export class DcaInitialOrderService {
   private readonly cycleService: DcaCycleService;
 
   constructor(
-    private readonly db: DatabaseAdapter,
+    private readonly db: DatabaseModel,
     strategyTypes: StrategyTypeModelSelector,
     balanceModes: BalanceModeModelSelector,
     exchanges: ExchangeModelSelector,

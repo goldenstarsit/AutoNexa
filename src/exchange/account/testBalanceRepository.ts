@@ -1,4 +1,4 @@
-import type { DatabaseAdapter } from '../../database/databaseAdapter';
+import type { DatabaseModel } from '../../domain/database/databaseModel';
 import type { ExchangeAssetBalance } from './exchangeAccount';
 
 interface TestBalanceRow {
@@ -9,7 +9,7 @@ interface TestBalanceRow {
 }
 
 export class TestBalanceRepository {
-  constructor(private readonly db: DatabaseAdapter) {}
+  constructor(private readonly db: DatabaseModel) {}
 
   getAll(exchangeId: string): ExchangeAssetBalance[] {
     return this.db

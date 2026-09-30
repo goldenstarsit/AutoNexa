@@ -1,4 +1,4 @@
-import type { DatabaseAdapter } from '../database/databaseAdapter';
+import type { DatabaseModel } from '../domain/database/databaseModel';
 
 export interface ExchangeRecord {
   id: string;
@@ -17,7 +17,7 @@ interface ExchangeRow {
 }
 
 export class ExchangeRepository {
-  constructor(public readonly db: DatabaseAdapter) {}
+  constructor(public readonly db: DatabaseModel) {}
 
   getAll(): ExchangeRecord[] {
     return this.db

@@ -1,4 +1,4 @@
-import type { DatabaseAdapter } from '../../database/databaseAdapter';
+import type { DatabaseModel } from '../../domain/database/databaseModel';
 
 export interface DcaOrderRecord {
   id: string;
@@ -51,7 +51,7 @@ interface DcaConfigurationOrderRow {
 }
 
 export class DcaConfigurationRepository {
-  constructor(public readonly db: DatabaseAdapter) {}
+  constructor(public readonly db: DatabaseModel) {}
 
   getAll(): DcaConfigurationRecord[] {
     return this.db

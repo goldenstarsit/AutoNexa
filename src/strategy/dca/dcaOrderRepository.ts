@@ -1,4 +1,4 @@
-import type { DatabaseAdapter } from '../../database/databaseAdapter';
+import type { DatabaseModel } from '../../domain/database/databaseModel';
 import type {
   ExchangeOrder,
   ExchangeOrderRequest,
@@ -62,7 +62,7 @@ type RuntimeOrderRow = {
 };
 
 export class DcaOrderRepository {
-  constructor(private readonly db: DatabaseAdapter) {}
+  constructor(private readonly db: DatabaseModel) {}
 
   getByCycleAndLevel(
     cycleId: string,

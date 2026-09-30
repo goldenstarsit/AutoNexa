@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { DatabaseAdapter } from '../../database/databaseAdapter';
+import type { DatabaseModel } from '../../domain/database/databaseModel';
 import type { ExchangeSymbolInfo } from '../market/exchangeMarket';
 import type { ExchangeTrade } from '../trade/exchangeTrade';
 import type {
@@ -21,7 +21,7 @@ export class TestOrderExecutionService {
   private readonly balanceService: TestBalanceService;
 
   constructor(
-    private readonly db: DatabaseAdapter,
+    private readonly db: DatabaseModel,
     private readonly exchangeId: string,
     private readonly market: TestOrderExecutionMarket,
   ) {
