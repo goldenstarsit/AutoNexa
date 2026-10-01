@@ -1,5 +1,6 @@
 import type {
   DcaConfigurationModel as DcaConfigurationDomainModel,
+  DcaConfigurationOrderModel,
 } from '../../../domain/strategy/dca/dcaConfigurationModel';
 import type { BalanceModeModelSelector } from '../../../domain/balance/balanceModeModel';
 import type { ExchangeModelSelector } from '../../../domain/exchange/exchangeModel';
@@ -24,7 +25,7 @@ export class DcaConfigurationModel implements DcaConfigurationDomainModel {
   readonly enabled: boolean;
   readonly createdAt: string;
   readonly updatedAt: string;
-  readonly orders: ReadonlyArray<DcaConfigurationRecord['orders'][number]>;
+  readonly orders: readonly DcaConfigurationOrderModel[];
 
   constructor(
     record: DcaConfigurationRecord,
@@ -48,6 +49,11 @@ export class DcaConfigurationModel implements DcaConfigurationDomainModel {
     this.enabled = record.enabled;
     this.createdAt = record.createdAt;
     this.updatedAt = record.updatedAt;
-    this.orders = record.orders;
+    this.orders = record.orders.map((order) => ({
+      id: order.id,
+      dcaOrderId: order.dcaOrderId,
+      level: order.level,
+      dropPercent: order.dropPercent,
+    }));
   }
 }
