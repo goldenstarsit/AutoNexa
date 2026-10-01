@@ -3,6 +3,8 @@ import type { DcaConfigurationModel } from '../../domain/strategy/dca/dcaConfigu
 import type { ExchangeOrder } from '../../domain/exchange/exchangeOrder';
 import type { ExchangeTrade } from '../../domain/exchange/exchangeTrade';
 import { DcaCycleService } from './dcaCycleService';
+import type { DcaExitOrderModelSelector } from '../../domain/strategy/dca/dcaExitOrderModel';
+import { DcaExitOrderModelSelectorImpl } from './models/dcaExitOrderModelSelector';
 import { DcaExitOrderRepository } from './dcaExitOrderRepository';
 import {
   evaluateDcaStopLoss,
@@ -28,7 +30,8 @@ export class DcaStopLossService {
     configurationId: string,
   ) => DcaConfigurationModel | undefined;
   private readonly cycleService: DcaCycleService;
-  private readonly exitOrderRepository: DcaExitOrderRepository;
+  private readonly exitOrderRepository: DcaExitOrderModelSelector;
+  private readonly exitOrderPersistence: DcaExitOrderRepository;
 
   constructor(
     private readonly db: DatabaseModel,
@@ -42,7 +45,8 @@ export class DcaStopLossService {
       db,
       this.getConfigurationModel,
     );
-    this.exitOrderRepository = new DcaExitOrderRepository(db);
+    this.exitOrderPersistence = new DcaExitOrderRepository(db);
+    this.exitOrderRepository = new DcaExitOrderModelSelectorImpl(this.exitOrderPersistence);
   }
 
   async evaluate(
@@ -128,7 +132,7 @@ export class DcaStopLossService {
       context.configuration.balanceMode.id,
     );
 
-    const runtimeOrder = this.exitOrderRepository.saveOrder(
+    const runtimeOrder = this.exitOrderPersistence.saveOrder(
       context.configuration.id,
       context.cycle.id,
       'stopLoss',
@@ -160,7 +164,7 @@ export class DcaStopLossService {
       );
     }
 
-    this.exitOrderRepository.saveFills(runtimeOrder.id, trades);
+    this.exitOrderPersistence.saveFills(runtimeOrder.id, trades);
     this.cycleService.stopCycle(context.cycle.id);
 
     return {

@@ -4,6 +4,10 @@ import type {
   ExchangeOrderRequest,
 } from '../../domain/exchange/exchangeOrder';
 import type { ExchangeTrade } from '../../domain/exchange/exchangeTrade';
+import type {
+  DcaExitOrderModel as DcaExitOrderDomainModel,
+} from '../../domain/strategy/dca/dcaExitOrderModel';
+import { DcaExitOrderModel } from './models/dcaExitOrderModel';
 
 export type DcaExitType = 'stopLoss' | 'takeProfit';
 
@@ -67,7 +71,7 @@ export class DcaExitOrderRepository {
   getByCycleAndType(
     cycleId: string,
     exitType: DcaExitType,
-  ): DcaExitOrderRecord | undefined {
+  ): DcaExitOrderDomainModel | undefined {
     const row = this.db.get<ExitOrderRow>(
       `
         SELECT *
@@ -78,7 +82,9 @@ export class DcaExitOrderRepository {
       exitType,
     );
 
-    return row ? this.mapOrder(row) : undefined;
+    return row
+      ? new DcaExitOrderModel(this.mapOrder(row), this.getFillsByOrderId(row.id))
+      : undefined;
   }
 
   saveOrder(
@@ -87,7 +93,7 @@ export class DcaExitOrderRepository {
     exitType: DcaExitType,
     order: ExchangeOrder,
     request: ExchangeOrderRequest,
-  ): DcaExitOrderRecord {
+  ): DcaExitOrderDomainModel {
     if (this.getByCycleAndType(cycleId, exitType)) {
       throw new Error(
         `DCA exit order already exists: ${cycleId}:${exitType}`,
@@ -244,6 +250,10 @@ export class DcaExitOrderRepository {
       tradeTimestamp: row.trade_timestamp,
       createdAt: row.created_at,
     }));
+  }
+
+  private getFillsByOrderId(exitOrderId: string): DcaExitOrderFillRecord[] {
+    return this.getFills(exitOrderId);
   }
 
   private mapOrder(row: ExitOrderRow): DcaExitOrderRecord {
