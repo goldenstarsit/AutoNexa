@@ -2,8 +2,8 @@ import type {
   ExecutionModeId,
   ExecutionModeModel,
   ExecutionModeModelSelector,
-} from './executionModeModel';
-import type { ExecutionModeProvider } from './executionModeProvider';
+} from '../../domain/execution/executionModeModel';
+import type { ExecutionModeProvider } from '../../domain/execution/executionModeProvider';
 
 abstract class BaseExecutionModeModel implements ExecutionModeModel {
   abstract readonly id: ExecutionModeId;

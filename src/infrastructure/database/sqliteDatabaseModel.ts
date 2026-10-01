@@ -3,7 +3,7 @@ import { createDatabase } from '../../database/database';
 import type {
   DatabaseModel,
   DatabaseModelFactory,
-} from './databaseModel';
+} from '../../domain/database/databaseModel';
 
 export class SQLiteDatabaseModel implements DatabaseModel {
   readonly id = 'sqlite';

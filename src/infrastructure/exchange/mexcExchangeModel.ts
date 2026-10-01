@@ -1,9 +1,9 @@
-import type { DatabaseModel } from '../database/databaseModel';
+import type { DatabaseModel } from '../../domain/database/databaseModel';
 import { ExchangeBalanceModeModelRegistry } from '../balance/exchangeBalanceModeModels';
 import { MexcExchangeAdapter } from '../../exchange/adapters/mexcExchangeAdapter';
-import type { ExchangeId } from './exchangeModel';
-import type { ExecutionModeProvider } from '../execution/executionModeProvider';
-import type { ExchangeModel, ExchangeModelSelector } from './exchangeModel';
+import type { ExchangeId } from '../../domain/exchange/exchangeModel';
+import type { ExecutionModeProvider } from '../../domain/execution/executionModeProvider';
+import type { ExchangeModel, ExchangeModelSelector } from '../../domain/exchange/exchangeModel';
 
 export class MexcExchangeModel implements ExchangeModel {
   readonly id: ExchangeId = 'mexc';

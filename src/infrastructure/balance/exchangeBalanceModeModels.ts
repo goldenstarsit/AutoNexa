@@ -1,11 +1,11 @@
-import type { ExchangeModel } from '../exchange/exchangeModel';
+import type { ExchangeModel } from '../../domain/exchange/exchangeModel';
 import type {
   BalanceModeId,
   BalanceModeModel,
   BalanceModeModelSelector,
   BalanceSourceModel,
   TestBalanceOperationsModel,
-} from './balanceModeModel';
+} from '../../domain/balance/balanceModeModel';
 
 class ExchangeBalanceSource implements BalanceSourceModel {
   constructor(
