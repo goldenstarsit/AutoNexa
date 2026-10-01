@@ -32,7 +32,6 @@ type RuntimeOrderRow = {
   updated_at: string;
 };
 
-export type { DcaRuntimeOrderRecord } from '../../domain/strategy/dca/dcaRuntimeOrderModel';
 
 export class DcaOrderRepository {
   constructor(private readonly db: DatabaseModel) {}
