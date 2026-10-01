@@ -1,7 +1,4 @@
 import type { DatabaseModel } from '../../domain/database/databaseModel';
-import type { BalanceModeModelSelector } from '../../domain/balance/balanceModeModel';
-import type { ExchangeModelSelector } from '../../domain/exchange/exchangeModel';
-import type { ExecutionModeModelSelector } from '../../domain/execution/executionModeModel';
 import type { DcaConfigurationModel } from '../../domain/strategy/dca/dcaConfigurationModel';
 import { DcaCycleService } from './dcaCycleService';
 import { DcaInitialOrderService } from './dcaInitialOrderService';
@@ -43,47 +40,29 @@ export class DcaStrategyService {
 
   constructor(
     private readonly db: DatabaseModel,
-    balanceModes: BalanceModeModelSelector,
-    exchanges: ExchangeModelSelector,
-    executionModes: ExecutionModeModelSelector,
     private readonly getConfigurationModel: (
       configurationId: string,
     ) => DcaConfigurationModel | undefined,
   ) {
     this.cycleService = new DcaCycleService(
       db,
-      balanceModes,
-      exchanges,
-      executionModes,
       this.getConfigurationModel,
     );
     this.initialOrderService = new DcaInitialOrderService(
       db,
-      balanceModes,
-      exchanges,
-      executionModes,
       this.getConfigurationModel,
     );
     this.orderService = new DcaOrderService(
       db,
-      balanceModes,
-      exchanges,
-      executionModes,
       this.getConfigurationModel,
     );
     this.orderRepository = new DcaOrderRepository(db);
     this.takeProfitService = new DcaTakeProfitService(
       db,
-      balanceModes,
-      exchanges,
-      executionModes,
       this.getConfigurationModel,
     );
     this.stopLossService = new DcaStopLossService(
       db,
-      balanceModes,
-      exchanges,
-      executionModes,
       this.getConfigurationModel,
     );
   }

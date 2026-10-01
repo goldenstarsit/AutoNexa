@@ -1,7 +1,4 @@
 import type { DatabaseModel } from '../../domain/database/databaseModel';
-import type { BalanceModeModelSelector } from '../../domain/balance/balanceModeModel';
-import type { ExchangeModelSelector } from '../../domain/exchange/exchangeModel';
-import type { ExecutionModeModelSelector } from '../../domain/execution/executionModeModel';
 import type { DcaConfigurationModel } from '../../domain/strategy/dca/dcaConfigurationModel';
 import type { ExchangeOrder } from '../../exchange/order/exchangeOrder';
 import type { ExchangeTrade } from '../../exchange/trade/exchangeTrade';
@@ -34,16 +31,10 @@ export class DcaTakeProfitService {
     configurationId: string,
   ) => DcaConfigurationModel | undefined;
   private readonly cycleService: DcaCycleService;
-  private readonly balanceModes: BalanceModeModelSelector;
-  private readonly exchanges: ExchangeModelSelector;
-  private readonly executionModes: ExecutionModeModelSelector;
   private readonly exitOrderRepository: DcaExitOrderRepository;
 
   constructor(
     private readonly db: DatabaseModel,
-    balanceModes: BalanceModeModelSelector,
-    exchanges: ExchangeModelSelector,
-    executionModes: ExecutionModeModelSelector,
     getConfigurationModel: (
       configurationId: string,
     ) => DcaConfigurationModel | undefined,
@@ -52,14 +43,8 @@ export class DcaTakeProfitService {
 
     this.cycleService = new DcaCycleService(
       db,
-      balanceModes,
-      exchanges,
-      executionModes,
       this.getConfigurationModel,
     );
-    this.balanceModes = balanceModes;
-    this.exchanges = exchanges;
-    this.executionModes = executionModes;
     this.exitOrderRepository = new DcaExitOrderRepository(db);
   }
 
@@ -131,9 +116,8 @@ export class DcaTakeProfitService {
       );
     }
 
-    const executionMode = this.executionModes.get(context.configuration.executionModeId).id;
+    const executionMode = context.configuration.executionMode.id;
 
-    this.executionModes.get(executionMode);
 
     const request: import('../../exchange/order/exchangeOrder').ExchangeOrderRequest =
       {
@@ -144,13 +128,11 @@ export class DcaTakeProfitService {
         quantity: context.cycle.entryQuantity,
       };
 
-    const exchange = this.exchanges.get(
-      context.configuration.exchangeId,
-    );
+    const exchange = context.configuration.exchange;
 
     const order = await exchange.placeOrder(
       request,
-      this.balanceModes.get(context.configuration.balanceModeId).id,
+      context.configuration.balanceMode.id,
     );
 
     const runtimeOrder = this.exitOrderRepository.saveOrder(
@@ -176,7 +158,7 @@ export class DcaTakeProfitService {
     const trades = await exchange.getOrderTrades(
       context.configuration.symbol,
       order.orderId,
-      this.balanceModes.get(context.configuration.balanceModeId).id,
+      context.configuration.balanceMode.id,
     );
 
     if (trades.length === 0) {
@@ -237,7 +219,7 @@ export class DcaTakeProfitService {
       );
     }
 
-    const exchange = this.exchanges.get(configuration.exchangeId);
+    const exchange = configuration.exchange;
     const currentPrice = await exchange.getCurrentPrice(
       configuration.symbol,
     );

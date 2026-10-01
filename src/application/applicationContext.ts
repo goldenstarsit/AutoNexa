@@ -59,9 +59,6 @@ export class ApplicationContext {
 
     this.dcaStrategy = new DcaStrategyService(
       this.database,
-      this.balanceModes,
-      this.exchangeModels,
-      this.executionModes,
       (configurationId) =>
         this.dcaStrategyModel.getConfiguration(configurationId),
     );
