@@ -1,5 +1,5 @@
 import type { ExchangeTradingRules } from '../../exchange/market/exchangeTradingRules';
-import type { ExchangeModelSelector } from '../../domain/exchange/exchangeModel';
+import type { ExchangeModel } from '../../domain/exchange/exchangeModel';
 
 export interface DcaTradingRuleResolution {
   rules: ExchangeTradingRules;
@@ -8,26 +8,23 @@ export interface DcaTradingRuleResolution {
 }
 
 export class DcaTradingRuleResolver {
-  constructor(
-    private readonly exchanges: ExchangeModelSelector,
-  ) {}
+  constructor() {}
 
   async resolve(
-    exchangeId: string,
+    exchange: ExchangeModel,
     symbol: string,
   ): Promise<DcaTradingRuleResolution> {
-    const exchange = this.exchanges.get(exchangeId);
     const rules = await exchange.getTradingRules(symbol);
 
     if (!rules) {
       throw new Error(
-        `Trading rules not found: ${exchangeId}:${symbol}`,
+        `Trading rules not found: ${exchange.id}:${symbol}`,
       );
     }
 
     if (!rules.spotTradingAllowed) {
       throw new Error(
-        `Spot trading is disabled: ${exchangeId}:${symbol}`,
+        `Spot trading is disabled: ${exchange.id}:${symbol}`,
       );
     }
 
@@ -35,7 +32,7 @@ export class DcaTradingRuleResolver {
 
     if (!minimumNotional || minimumNotional === '0') {
       throw new Error(
-        `Market minimum notional is unavailable: ${exchangeId}:${symbol}`,
+        `Market minimum notional is unavailable: ${exchange.id}:${symbol}`,
       );
     }
 
@@ -43,13 +40,13 @@ export class DcaTradingRuleResolver {
 
     if (!price || price === '0') {
       throw new Error(
-        `Current price is unavailable: ${exchangeId}:${symbol}`,
+        `Current price is unavailable: ${exchange.id}:${symbol}`,
       );
     }
 
     if (!rules.baseSizePrecision || rules.baseSizePrecision === '0') {
       throw new Error(
-        `Base size precision is unavailable: ${exchangeId}:${symbol}`,
+        `Base size precision is unavailable: ${exchange.id}:${symbol}`,
       );
     }
 
