@@ -23,7 +23,6 @@ export class ApplicationContext {
   readonly executionModes: ExecutionModeModelSelector;
   readonly strategyTypes: DcaStrategyTypeModelSelector;
   readonly dcaStrategyModel: DcaStrategyModel;
-  readonly dcaStrategy: DcaStrategyService;
 
   constructor() {
     this.database = new SQLiteDatabaseModelFactory().create();
@@ -47,22 +46,26 @@ export class ApplicationContext {
     );
 
 
-    this.dcaStrategyModel = new DcaStrategyModelRegistry(
+    let dcaStrategyModel: DcaStrategyModel;
+
+    const dcaStrategy = new DcaStrategyService(
+      this.database,
+      (configurationId) =>
+        dcaStrategyModel.getConfiguration(configurationId),
+    );
+
+    dcaStrategyModel = new DcaStrategyModelRegistry(
       this.database,
       this.balanceModes,
       this.exchangeModels,
       this.executionModes,
-      () => this.dcaStrategy,
+      () => dcaStrategy,
     ).get('dca');
 
-    this.strategyTypes = new StrategyTypeModelRegistry(
-      () => this.dcaStrategyModel,
-    );
+    this.dcaStrategyModel = dcaStrategyModel;
 
-    this.dcaStrategy = new DcaStrategyService(
-      this.database,
-      (configurationId) =>
-        this.dcaStrategyModel.getConfiguration(configurationId),
+    this.strategyTypes = new StrategyTypeModelRegistry(
+      dcaStrategyModel,
     );
   }
 
