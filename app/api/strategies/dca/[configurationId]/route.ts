@@ -38,11 +38,16 @@ export async function POST(
   try {
     return withApplicationContext(async (app) => {
       const strategy = app.strategyTypes.get('dca').strategy;
+      const instance = strategy.instances.get(configurationId);
+
+      if (!instance) {
+        throw new Error(`DCA configuration not found: ${configurationId}`);
+      }
 
       const result =
         body.action === 'start'
-          ? await strategy.start(configurationId)
-          : await strategy.process(configurationId);
+          ? await strategy.start(instance.id)
+          : await strategy.process(instance.id);
 
       return NextResponse.json({
         configurationId,
