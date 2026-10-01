@@ -9,7 +9,9 @@ import {
   calculateTradeFillTotals,
   combineTradeFillTotals,
 } from '../../exchange/trade/exchangeTradeFillCalculator';
-import { DcaCycleService } from './dcaCycleService';
+import type { DcaCycleModel } from '../../domain/strategy/dca/dcaCycleModel';
+import { DcaCycleRepository } from './dcaCycleRepository';
+import { DcaCycleModelSelector } from './models/dcaCycleModelSelector';
 import { DcaTradingRuleResolver } from './dcaTradingRuleResolver';
 import {
   DcaOrderRepository,
@@ -35,7 +37,7 @@ export class DcaOrderService {
   private readonly getConfigurationModel: (
     configurationId: string,
   ) => DcaConfigurationModel | undefined;
-  private readonly cycleService: DcaCycleService;
+  private readonly cycleModels: DcaCycleModelSelector;
   private readonly tradingRuleResolver: DcaTradingRuleResolver;
   private readonly orderRepository: DcaOrderRepository;
   private readonly runtimeOrderModels: {
@@ -53,9 +55,8 @@ export class DcaOrderService {
   ) {
     this.getConfigurationModel = getConfigurationModel;
 
-    this.cycleService = new DcaCycleService(
-      db,
-      this.getConfigurationModel,
+    this.cycleModels = new DcaCycleModelSelector(
+      new DcaCycleRepository(db),
     );
     this.tradingRuleResolver = new DcaTradingRuleResolver();
     this.orderRepository = new DcaOrderRepository(db);
@@ -86,7 +87,7 @@ export class DcaOrderService {
       throw new Error(`Invalid DCA level: ${level}`);
     }
 
-    const cycle = this.cycleService.getCurrent(configurationId);
+    const cycle = this.cycleModels.getCurrent(configurationId);
 
     if (!cycle || cycle.id !== cycleId) {
       throw new Error(
@@ -199,7 +200,7 @@ export class DcaOrderService {
     this.orderRepository.saveFills(runtimeOrder.id, trades);
 
     if (trades.length > 0) {
-      const cycle = this.cycleService.getCurrent(
+      const cycle = this.cycleModels.getCurrent(
         preparation.configurationId,
       );
 
@@ -244,8 +245,7 @@ export class DcaOrderService {
         dcaTotals,
       );
 
-      this.cycleService.recordDcaEntryTotals(
-        preparation.cycleId,
+      cycle.recordDcaEntryTotals(
         combinedTotals.quantity,
         combinedTotals.quoteQuantity,
         combinedTotals.averagePrice,

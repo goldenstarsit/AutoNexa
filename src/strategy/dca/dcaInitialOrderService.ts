@@ -8,7 +8,9 @@ import type {
   ExchangeOrderRequest,
 } from '../../domain/exchange/exchangeOrder';
 import { calculateTradeFillTotals } from '../../exchange/trade/exchangeTradeFillCalculator';
-import { DcaCycleService } from './dcaCycleService';
+import type { DcaCycleModel } from '../../domain/strategy/dca/dcaCycleModel';
+import { DcaCycleRepository } from './dcaCycleRepository';
+import { DcaCycleModelSelector } from './models/dcaCycleModelSelector';
 import { DcaTradingRuleResolver } from './dcaTradingRuleResolver';
 
 export interface DcaInitialOrderPreparation {
@@ -34,7 +36,7 @@ export class DcaInitialOrderService {
     configurationId: string,
   ) => DcaConfigurationModel | undefined;
   private readonly tradingRuleResolver: DcaTradingRuleResolver;
-  private readonly cycleService: DcaCycleService;
+  private readonly cycleModels: DcaCycleModelSelector;
 
   constructor(
     private readonly db: DatabaseModel,
@@ -44,9 +46,8 @@ export class DcaInitialOrderService {
   ) {
     this.getConfigurationModel = getConfigurationModel;
     this.tradingRuleResolver = new DcaTradingRuleResolver();
-    this.cycleService = new DcaCycleService(
-      db,
-      this.getConfigurationModel,
+    this.cycleModels = new DcaCycleModelSelector(
+      new DcaCycleRepository(db),
     );
   }
 
@@ -117,7 +118,7 @@ export class DcaInitialOrderService {
   async startCycleAndExecute(
     configurationId: string,
   ): Promise<DcaInitialOrderExecution> {
-    const cycle = this.cycleService.startCycle(configurationId);
+    const cycle = this.cycleModels.start(configurationId);
 
     try {
       const preparation = await this.prepare(configurationId);
@@ -154,10 +155,7 @@ export class DcaInitialOrderService {
 
       const initialEntry = calculateTradeFillTotals(trades);
 
-      const activeCycle = this.cycleService.recordInitialEntryPrice(
-        cycle.id,
-        initialEntry,
-      );
+      const activeCycle = cycle.recordInitialEntryPrice(initialEntry);
 
       return {
         cycleId: activeCycle.id,
@@ -166,7 +164,7 @@ export class DcaInitialOrderService {
         initialEntryPrice: initialEntry.averagePrice,
       };
     } catch (error) {
-      this.cycleService.stopCycle(cycle.id);
+      this.cycleModels.get(cycle.id)?.stop();
       throw error;
     }
   }

@@ -2,7 +2,9 @@ import type { DatabaseModel } from '../../domain/database/databaseModel';
 import type { DcaConfigurationModel } from '../../domain/strategy/dca/dcaConfigurationModel';
 import type { DcaStrategyRuntime } from '../../domain/strategy/dca/dcaStrategyRuntime';
 import type { DcaRuntimeOrderModelSelector } from '../../domain/strategy/dca/dcaRuntimeOrderModel';
-import { DcaCycleService } from './dcaCycleService';
+import type { DcaCycleModel } from '../../domain/strategy/dca/dcaCycleModel';
+import { DcaCycleRepository } from './dcaCycleRepository';
+import { DcaCycleModelSelector } from './models/dcaCycleModelSelector';
 import { DcaInitialOrderService } from './dcaInitialOrderService';
 import { DcaRuntimeOrderModelSelectorImpl } from './models/dcaRuntimeOrderModelSelector';
 import { DcaOrderRepository } from './dcaOrderRepository';
@@ -34,7 +36,7 @@ export interface DcaStrategyProcessResult {
 }
 
 export class DcaStrategyService implements DcaStrategyRuntime {
-  private readonly cycleService: DcaCycleService;
+  private readonly cycleModels: DcaCycleModelSelector;
   private readonly initialOrderService: DcaInitialOrderService;
   private readonly orderService: DcaOrderService;
   private readonly orderRepository: DcaRuntimeOrderModelSelector;
@@ -47,9 +49,8 @@ export class DcaStrategyService implements DcaStrategyRuntime {
       configurationId: string,
     ) => DcaConfigurationModel | undefined,
   ) {
-    this.cycleService = new DcaCycleService(
-      db,
-      this.getConfigurationModel,
+    this.cycleModels = new DcaCycleModelSelector(
+      new DcaCycleRepository(db),
     );
     this.initialOrderService = new DcaInitialOrderService(
       db,
@@ -83,7 +84,7 @@ export class DcaStrategyService implements DcaStrategyRuntime {
       );
     }
 
-    const current = this.cycleService.getCurrent(configurationId);
+    const current = this.cycleModels.getCurrent(configurationId);
 
     if (current?.status === 'active' || current?.status === 'pending') {
       throw new Error(
@@ -96,7 +97,7 @@ export class DcaStrategyService implements DcaStrategyRuntime {
 
     return {
       cycleId: initialOrder.cycleId,
-      cycleNumber: this.cycleService.getCurrent(configurationId)?.cycleNumber ?? 0,
+      cycleNumber: this.cycleModels.getCurrent(configurationId)?.cycleNumber ?? 0,
       initialOrder,
     };
   }
@@ -116,7 +117,7 @@ export class DcaStrategyService implements DcaStrategyRuntime {
       );
     }
 
-    const cycle = this.cycleService.getCurrent(configurationId);
+    const cycle = this.cycleModels.getCurrent(configurationId);
 
     if (!cycle || cycle.status !== 'active') {
       throw new Error(

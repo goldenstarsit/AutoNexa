@@ -2,7 +2,9 @@ import type { DatabaseModel } from '../../domain/database/databaseModel';
 import type { DcaConfigurationModel } from '../../domain/strategy/dca/dcaConfigurationModel';
 import type { ExchangeOrder } from '../../domain/exchange/exchangeOrder';
 import type { ExchangeTrade } from '../../domain/exchange/exchangeTrade';
-import { DcaCycleService } from './dcaCycleService';
+import type { DcaCycleModel } from '../../domain/strategy/dca/dcaCycleModel';
+import { DcaCycleRepository } from './dcaCycleRepository';
+import { DcaCycleModelSelector } from './models/dcaCycleModelSelector';
 import type { DcaExitOrderModelSelector } from '../../domain/strategy/dca/dcaExitOrderModel';
 import { DcaExitOrderModelSelectorImpl } from './models/dcaExitOrderModelSelector';
 import { DcaExitOrderRepository } from './dcaExitOrderRepository';
@@ -32,7 +34,7 @@ export class DcaTakeProfitService {
   private readonly getConfigurationModel: (
     configurationId: string,
   ) => DcaConfigurationModel | undefined;
-  private readonly cycleService: DcaCycleService;
+  private readonly cycleModels: DcaCycleModelSelector;
   private readonly exitOrderRepository: DcaExitOrderModelSelector;
   private readonly exitOrderPersistence: DcaExitOrderRepository;
 
@@ -44,9 +46,8 @@ export class DcaTakeProfitService {
   ) {
     this.getConfigurationModel = getConfigurationModel;
 
-    this.cycleService = new DcaCycleService(
-      db,
-      this.getConfigurationModel,
+    this.cycleModels = new DcaCycleModelSelector(
+      new DcaCycleRepository(db),
     );
     this.exitOrderPersistence = new DcaExitOrderRepository(db);
     this.exitOrderRepository = new DcaExitOrderModelSelectorImpl(this.exitOrderPersistence);
@@ -91,7 +92,7 @@ export class DcaTakeProfitService {
         trades.length > 0 &&
         existing.executedQuantity !== '0'
       ) {
-        this.cycleService.completeCycle(context.cycle.id);
+        this.cycleModels.get(context.cycle.id)?.complete();
 
         return {
           ...context.evaluation,
@@ -172,7 +173,7 @@ export class DcaTakeProfitService {
     }
 
     this.exitOrderPersistence.saveFills(runtimeOrder.id, trades);
-    this.cycleService.completeCycle(context.cycle.id);
+    this.cycleModels.get(context.cycle.id)?.complete();
 
     return {
       ...context.evaluation,
@@ -203,7 +204,7 @@ export class DcaTakeProfitService {
       );
     }
 
-    const cycle = this.cycleService.getCurrent(configurationId);
+    const cycle = this.cycleModels.getCurrent(configurationId);
 
     if (!cycle) {
       throw new Error(
