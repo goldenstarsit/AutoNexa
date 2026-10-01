@@ -12,12 +12,18 @@ import {
   type DcaStrategyTypeModelSelector,
 } from '../domain/strategy/dcaStrategyTypeModel';
 import { DcaStrategyModelRegistry } from '../strategy/dca/models/dcaStrategyModel';
-import {
-  DcaConfigurationModelSelector,
-} from '../strategy/dca/models/dcaConfigurationModelSelector';
+import { DcaConfigurationModelSelector } from '../strategy/dca/models/dcaConfigurationModelSelector';
+import { DcaConfigurationPersistenceModelImpl } from '../strategy/dca/models/dcaConfigurationPersistenceModel';
 import { DcaConfigurationRepository } from '../strategy/dca/dcaConfigurationRepository';
 import type { DcaStrategyModel } from '../domain/strategy/dca/dcaStrategyModel';
 import { DcaStrategyService } from '../strategy/dca/dcaStrategyService';
+import { DcaCycleRepository } from '../strategy/dca/dcaCycleRepository';
+import { DcaCyclePersistenceModelImpl } from '../strategy/dca/models/dcaCyclePersistenceModel';
+import { DcaRuntimeOrderPersistenceModelImpl } from '../strategy/dca/models/dcaRuntimeOrderPersistenceModel';
+import { DcaOrderRepository } from '../strategy/dca/dcaOrderRepository';
+import { DcaRuntimeOrderModelSelectorImpl } from '../strategy/dca/models/dcaRuntimeOrderModelSelector';
+import { DcaExitOrderPersistenceModelImpl } from '../strategy/dca/models/dcaExitOrderPersistenceModel';
+import { DcaExitOrderRepository } from '../strategy/dca/dcaExitOrderRepository';
 
 export class ApplicationContext {
   readonly database: DatabaseModel;
@@ -49,27 +55,46 @@ export class ApplicationContext {
       executionModeProvider,
     );
 
-    let dcaStrategyModel: DcaStrategyModel;
+    const dcaStrategyModelRef: { current?: DcaStrategyModel } = {};
+
+    const cyclePersistence = new DcaCyclePersistenceModelImpl(
+      new DcaCycleRepository(this.database),
+    );
+    const runtimeOrderRepository = new DcaOrderRepository(this.database);
+    const runtimeOrderPersistence =
+      new DcaRuntimeOrderPersistenceModelImpl(runtimeOrderRepository);
+    const exitOrderPersistence = new DcaExitOrderPersistenceModelImpl(
+      new DcaExitOrderRepository(this.database),
+    );
+    const runtimeOrderModels = new DcaRuntimeOrderModelSelectorImpl(
+      runtimeOrderRepository,
+    );
 
     const dcaStrategy = new DcaStrategyService(
-      this.database,
+      cyclePersistence,
+      runtimeOrderPersistence,
+      exitOrderPersistence,
+      runtimeOrderModels,
       (configurationId) =>
-        dcaStrategyModel.instances.get(configurationId),
+        dcaStrategyModelRef.current!.instances.get(configurationId),
     );
 
     const dcaConfigurationModels = new DcaConfigurationModelSelector(
-      new DcaConfigurationRepository(this.database),
-      () => dcaStrategyModel,
+      new DcaConfigurationPersistenceModelImpl(
+        new DcaConfigurationRepository(this.database),
+      ),
+      () => dcaStrategyModelRef.current!,
       this.balanceModes,
       this.exchangeModels,
       this.executionModes,
     );
 
-    dcaStrategyModel = new DcaStrategyModelRegistry(
+    const dcaStrategyModel = new DcaStrategyModelRegistry(
       dcaConfigurationModels,
       () => dcaStrategy,
     ).get('dca');
 
+    dcaStrategyModelRef.current = dcaStrategyModel;
     this.dcaStrategyModel = dcaStrategyModel;
 
     this.strategyTypes = new StrategyTypeModelRegistry(

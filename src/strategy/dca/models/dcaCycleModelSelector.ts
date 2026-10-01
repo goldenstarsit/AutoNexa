@@ -1,41 +1,41 @@
 import type {
   DcaCycleModel as DcaCycleDomainModel,
   DcaCycleModelSelector as DcaCycleDomainModelSelector,
+  DcaCyclePersistenceModel,
 } from '../../../domain/strategy/dca/dcaCycleModel';
-import type { DcaCycleRepository } from '../dcaCycleRepository';
 import { DcaCycleModel } from './dcaCycleModel';
 
 export class DcaCycleModelSelector
   implements DcaCycleDomainModelSelector
 {
-  constructor(private readonly repository: DcaCycleRepository) {}
+  constructor(private readonly persistence: DcaCyclePersistenceModel) {}
 
   get(id: string): DcaCycleDomainModel | undefined {
-    const record = this.repository.getById(id);
+    const record = this.persistence.getById(id);
 
     return record
-      ? new DcaCycleModel(record, this.repository)
+      ? new DcaCycleModel(record, this.persistence)
       : undefined;
   }
 
   getCurrent(configurationId: string): DcaCycleDomainModel | undefined {
-    const record = this.repository.getCurrent(configurationId);
+    const record = this.persistence.getCurrent(configurationId);
 
     return record
-      ? new DcaCycleModel(record, this.repository)
+      ? new DcaCycleModel(record, this.persistence)
       : undefined;
   }
 
   start(configurationId: string): DcaCycleDomainModel {
-    const current = this.repository.getCurrent(configurationId);
+    const current = this.persistence.getCurrent(configurationId);
     const cycleNumber = current ? current.cycleNumber + 1 : 1;
 
-    const record = this.repository.create(
+    const record = this.persistence.create(
       `${configurationId}-cycle-${cycleNumber}`,
       configurationId,
       cycleNumber,
     );
 
-    return new DcaCycleModel(record, this.repository);
+    return new DcaCycleModel(record, this.persistence);
   }
 }

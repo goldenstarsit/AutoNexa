@@ -1,9 +1,10 @@
 import type {
   DcaCycleModel as DcaCycleDomainModel,
+  DcaCycleModelRecord,
+  DcaCyclePersistenceModel,
   DcaCycleStatus,
   DcaInitialEntryTotals,
 } from '../../../domain/strategy/dca/dcaCycleModel';
-import type { DcaCycleRecord, DcaCycleRepository } from '../dcaCycleRepository';
 
 export class DcaCycleModel implements DcaCycleDomainModel {
   readonly id: string;
@@ -18,8 +19,8 @@ export class DcaCycleModel implements DcaCycleDomainModel {
   readonly updatedAt: string;
 
   constructor(
-    record: DcaCycleRecord,
-    private readonly repository: DcaCycleRepository,
+    record: DcaCycleModelRecord,
+    private readonly persistence: DcaCyclePersistenceModel,
   ) {
     this.id = record.id;
     this.dcaConfigurationId = record.dcaConfigurationId;
@@ -36,19 +37,19 @@ export class DcaCycleModel implements DcaCycleDomainModel {
   recordInitialEntryPrice(
     entry: DcaInitialEntryTotals,
   ): DcaCycleDomainModel {
-    const cycle = this.repository.setInitialEntryPrice(
+    const cycle = this.persistence.setInitialEntryPrice(
       this.id,
       entry.averagePrice,
     );
 
-    const updated = this.repository.setEntryTotals(
+    const updated = this.persistence.setEntryTotals(
       cycle.id,
       entry.quantity,
       entry.quoteQuantity,
       entry.averagePrice,
     );
 
-    return new DcaCycleModel(updated, this.repository);
+    return new DcaCycleModel(updated, this.persistence);
   }
 
   recordDcaEntryTotals(
@@ -63,27 +64,27 @@ export class DcaCycleModel implements DcaCycleDomainModel {
     }
 
     return new DcaCycleModel(
-      this.repository.setEntryTotals(
+      this.persistence.setEntryTotals(
         this.id,
         quantity,
         quoteQuantity,
         averagePrice,
       ),
-      this.repository,
+      this.persistence,
     );
   }
 
   complete(): DcaCycleDomainModel {
     return new DcaCycleModel(
-      this.repository.updateStatus(this.id, 'completed'),
-      this.repository,
+      this.persistence.updateStatus(this.id, 'completed'),
+      this.persistence,
     );
   }
 
   stop(): DcaCycleDomainModel {
     return new DcaCycleModel(
-      this.repository.updateStatus(this.id, 'stopped'),
-      this.repository,
+      this.persistence.updateStatus(this.id, 'stopped'),
+      this.persistence,
     );
   }
 }

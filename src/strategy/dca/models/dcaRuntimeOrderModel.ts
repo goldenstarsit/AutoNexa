@@ -1,12 +1,9 @@
 import type {
   DcaRuntimeOrderModel as DcaRuntimeOrderDomainModel,
   DcaRuntimeOrderFillModel,
-} from '../../../domain/strategy/dca/dcaRuntimeOrderModel';
-import type {
   DcaRuntimeOrderRecord,
   DcaRuntimeOrderFillRecord,
-} from '../dcaOrderRepository';
-
+} from '../../../domain/strategy/dca/dcaRuntimeOrderModel';
 export class DcaRuntimeOrderModel
   implements DcaRuntimeOrderDomainModel
 {

@@ -1,13 +1,11 @@
-import type { DatabaseModel } from '../../domain/database/databaseModel';
 import type { DcaConfigurationModel } from '../../domain/strategy/dca/dcaConfigurationModel';
 import type { ExchangeOrder } from '../../domain/exchange/exchangeOrder';
 import type { ExchangeTrade } from '../../domain/exchange/exchangeTrade';
-import type { DcaCycleModel } from '../../domain/strategy/dca/dcaCycleModel';
-import { DcaCycleRepository } from './dcaCycleRepository';
+import type { DcaCyclePersistenceModel } from '../../domain/strategy/dca/dcaCycleModel';
 import { DcaCycleModelSelector } from './models/dcaCycleModelSelector';
 import type { DcaExitOrderModelSelector } from '../../domain/strategy/dca/dcaExitOrderModel';
 import { DcaExitOrderModelSelectorImpl } from './models/dcaExitOrderModelSelector';
-import { DcaExitOrderRepository } from './dcaExitOrderRepository';
+import type { DcaExitOrderPersistenceModel } from '../../domain/strategy/dca/dcaExitOrderModel';
 import {
   evaluateDcaStopLoss,
   type DcaStopLossEvaluation,
@@ -33,21 +31,21 @@ export class DcaStopLossService {
   ) => DcaConfigurationModel | undefined;
   private readonly cycleModels: DcaCycleModelSelector;
   private readonly exitOrderRepository: DcaExitOrderModelSelector;
-  private readonly exitOrderPersistence: DcaExitOrderRepository;
+  private readonly exitOrderPersistence: DcaExitOrderPersistenceModel;
 
   constructor(
-    private readonly db: DatabaseModel,
+    cyclePersistence: DcaCyclePersistenceModel,
+    exitOrderPersistence: DcaExitOrderPersistenceModel,
     getConfigurationModel: (
       configurationId: string,
     ) => DcaConfigurationModel | undefined,
   ) {
     this.getConfigurationModel = getConfigurationModel;
-
-    this.cycleModels = new DcaCycleModelSelector(
-      new DcaCycleRepository(db),
+    this.cycleModels = new DcaCycleModelSelector(cyclePersistence);
+    this.exitOrderPersistence = exitOrderPersistence;
+    this.exitOrderRepository = new DcaExitOrderModelSelectorImpl(
+      exitOrderPersistence,
     );
-    this.exitOrderPersistence = new DcaExitOrderRepository(db);
-    this.exitOrderRepository = new DcaExitOrderModelSelectorImpl(this.exitOrderPersistence);
   }
 
   async evaluate(

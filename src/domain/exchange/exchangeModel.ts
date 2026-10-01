@@ -1,7 +1,6 @@
 import type { ExchangeAccount } from '../../domain/exchange/exchangeAccount';
 import type {
   BalanceModeId,
-  BalanceModeModel,
   BalanceModeModelSelector,
   TestBalanceOperationsModel,
 } from '../balance/balanceModeModel';

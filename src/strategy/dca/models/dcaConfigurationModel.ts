@@ -5,7 +5,7 @@ import type {
 import type { BalanceModeModelSelector } from '../../../domain/balance/balanceModeModel';
 import type { ExchangeModelSelector } from '../../../domain/exchange/exchangeModel';
 import type { ExecutionModeModelSelector } from '../../../domain/execution/executionModeModel';
-import type { DcaConfigurationRecord } from '../dcaConfigurationRepository';
+import type { DcaConfigurationModelRecord } from '../../../domain/strategy/dca/dcaConfigurationModel';
 import type { StrategyModel } from '../../../domain/strategy/strategyModel';
 
 export class DcaConfigurationModel implements DcaConfigurationDomainModel {
@@ -28,7 +28,7 @@ export class DcaConfigurationModel implements DcaConfigurationDomainModel {
   readonly orders: readonly DcaConfigurationOrderModel[];
 
   constructor(
-    record: DcaConfigurationRecord,
+    record: DcaConfigurationModelRecord,
     strategy: StrategyModel,
     balanceModes: BalanceModeModelSelector,
     exchanges: ExchangeModelSelector,

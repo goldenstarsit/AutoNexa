@@ -6,44 +6,10 @@ import type {
 import type { ExchangeTrade } from '../../domain/exchange/exchangeTrade';
 import type {
   DcaRuntimeOrderModel as DcaRuntimeOrderDomainModel,
-  DcaRuntimeOrderFillModel,
+  DcaRuntimeOrderRecord,
+  DcaRuntimeOrderFillRecord,
 } from '../../domain/strategy/dca/dcaRuntimeOrderModel';
 import { DcaRuntimeOrderModel } from './models/dcaRuntimeOrderModel';
-
-export interface DcaRuntimeOrderRecord {
-  id: string;
-  dcaConfigurationId: string;
-  dcaCycleId: string;
-  dcaOrderId: string;
-  level: number;
-  exchangeOrderId: string;
-  clientOrderId?: string;
-  symbol: string;
-  side: ExchangeOrder['side'];
-  type: ExchangeOrder['type'];
-  executionMode: ExchangeOrderRequest['executionMode'];
-  status: ExchangeOrder['status'];
-  quantity: string;
-  executedQuantity: string;
-  requestedPrice?: string;
-  averageFillPrice?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface DcaRuntimeOrderFillRecord {
-  id: string;
-  dcaRuntimeOrderId: string;
-  exchangeTradeId: string;
-  exchangeOrderId: string;
-  symbol: string;
-  side: ExchangeTrade['side'];
-  price: string;
-  quantity: string;
-  quoteQuantity: string;
-  tradeTimestamp: number;
-  createdAt: string;
-}
 
 type RuntimeOrderRow = {
   id: string;
@@ -65,6 +31,8 @@ type RuntimeOrderRow = {
   created_at: string;
   updated_at: string;
 };
+
+export type { DcaRuntimeOrderRecord } from '../../domain/strategy/dca/dcaRuntimeOrderModel';
 
 export class DcaOrderRepository {
   constructor(private readonly db: DatabaseModel) {}

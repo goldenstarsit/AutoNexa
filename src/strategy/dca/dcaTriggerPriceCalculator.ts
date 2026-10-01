@@ -1,4 +1,4 @@
-import type { DcaConfigurationOrderRecord } from './dcaConfigurationRepository';
+import type { DcaConfigurationOrderModel } from '../../domain/strategy/dca/dcaConfigurationModel';
 
 export interface DcaTriggerLevel {
   level: number;
@@ -43,7 +43,7 @@ export function calculateDcaTriggerPrice(
 
 export function calculateDcaTriggerLevels(
   initialEntryPrice: string,
-  orders: DcaConfigurationOrderRecord[],
+  orders: DcaConfigurationOrderModel[],
 ): DcaTriggerLevel[] {
   if (orders.length === 0) {
     throw new Error('DCA configuration has no DCA levels');

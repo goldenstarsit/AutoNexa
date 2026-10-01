@@ -1,4 +1,3 @@
-import type { DatabaseModel } from '../../domain/database/databaseModel';
 import type { DcaConfigurationModel } from '../../domain/strategy/dca/dcaConfigurationModel';
 import type { BalanceModeModel } from '../../domain/balance/balanceModeModel';
 import type { ExchangeModel } from '../../domain/exchange/exchangeModel';
@@ -8,8 +7,9 @@ import type {
   ExchangeOrderRequest,
 } from '../../domain/exchange/exchangeOrder';
 import { calculateTradeFillTotals } from '../../exchange/trade/exchangeTradeFillCalculator';
-import type { DcaCycleModel } from '../../domain/strategy/dca/dcaCycleModel';
-import { DcaCycleRepository } from './dcaCycleRepository';
+import type {
+  DcaCyclePersistenceModel,
+} from '../../domain/strategy/dca/dcaCycleModel';
 import { DcaCycleModelSelector } from './models/dcaCycleModelSelector';
 import { DcaTradingRuleResolver } from './dcaTradingRuleResolver';
 
@@ -39,7 +39,7 @@ export class DcaInitialOrderService {
   private readonly cycleModels: DcaCycleModelSelector;
 
   constructor(
-    private readonly db: DatabaseModel,
+    cyclePersistence: DcaCyclePersistenceModel,
     getConfigurationModel: (
       configurationId: string,
     ) => DcaConfigurationModel | undefined,
@@ -47,7 +47,7 @@ export class DcaInitialOrderService {
     this.getConfigurationModel = getConfigurationModel;
     this.tradingRuleResolver = new DcaTradingRuleResolver();
     this.cycleModels = new DcaCycleModelSelector(
-      new DcaCycleRepository(db),
+      cyclePersistence,
     );
   }
 

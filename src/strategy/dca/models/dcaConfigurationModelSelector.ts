@@ -1,19 +1,19 @@
 import type {
   DcaConfigurationModel as DcaConfigurationDomainModel,
   DcaConfigurationModelSelector as DcaConfigurationDomainModelSelector,
+  DcaConfigurationPersistenceModel,
 } from '../../../domain/strategy/dca/dcaConfigurationModel';
 import type { BalanceModeModelSelector } from '../../../domain/balance/balanceModeModel';
 import type { ExchangeModelSelector } from '../../../domain/exchange/exchangeModel';
 import type { ExecutionModeModelSelector } from '../../../domain/execution/executionModeModel';
 import type { StrategyModel } from '../../../domain/strategy/strategyModel';
-import { DcaConfigurationRepository } from '../dcaConfigurationRepository';
 import { DcaConfigurationModel } from './dcaConfigurationModel';
 
 export class DcaConfigurationModelSelector
   implements DcaConfigurationDomainModelSelector
 {
   constructor(
-    private readonly repository: DcaConfigurationRepository,
+    private readonly persistence: DcaConfigurationPersistenceModel,
     private readonly getStrategy: () => StrategyModel,
     private readonly balanceModes: BalanceModeModelSelector,
     private readonly exchanges: ExchangeModelSelector,
@@ -21,7 +21,7 @@ export class DcaConfigurationModelSelector
   ) {}
 
   get(id: string): DcaConfigurationDomainModel | undefined {
-    const record = this.repository.getById(id);
+    const record = this.persistence.getById(id);
 
     return record
       ? new DcaConfigurationModel(
@@ -35,7 +35,7 @@ export class DcaConfigurationModelSelector
   }
 
   getAll(): readonly DcaConfigurationDomainModel[] {
-    return this.repository.getAll().map(
+    return this.persistence.getAll().map(
       (record) =>
         new DcaConfigurationModel(
           record,

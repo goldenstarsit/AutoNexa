@@ -1,12 +1,9 @@
 import type {
   DcaExitOrderModel as DcaExitOrderDomainModel,
   DcaExitOrderFillModel,
-} from '../../../domain/strategy/dca/dcaExitOrderModel';
-import type {
   DcaExitOrderRecord,
   DcaExitOrderFillRecord,
-} from '../dcaExitOrderRepository';
-
+} from '../../../domain/strategy/dca/dcaExitOrderModel';
 export class DcaExitOrderModel implements DcaExitOrderDomainModel {
   readonly id: string;
   readonly dcaConfigurationId: string;

@@ -6,44 +6,11 @@ import type {
 import type { ExchangeTrade } from '../../domain/exchange/exchangeTrade';
 import type {
   DcaExitOrderModel as DcaExitOrderDomainModel,
+  DcaExitOrderRecord,
+  DcaExitOrderFillRecord,
+  DcaExitType,
 } from '../../domain/strategy/dca/dcaExitOrderModel';
 import { DcaExitOrderModel } from './models/dcaExitOrderModel';
-
-export type DcaExitType = 'stopLoss' | 'takeProfit';
-
-export interface DcaExitOrderRecord {
-  id: string;
-  dcaConfigurationId: string;
-  dcaCycleId: string;
-  exitType: DcaExitType;
-  exchangeOrderId: string;
-  clientOrderId?: string;
-  symbol: string;
-  side: ExchangeOrder['side'];
-  type: ExchangeOrder['type'];
-  executionMode: ExchangeOrderRequest['executionMode'];
-  status: ExchangeOrder['status'];
-  quantity: string;
-  executedQuantity: string;
-  requestedPrice?: string;
-  averageFillPrice?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface DcaExitOrderFillRecord {
-  id: string;
-  dcaExitOrderId: string;
-  exchangeTradeId: string;
-  exchangeOrderId: string;
-  symbol: string;
-  side: ExchangeTrade['side'];
-  price: string;
-  quantity: string;
-  quoteQuantity: string;
-  tradeTimestamp: number;
-  createdAt: string;
-}
 
 type ExitOrderRow = {
   id: string;

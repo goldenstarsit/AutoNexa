@@ -1,15 +1,13 @@
-import type { DatabaseModel } from '../../domain/database/databaseModel';
 import type { DcaConfigurationModel } from '../../domain/strategy/dca/dcaConfigurationModel';
 import type { DcaStrategyRuntime } from '../../domain/strategy/dca/dcaStrategyRuntime';
 import type { DcaRuntimeOrderModelSelector } from '../../domain/strategy/dca/dcaRuntimeOrderModel';
-import type { DcaCycleModel } from '../../domain/strategy/dca/dcaCycleModel';
-import { DcaCycleRepository } from './dcaCycleRepository';
+import type { DcaCyclePersistenceModel } from '../../domain/strategy/dca/dcaCycleModel';
 import { DcaCycleModelSelector } from './models/dcaCycleModelSelector';
 import { DcaInitialOrderService } from './dcaInitialOrderService';
-import { DcaRuntimeOrderModelSelectorImpl } from './models/dcaRuntimeOrderModelSelector';
-import { DcaOrderRepository } from './dcaOrderRepository';
+import type { DcaRuntimeOrderPersistenceModel } from '../../domain/strategy/dca/dcaRuntimeOrderModel';
 import { DcaOrderService } from './dcaOrderService';
 import { DcaStopLossService } from './dcaStopLossService';
+import type { DcaExitOrderPersistenceModel } from '../../domain/strategy/dca/dcaExitOrderModel';
 import { DcaTakeProfitService } from './dcaTakeProfitService';
 import {
   calculateDcaTriggerLevels,
@@ -44,29 +42,33 @@ export class DcaStrategyService implements DcaStrategyRuntime {
   private readonly stopLossService: DcaStopLossService;
 
   constructor(
-    private readonly db: DatabaseModel,
+    cyclePersistence: DcaCyclePersistenceModel,
+    runtimeOrderPersistence: DcaRuntimeOrderPersistenceModel,
+    exitOrderPersistence: DcaExitOrderPersistenceModel,
+    orderRepository: DcaRuntimeOrderModelSelector,
     private readonly getConfigurationModel: (
       configurationId: string,
     ) => DcaConfigurationModel | undefined,
   ) {
-    this.cycleModels = new DcaCycleModelSelector(
-      new DcaCycleRepository(db),
-    );
+    this.cycleModels = new DcaCycleModelSelector(cyclePersistence);
     this.initialOrderService = new DcaInitialOrderService(
-      db,
+      cyclePersistence,
       this.getConfigurationModel,
     );
     this.orderService = new DcaOrderService(
-      db,
+      cyclePersistence,
+      runtimeOrderPersistence,
       this.getConfigurationModel,
     );
-    this.orderRepository = new DcaRuntimeOrderModelSelectorImpl(new DcaOrderRepository(db));
+    this.orderRepository = orderRepository;
     this.takeProfitService = new DcaTakeProfitService(
-      db,
+      cyclePersistence,
+      exitOrderPersistence,
       this.getConfigurationModel,
     );
     this.stopLossService = new DcaStopLossService(
-      db,
+      cyclePersistence,
+      exitOrderPersistence,
       this.getConfigurationModel,
     );
   }

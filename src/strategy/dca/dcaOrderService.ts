@@ -1,22 +1,17 @@
-import type { DatabaseModel } from '../../domain/database/databaseModel';
 import type { DcaConfigurationModel } from '../../domain/strategy/dca/dcaConfigurationModel';
+import type { DcaRuntimeOrderPersistenceModel } from '../../domain/strategy/dca/dcaRuntimeOrderModel';
 import type { BalanceModeModel } from '../../domain/balance/balanceModeModel';
 import type { ExchangeModel } from '../../domain/exchange/exchangeModel';
 import type { ExchangeOrder, ExchangeOrderRequest } from '../../domain/exchange/exchangeOrder';
 import type { ExchangeTrade } from '../../domain/exchange/exchangeTrade';
-import type { DcaRuntimeOrderModel } from '../../domain/strategy/dca/dcaRuntimeOrderModel';
 import {
   calculateTradeFillTotals,
   combineTradeFillTotals,
 } from '../../exchange/trade/exchangeTradeFillCalculator';
-import type { DcaCycleModel } from '../../domain/strategy/dca/dcaCycleModel';
-import { DcaCycleRepository } from './dcaCycleRepository';
+import type { DcaCyclePersistenceModel } from '../../domain/strategy/dca/dcaCycleModel';
 import { DcaCycleModelSelector } from './models/dcaCycleModelSelector';
 import { DcaTradingRuleResolver } from './dcaTradingRuleResolver';
-import {
-  DcaOrderRepository,
-  type DcaRuntimeOrderRecord,
-} from './dcaOrderRepository';
+import type { DcaRuntimeOrderRecord } from '../../domain/strategy/dca/dcaRuntimeOrderModel';
 
 export interface DcaOrderPreparation {
   configurationId: string;
@@ -39,28 +34,21 @@ export class DcaOrderService {
   ) => DcaConfigurationModel | undefined;
   private readonly cycleModels: DcaCycleModelSelector;
   private readonly tradingRuleResolver: DcaTradingRuleResolver;
-  private readonly orderRepository: DcaOrderRepository;
-  private readonly runtimeOrderModels: {
-    getByCycleAndLevel(
-      cycleId: string,
-      level: number,
-    ): DcaRuntimeOrderModel | undefined;
-  };
+  private readonly runtimeOrderPersistence: DcaRuntimeOrderPersistenceModel;
 
   constructor(
-    private readonly db: DatabaseModel,
+    cyclePersistence: DcaCyclePersistenceModel,
+    runtimeOrderPersistence: DcaRuntimeOrderPersistenceModel,
     getConfigurationModel: (
       configurationId: string,
     ) => DcaConfigurationModel | undefined,
   ) {
     this.getConfigurationModel = getConfigurationModel;
-
     this.cycleModels = new DcaCycleModelSelector(
-      new DcaCycleRepository(db),
+      cyclePersistence,
     );
     this.tradingRuleResolver = new DcaTradingRuleResolver();
-    this.orderRepository = new DcaOrderRepository(db);
-    this.runtimeOrderModels = this.orderRepository;
+    this.runtimeOrderPersistence = runtimeOrderPersistence;
   }
 
   async prepare(
@@ -162,7 +150,7 @@ export class DcaOrderService {
     trades: ExchangeTrade[];
   }> {
     if (
-      this.runtimeOrderModels.getByCycleAndLevel(
+      this.runtimeOrderPersistence.getByCycleAndLevel(
         preparation.cycleId,
         preparation.level,
       )
@@ -179,7 +167,7 @@ export class DcaOrderService {
       preparation.balanceMode,
     );
 
-    const runtimeOrder = this.orderRepository.saveOrder(
+    const runtimeOrder = this.runtimeOrderPersistence.saveOrder(
       preparation.configurationId,
       preparation.cycleId,
       preparation.dcaOrderId,
@@ -197,7 +185,7 @@ export class DcaOrderService {
           )
         : [];
 
-    this.orderRepository.saveFills(runtimeOrder.id, trades);
+    this.runtimeOrderPersistence.saveFills(runtimeOrder.id, trades);
 
     if (trades.length > 0) {
       const cycle = this.cycleModels.getCurrent(
@@ -217,7 +205,7 @@ export class DcaOrderService {
       }
 
       const cycleFills =
-        this.orderRepository.getFillsByCycle(
+        this.runtimeOrderPersistence.getFillsByCycle(
           preparation.cycleId,
         );
 
