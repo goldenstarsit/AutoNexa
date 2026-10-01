@@ -1,5 +1,6 @@
 import type { DatabaseModel } from '../../domain/database/databaseModel';
 import type { DcaConfigurationModel } from '../../domain/strategy/dca/dcaConfigurationModel';
+import type { DcaStrategyRuntime } from '../../domain/strategy/dca/dcaStrategyRuntime';
 import { DcaCycleService } from './dcaCycleService';
 import { DcaInitialOrderService } from './dcaInitialOrderService';
 import { DcaOrderRepository } from './dcaOrderRepository';
@@ -30,7 +31,7 @@ export interface DcaStrategyProcessResult {
   reachedDcaLevels: DcaLevelEvaluation[];
 }
 
-export class DcaStrategyService {
+export class DcaStrategyService implements DcaStrategyRuntime {
   private readonly cycleService: DcaCycleService;
   private readonly initialOrderService: DcaInitialOrderService;
   private readonly orderService: DcaOrderService;
