@@ -37,10 +37,12 @@ export async function POST(
 
   try {
     return withApplicationContext(async (app) => {
+      const strategy = app.strategyTypes.get('dca').strategy;
+
       const result =
         body.action === 'start'
-          ? await app.dcaStrategy.start(configurationId)
-          : await app.dcaStrategy.process(configurationId);
+          ? await strategy.start(configurationId)
+          : await strategy.process(configurationId);
 
       return NextResponse.json({
         configurationId,

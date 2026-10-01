@@ -7,10 +7,12 @@ import type { BalanceModeModelSelector } from '../domain/balance/balanceModeMode
 import { ExecutionModeModelRegistry } from '../domain/execution/executionModeModels';
 import { ExecutionModeRepository } from '../exchange/order/executionModeRepository';
 import type { ExecutionModeModelSelector } from '../domain/execution/executionModeModel';
-import { StrategyTypeModelRegistry } from '../domain/strategy/dcaStrategyTypeModel';
+import {
+  StrategyTypeModelRegistry,
+  type DcaStrategyTypeModelSelector,
+} from '../domain/strategy/dcaStrategyTypeModel';
 import { DcaStrategyModelRegistry } from '../strategy/dca/models/dcaStrategyModel';
 import type { DcaStrategyModel } from '../domain/strategy/dca/dcaStrategyModel';
-import type { StrategyTypeModelSelector } from '../domain/strategy/strategyTypeModel';
 import { DcaStrategyService } from '../strategy/dca/dcaStrategyService';
 
 export class ApplicationContext {
@@ -19,7 +21,7 @@ export class ApplicationContext {
   readonly exchangeModels: ExchangeModelSelector;
   readonly balanceModes: BalanceModeModelSelector;
   readonly executionModes: ExecutionModeModelSelector;
-  readonly strategyTypes: StrategyTypeModelSelector;
+  readonly strategyTypes: DcaStrategyTypeModelSelector;
   readonly dcaStrategyModel: DcaStrategyModel;
   readonly dcaStrategy: DcaStrategyService;
 

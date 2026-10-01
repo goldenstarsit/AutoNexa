@@ -1,5 +1,4 @@
 import type {
-  StrategyTypeId,
   StrategyTypeModel,
   StrategyTypeModelSelector,
 } from './strategyTypeModel';
@@ -18,8 +17,12 @@ export class DcaStrategyTypeModelImpl implements DcaStrategyTypeModel {
   constructor(readonly strategy: DcaStrategyModel) {}
 }
 
-export class StrategyTypeModelRegistry implements StrategyTypeModelSelector {
-  private readonly models = new Map<StrategyTypeId, StrategyTypeModel>();
+export interface DcaStrategyTypeModelSelector extends StrategyTypeModelSelector {
+  get(id: 'dca'): DcaStrategyTypeModel;
+}
+
+export class StrategyTypeModelRegistry implements DcaStrategyTypeModelSelector {
+  private readonly models = new Map<string, DcaStrategyTypeModel>();
 
   constructor(dcaStrategy: DcaStrategyModel | (() => DcaStrategyModel)) {
     const strategy =
@@ -29,7 +32,7 @@ export class StrategyTypeModelRegistry implements StrategyTypeModelSelector {
     this.models.set(dca.id, dca);
   }
 
-  get(id: StrategyTypeId): StrategyTypeModel {
+  get(id: 'dca'): DcaStrategyTypeModel {
     const model = this.models.get(id);
 
     if (!model) {
