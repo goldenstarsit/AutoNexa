@@ -4,6 +4,11 @@ import type {
   ExchangeOrderRequest,
 } from '../../domain/exchange/exchangeOrder';
 import type { ExchangeTrade } from '../../domain/exchange/exchangeTrade';
+import type {
+  DcaRuntimeOrderModel as DcaRuntimeOrderDomainModel,
+  DcaRuntimeOrderFillModel,
+} from '../../domain/strategy/dca/dcaRuntimeOrderModel';
+import { DcaRuntimeOrderModel } from './models/dcaRuntimeOrderModel';
 
 export interface DcaRuntimeOrderRecord {
   id: string;
@@ -67,7 +72,7 @@ export class DcaOrderRepository {
   getByCycleAndLevel(
     cycleId: string,
     level: number,
-  ): DcaRuntimeOrderRecord | undefined {
+  ): DcaRuntimeOrderDomainModel | undefined {
     const row = this.db.get<RuntimeOrderRow>(
       `
         SELECT *
@@ -78,7 +83,16 @@ export class DcaOrderRepository {
       level,
     );
 
-    return row ? this.mapOrder(row) : undefined;
+    if (!row) {
+      return undefined;
+    }
+
+    return new DcaRuntimeOrderModel(
+      this.mapOrder(row),
+      this.getFillsByCycle(cycleId).filter(
+        (fill) => fill.dcaRuntimeOrderId === row.id,
+      ),
+    );
   }
 
   saveOrder(
@@ -88,7 +102,7 @@ export class DcaOrderRepository {
     level: number,
     order: ExchangeOrder,
     request: ExchangeOrderRequest,
-  ): DcaRuntimeOrderRecord {
+  ): DcaRuntimeOrderDomainModel {
     if (this.getByCycleAndLevel(cycleId, level)) {
       throw new Error(
         `DCA runtime order already exists: ${cycleId}:level-${level}`,

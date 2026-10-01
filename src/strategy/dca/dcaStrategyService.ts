@@ -1,8 +1,10 @@
 import type { DatabaseModel } from '../../domain/database/databaseModel';
 import type { DcaConfigurationModel } from '../../domain/strategy/dca/dcaConfigurationModel';
 import type { DcaStrategyRuntime } from '../../domain/strategy/dca/dcaStrategyRuntime';
+import type { DcaRuntimeOrderModelSelector } from '../../domain/strategy/dca/dcaRuntimeOrderModel';
 import { DcaCycleService } from './dcaCycleService';
 import { DcaInitialOrderService } from './dcaInitialOrderService';
+import { DcaRuntimeOrderModelSelectorImpl } from './models/dcaRuntimeOrderModelSelector';
 import { DcaOrderRepository } from './dcaOrderRepository';
 import { DcaOrderService } from './dcaOrderService';
 import { DcaStopLossService } from './dcaStopLossService';
@@ -35,7 +37,7 @@ export class DcaStrategyService implements DcaStrategyRuntime {
   private readonly cycleService: DcaCycleService;
   private readonly initialOrderService: DcaInitialOrderService;
   private readonly orderService: DcaOrderService;
-  private readonly orderRepository: DcaOrderRepository;
+  private readonly orderRepository: DcaRuntimeOrderModelSelector;
   private readonly takeProfitService: DcaTakeProfitService;
   private readonly stopLossService: DcaStopLossService;
 
@@ -57,7 +59,7 @@ export class DcaStrategyService implements DcaStrategyRuntime {
       db,
       this.getConfigurationModel,
     );
-    this.orderRepository = new DcaOrderRepository(db);
+    this.orderRepository = new DcaRuntimeOrderModelSelectorImpl(new DcaOrderRepository(db));
     this.takeProfitService = new DcaTakeProfitService(
       db,
       this.getConfigurationModel,

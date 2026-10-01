@@ -4,6 +4,7 @@ import type { BalanceModeModel } from '../../domain/balance/balanceModeModel';
 import type { ExchangeModel } from '../../domain/exchange/exchangeModel';
 import type { ExchangeOrder, ExchangeOrderRequest } from '../../domain/exchange/exchangeOrder';
 import type { ExchangeTrade } from '../../domain/exchange/exchangeTrade';
+import type { DcaRuntimeOrderModel } from '../../domain/strategy/dca/dcaRuntimeOrderModel';
 import {
   calculateTradeFillTotals,
   combineTradeFillTotals,
@@ -37,6 +38,12 @@ export class DcaOrderService {
   private readonly cycleService: DcaCycleService;
   private readonly tradingRuleResolver: DcaTradingRuleResolver;
   private readonly orderRepository: DcaOrderRepository;
+  private readonly runtimeOrderModels: {
+    getByCycleAndLevel(
+      cycleId: string,
+      level: number,
+    ): DcaRuntimeOrderModel | undefined;
+  };
 
   constructor(
     private readonly db: DatabaseModel,
@@ -52,6 +59,7 @@ export class DcaOrderService {
     );
     this.tradingRuleResolver = new DcaTradingRuleResolver();
     this.orderRepository = new DcaOrderRepository(db);
+    this.runtimeOrderModels = this.orderRepository;
   }
 
   async prepare(
@@ -153,7 +161,7 @@ export class DcaOrderService {
     trades: ExchangeTrade[];
   }> {
     if (
-      this.orderRepository.getByCycleAndLevel(
+      this.runtimeOrderModels.getByCycleAndLevel(
         preparation.cycleId,
         preparation.level,
       )
