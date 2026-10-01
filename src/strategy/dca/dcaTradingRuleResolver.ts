@@ -1,4 +1,4 @@
-import type { ExchangeTradingRules } from '../../exchange/market/exchangeTradingRules';
+import type { ExchangeTradingRules } from '../../domain/exchange/exchangeTradingRules';
 import type { ExchangeModel } from '../../domain/exchange/exchangeModel';
 
 export interface DcaTradingRuleResolution {

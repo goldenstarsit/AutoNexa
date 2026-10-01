@@ -1,12 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import type { DatabaseModel } from '../../domain/database/databaseModel';
 import type { ExchangeSymbolInfo } from '../market/exchangeMarket';
-import type { ExchangeTrade } from '../trade/exchangeTrade';
+import type { ExchangeTrade } from '../../domain/exchange/exchangeTrade';
 import type {
   ExchangeOrder,
   ExchangeOrderRequest,
   ExchangeOrderStatus,
-} from './exchangeOrder';
+} from '../../domain/exchange/exchangeOrder';
 import { TestBalanceService } from '../account/testBalanceService';
 import { compareDecimalAmounts, multiplyDecimalAmounts } from '../account/decimalAmount';
 import { TestOrderRepository, type TestOrderRecord, type TestOrderTradeRecord } from './testOrderRepository';

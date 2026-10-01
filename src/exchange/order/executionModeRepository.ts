@@ -1,5 +1,5 @@
 import type { DatabaseModel } from '../../domain/database/databaseModel';
-import type { ExchangeOrderExecutionMode } from './exchangeOrder';
+import type { ExchangeOrderExecutionMode } from '../../domain/exchange/exchangeOrder';
 import type { ExecutionModeProvider } from '../../domain/execution/executionModeProvider';
 
 export interface ExecutionModeRecord {

@@ -1,4 +1,4 @@
-import type { ExchangeAccount } from '../../exchange/account/exchangeAccount';
+import type { ExchangeAccount } from '../../domain/exchange/exchangeAccount';
 
 export type BalanceModeId = 'live' | 'test';
 

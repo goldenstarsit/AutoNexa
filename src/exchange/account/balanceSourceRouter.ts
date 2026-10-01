@@ -1,4 +1,4 @@
-import type { ExchangeAccount } from './exchangeAccount';
+import type { ExchangeAccount } from '../../domain/exchange/exchangeAccount';
 import type { ExchangeBalanceMode } from './balanceMode';
 import type { BalanceSource } from './balanceSource';
 

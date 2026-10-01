@@ -1,7 +1,7 @@
 import type {
   ExchangeOrder,
   ExchangeOrderRequest,
-} from './exchangeOrder';
+} from '../../domain/exchange/exchangeOrder';
 
 export type OrderExecutionAttemptType = 'maker' | 'taker';
 

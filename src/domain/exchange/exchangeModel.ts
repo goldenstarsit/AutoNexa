@@ -1,4 +1,4 @@
-import type { ExchangeAccount } from '../../exchange/account/exchangeAccount';
+import type { ExchangeAccount } from '../../domain/exchange/exchangeAccount';
 import type {
   BalanceModeId,
   BalanceModeModel,
@@ -8,9 +8,9 @@ import type {
 import type {
   ExchangeOrder,
   ExchangeOrderRequest,
-} from '../../exchange/order/exchangeOrder';
-import type { ExchangeTrade } from '../../exchange/trade/exchangeTrade';
-import type { ExchangeTradingRules } from '../../exchange/market/exchangeTradingRules';
+} from '../../domain/exchange/exchangeOrder';
+import type { ExchangeTrade } from '../../domain/exchange/exchangeTrade';
+import type { ExchangeTradingRules } from '../../domain/exchange/exchangeTradingRules';
 
 export type ExchangeId = string;
 

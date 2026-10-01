@@ -1,4 +1,4 @@
-import type { ExchangeOrder } from '../../order/exchangeOrder';
+import type { ExchangeOrder } from '../../../domain/exchange/exchangeOrder';
 
 export function normalizeMexcOrderType(
   type: string,

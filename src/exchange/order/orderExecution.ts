@@ -2,7 +2,7 @@ import type {
   ExchangeOrderExecutionMode,
   ExchangeOrderRequest,
   ExchangeOrderType,
-} from './exchangeOrder';
+} from '../../domain/exchange/exchangeOrder';
 
 export interface OrderExecutionPlan {
   mode: ExchangeOrderExecutionMode;

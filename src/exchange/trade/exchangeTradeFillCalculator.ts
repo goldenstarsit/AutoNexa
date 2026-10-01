@@ -1,4 +1,4 @@
-import type { ExchangeTrade } from './exchangeTrade';
+import type { ExchangeTrade } from '../../domain/exchange/exchangeTrade';
 
 export interface TradeFillTotals {
   quantity: string;

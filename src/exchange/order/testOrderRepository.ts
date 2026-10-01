@@ -1,5 +1,5 @@
 import type { DatabaseModel } from '../../domain/database/databaseModel';
-import type { ExchangeOrderStatus, ExchangeOrderType, ExchangeOrderExecutionMode, ExchangeOrderSide } from './exchangeOrder';
+import type { ExchangeOrderStatus, ExchangeOrderType, ExchangeOrderExecutionMode, ExchangeOrderSide } from '../../domain/exchange/exchangeOrder';
 
 export interface TestOrderRecord {
   id: string;

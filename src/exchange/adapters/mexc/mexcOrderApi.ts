@@ -1,5 +1,5 @@
-import type { ExchangeOrder, ExchangeOrderRequest } from '../../order/exchangeOrder';
-import type { ExchangeTrade } from '../../trade/exchangeTrade';
+import type { ExchangeOrder, ExchangeOrderRequest } from '../../../domain/exchange/exchangeOrder';
+import type { ExchangeTrade } from '../../../domain/exchange/exchangeTrade';
 import { MexcPrivateApiClient } from './mexcPrivateApiClient';
 import { MexcMarketApi } from './mexcMarketApi';
 import { mapDefinedMexcSymbolInfo } from './mexcMarketMapper';

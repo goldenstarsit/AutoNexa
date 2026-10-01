@@ -1,10 +1,10 @@
-import type { ExchangeAccount } from './account/exchangeAccount';
+import type { ExchangeAccount } from '../domain/exchange/exchangeAccount';
 import type { TestBalanceOperations } from './account/testBalanceOperations';
 import type { ExchangeBalanceMode } from './account/balanceMode';
-import type { ExchangeOrder, ExchangeOrderRequest } from './order/exchangeOrder';
-import type { ExchangeTrade } from './trade/exchangeTrade';
+import type { ExchangeOrder, ExchangeOrderRequest } from '../domain/exchange/exchangeOrder';
+import type { ExchangeTrade } from '../domain/exchange/exchangeTrade';
 import type { ExchangeSymbolInfo } from './market/exchangeMarket';
-import type { ExchangeTradingRules } from './market/exchangeTradingRules';
+import type { ExchangeTradingRules } from '../domain/exchange/exchangeTradingRules';
 import type { ExchangeCapabilities } from './exchangeCapabilities';
 import type { ExchangeHealth } from './exchangeHealth';
 

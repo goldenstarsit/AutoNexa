@@ -1,4 +1,4 @@
-import type { ExchangeOrderStatus } from '../../order/exchangeOrder';
+import type { ExchangeOrderStatus } from '../../../domain/exchange/exchangeOrder';
 
 export type MexcOrderStatus =
   | 'NEW'

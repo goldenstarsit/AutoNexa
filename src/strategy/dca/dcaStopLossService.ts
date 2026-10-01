@@ -1,7 +1,7 @@
 import type { DatabaseModel } from '../../domain/database/databaseModel';
 import type { DcaConfigurationModel } from '../../domain/strategy/dca/dcaConfigurationModel';
-import type { ExchangeOrder } from '../../exchange/order/exchangeOrder';
-import type { ExchangeTrade } from '../../exchange/trade/exchangeTrade';
+import type { ExchangeOrder } from '../../domain/exchange/exchangeOrder';
+import type { ExchangeTrade } from '../../domain/exchange/exchangeTrade';
 import { DcaCycleService } from './dcaCycleService';
 import { DcaExitOrderRepository } from './dcaExitOrderRepository';
 import {
@@ -113,7 +113,7 @@ export class DcaStopLossService {
     const executionMode = context.configuration.executionMode.id;
 
 
-    const request: import('../../exchange/order/exchangeOrder').ExchangeOrderRequest = {
+    const request: import('../../domain/exchange/exchangeOrder').ExchangeOrderRequest = {
       symbol: context.configuration.symbol,
       side: 'sell',
       type: 'market',

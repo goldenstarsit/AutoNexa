@@ -2,8 +2,8 @@ import type { DatabaseModel } from '../../domain/database/databaseModel';
 import type {
   ExchangeOrder,
   ExchangeOrderRequest,
-} from '../../exchange/order/exchangeOrder';
-import type { ExchangeTrade } from '../../exchange/trade/exchangeTrade';
+} from '../../domain/exchange/exchangeOrder';
+import type { ExchangeTrade } from '../../domain/exchange/exchangeTrade';
 
 export type DcaExitType = 'stopLoss' | 'takeProfit';
 

@@ -2,11 +2,11 @@ import type { DatabaseModel } from '../../domain/database/databaseModel';
 import type { DcaConfigurationModel } from '../../domain/strategy/dca/dcaConfigurationModel';
 import type { BalanceModeModel } from '../../domain/balance/balanceModeModel';
 import type { ExchangeModel } from '../../domain/exchange/exchangeModel';
-import type { ExchangeTrade } from '../../exchange/trade/exchangeTrade';
+import type { ExchangeTrade } from '../../domain/exchange/exchangeTrade';
 import type {
   ExchangeOrder,
   ExchangeOrderRequest,
-} from '../../exchange/order/exchangeOrder';
+} from '../../domain/exchange/exchangeOrder';
 import { calculateTradeFillTotals } from '../../exchange/trade/exchangeTradeFillCalculator';
 import { DcaCycleService } from './dcaCycleService';
 import { DcaTradingRuleResolver } from './dcaTradingRuleResolver';

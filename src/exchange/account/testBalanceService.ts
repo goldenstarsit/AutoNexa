@@ -1,5 +1,5 @@
 import type { DatabaseModel } from '../../domain/database/databaseModel';
-import type { ExchangeAccount } from './exchangeAccount';
+import type { ExchangeAccount } from '../../domain/exchange/exchangeAccount';
 import { TestBalanceRepository } from './testBalanceRepository';
 import type { BalanceSource } from './balanceSource';
 import type { TestBalanceOperations } from './testBalanceOperations';

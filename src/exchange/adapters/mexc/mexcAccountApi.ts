@@ -1,4 +1,4 @@
-import type { ExchangeAccount } from '../../account/exchangeAccount';
+import type { ExchangeAccount } from '../../../domain/exchange/exchangeAccount';
 import { MexcPrivateApiClient } from './mexcPrivateApiClient';
 
 export interface MexcAccountResponse {

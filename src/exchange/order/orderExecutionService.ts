@@ -1,7 +1,7 @@
 import type {
   ExchangeOrder,
   ExchangeOrderRequest,
-} from './exchangeOrder';
+} from '../../domain/exchange/exchangeOrder';
 import { createOrderExecutionPlan } from './orderExecution';
 import { classifyMakerFailure, shouldFallbackToTaker } from './makerFailure';
 import type {

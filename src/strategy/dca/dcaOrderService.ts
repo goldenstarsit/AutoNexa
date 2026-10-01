@@ -2,8 +2,8 @@ import type { DatabaseModel } from '../../domain/database/databaseModel';
 import type { DcaConfigurationModel } from '../../domain/strategy/dca/dcaConfigurationModel';
 import type { BalanceModeModel } from '../../domain/balance/balanceModeModel';
 import type { ExchangeModel } from '../../domain/exchange/exchangeModel';
-import type { ExchangeOrder, ExchangeOrderRequest } from '../../exchange/order/exchangeOrder';
-import type { ExchangeTrade } from '../../exchange/trade/exchangeTrade';
+import type { ExchangeOrder, ExchangeOrderRequest } from '../../domain/exchange/exchangeOrder';
+import type { ExchangeTrade } from '../../domain/exchange/exchangeTrade';
 import {
   calculateTradeFillTotals,
   combineTradeFillTotals,

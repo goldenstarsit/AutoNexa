@@ -1,4 +1,4 @@
-import type { ExchangeOrderRequest } from '../../order/exchangeOrder';
+import type { ExchangeOrderRequest } from '../../../domain/exchange/exchangeOrder';
 import type { ExchangeSymbolInfo } from '../../market/exchangeMarket';
 
 export function validateMexcOrder(

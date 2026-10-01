@@ -1,5 +1,5 @@
 import type { DatabaseModel } from '../../domain/database/databaseModel';
-import type { ExchangeAssetBalance } from './exchangeAccount';
+import type { ExchangeAssetBalance } from '../../domain/exchange/exchangeAccount';
 
 interface TestBalanceRow {
   exchange_id: string;
