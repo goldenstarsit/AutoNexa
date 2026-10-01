@@ -20,7 +20,9 @@ export async function GET(
   const { exchangeId } = await context.params;
 
   return withApplicationContext(async (app) => {
-    const account = await app.exchangeModels.get(exchangeId).getAccount('test');
+    const exchange = app.exchangeModels.get(exchangeId);
+    const balanceMode = exchange.balanceModes.get('test');
+    const account = await balanceMode.source.getAccount();
 
     return NextResponse.json({
       exchangeId,
@@ -66,13 +68,20 @@ export async function POST(
     return withApplicationContext(async (app) => {
       const asset = body.asset.trim().toUpperCase();
 
-      if (body.action === 'deposit') {
-        app.exchangeModels.get(exchangeId).depositTestBalance(asset, body.amount);
-      } else {
-        app.exchangeModels.get(exchangeId).withdrawTestBalance(asset, body.amount);
-      }
+        const exchange = app.exchangeModels.get(exchangeId);
+        const balanceMode = exchange.balanceModes.get('test');
 
-      const account = await app.exchangeModels.get(exchangeId).getAccount('test');
+        if (!balanceMode.testOperations) {
+          throw new Error(`Test balance operations are unavailable: ${exchangeId}`);
+        }
+
+        if (body.action === 'deposit') {
+          balanceMode.testOperations.depositTestBalance(asset, body.amount);
+        } else {
+          balanceMode.testOperations.withdrawTestBalance(asset, body.amount);
+        }
+
+        const account = await balanceMode.source.getAccount();
 
       return NextResponse.json({
         exchangeId,

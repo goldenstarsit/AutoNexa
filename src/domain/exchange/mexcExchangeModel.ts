@@ -1,4 +1,5 @@
 import type { DatabaseModel } from '../database/databaseModel';
+import { ExchangeBalanceModeModelRegistry } from '../balance/exchangeBalanceModeModels';
 import { MexcExchangeAdapter } from '../../exchange/adapters/mexcExchangeAdapter';
 import type { ExchangeId } from './exchangeModel';
 import type { ExecutionModeProvider } from '../execution/executionModeProvider';
@@ -8,6 +9,7 @@ export class MexcExchangeModel implements ExchangeModel {
   readonly id: ExchangeId = 'mexc';
   readonly name = 'MEXC';
   readonly enabled = true;
+  readonly balanceModes: ExchangeBalanceModeModelRegistry;
 
   private readonly adapter: MexcExchangeAdapter;
 
@@ -16,6 +18,7 @@ export class MexcExchangeModel implements ExchangeModel {
     executionModeProvider?: ExecutionModeProvider,
   ) {
     this.adapter = new MexcExchangeAdapter(db, executionModeProvider);
+    this.balanceModes = new ExchangeBalanceModeModelRegistry(this);
   }
 
   placeOrder(

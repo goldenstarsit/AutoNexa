@@ -1,5 +1,10 @@
 import type { ExchangeAccount } from '../../exchange/account/exchangeAccount';
-import type { BalanceModeId, TestBalanceOperationsModel } from '../balance/balanceModeModel';
+import type {
+  BalanceModeId,
+  BalanceModeModel,
+  BalanceModeModelSelector,
+  TestBalanceOperationsModel,
+} from '../balance/balanceModeModel';
 import type {
   ExchangeOrder,
   ExchangeOrderRequest,
@@ -13,6 +18,7 @@ export interface ExchangeModel {
   readonly id: ExchangeId;
   readonly name: string;
   readonly enabled: boolean;
+  readonly balanceModes: BalanceModeModelSelector;
 
   getTradingRules(
     symbol: string,
