@@ -24,6 +24,8 @@ import { DcaOrderRepository } from '../strategy/dca/dcaOrderRepository';
 import { DcaRuntimeOrderModelSelectorImpl } from '../strategy/dca/models/dcaRuntimeOrderModelSelector';
 import { DcaExitOrderPersistenceModelImpl } from '../strategy/dca/models/dcaExitOrderPersistenceModel';
 import { DcaExitOrderRepository } from '../strategy/dca/dcaExitOrderRepository';
+import { DcaInitialOrderRepository } from '../strategy/dca/dcaInitialOrderRepository';
+import { DcaInitialOrderPersistenceModelImpl } from '../strategy/dca/models/dcaInitialOrderPersistenceModel';
 
 export class ApplicationContext {
   readonly database: DatabaseModel;
@@ -64,6 +66,9 @@ export class ApplicationContext {
     const exitOrderPersistence = new DcaExitOrderPersistenceModelImpl(
       new DcaExitOrderRepository(this.database),
     );
+    const initialOrderPersistence = new DcaInitialOrderPersistenceModelImpl(
+      new DcaInitialOrderRepository(this.database),
+    );
     const runtimeOrderModels = new DcaRuntimeOrderModelSelectorImpl(
       runtimeOrderRepository,
     );
@@ -72,6 +77,7 @@ export class ApplicationContext {
       cyclePersistence,
       runtimeOrderPersistence,
       exitOrderPersistence,
+      initialOrderPersistence,
       runtimeOrderModels,
       (configurationId) =>
         dcaStrategyModelRef.current!.instances.get(configurationId),

@@ -40,6 +40,8 @@ export interface ExchangeAdapter extends TestBalanceOperations {
   getSymbols(): Promise<ExchangeSymbolInfo[]>;
   getTradingRules(symbol: string): Promise<ExchangeTradingRules | undefined>;
   getCurrentPrice(symbol: string): Promise<string>;
+  getBestBidPrice(symbol: string): Promise<string>;
+  getBestAskPrice(symbol: string): Promise<string>;
   getCapabilities(): Promise<ExchangeCapabilities>;
   getHealth(): Promise<ExchangeHealth>;
 }

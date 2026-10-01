@@ -139,6 +139,30 @@ export class TestOrderRepository {
     );
   }
 
+  updateOrder(
+    orderId: string,
+    status: ExchangeOrderStatus,
+    executedQuantity: string,
+    averageFillPrice?: string,
+  ): void {
+    this.db.run(
+      `
+        UPDATE test_orders
+        SET
+          status = ?,
+          executed_quantity = ?,
+          average_fill_price = COALESCE(?, average_fill_price),
+          updated_at = ?
+        WHERE id = ?
+      `,
+      status,
+      executedQuantity,
+      averageFillPrice ?? null,
+      new Date().toISOString(),
+      orderId,
+    );
+  }
+
   saveTrades(trades: TestOrderTradeRecord[]): void {
     for (const trade of trades) {
       this.db.run(

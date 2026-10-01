@@ -7,7 +7,12 @@ import { DcaInitialOrderService } from './dcaInitialOrderService';
 import type { DcaRuntimeOrderPersistenceModel } from '../../domain/strategy/dca/dcaRuntimeOrderModel';
 import { DcaOrderService } from './dcaOrderService';
 import { DcaStopLossService } from './dcaStopLossService';
-import type { DcaExitOrderPersistenceModel } from '../../domain/strategy/dca/dcaExitOrderModel';
+import type {
+  DcaExitOrderModelSelector,
+  DcaExitOrderPersistenceModel,
+} from '../../domain/strategy/dca/dcaExitOrderModel';
+import { DcaExitOrderModelSelectorImpl } from './models/dcaExitOrderModelSelector';
+import type { DcaInitialOrderPersistenceModel } from '../../domain/strategy/dca/dcaInitialOrderModel';
 import { DcaTakeProfitService } from './dcaTakeProfitService';
 import {
   calculateDcaTriggerLevels,
@@ -32,6 +37,9 @@ export interface DcaStrategyProcessResult {
   executedDcaLevels: number[];
   reachedDcaLevels: DcaLevelEvaluation[];
   nextCycle?: DcaStrategyStartResult;
+  initialOrderPending?: boolean;
+  takeProfitPending?: boolean;
+  stopLossPending?: boolean;
 }
 
 export class DcaStrategyService implements DcaStrategyRuntime {
@@ -41,11 +49,13 @@ export class DcaStrategyService implements DcaStrategyRuntime {
   private readonly orderRepository: DcaRuntimeOrderModelSelector;
   private readonly takeProfitService: DcaTakeProfitService;
   private readonly stopLossService: DcaStopLossService;
+  private readonly exitOrderRepository: DcaExitOrderModelSelector;
 
   constructor(
     cyclePersistence: DcaCyclePersistenceModel,
     runtimeOrderPersistence: DcaRuntimeOrderPersistenceModel,
     exitOrderPersistence: DcaExitOrderPersistenceModel,
+    initialOrderPersistence: DcaInitialOrderPersistenceModel,
     orderRepository: DcaRuntimeOrderModelSelector,
     private readonly getConfigurationModel: (
       configurationId: string,
@@ -54,6 +64,7 @@ export class DcaStrategyService implements DcaStrategyRuntime {
     this.cycleModels = new DcaCycleModelSelector(cyclePersistence);
     this.initialOrderService = new DcaInitialOrderService(
       cyclePersistence,
+      initialOrderPersistence,
       this.getConfigurationModel,
     );
     this.orderService = new DcaOrderService(
@@ -62,6 +73,9 @@ export class DcaStrategyService implements DcaStrategyRuntime {
       this.getConfigurationModel,
     );
     this.orderRepository = orderRepository;
+    this.exitOrderRepository = new DcaExitOrderModelSelectorImpl(
+      exitOrderPersistence,
+    );
     this.takeProfitService = new DcaTakeProfitService(
       cyclePersistence,
       exitOrderPersistence,
@@ -120,9 +134,43 @@ export class DcaStrategyService implements DcaStrategyRuntime {
       );
     }
 
-    const cycle = this.cycleModels.getCurrent(configurationId);
+    let cycle = this.cycleModels.getCurrent(configurationId);
 
-    if (!cycle || cycle.status !== 'active') {
+    if (!cycle) {
+      throw new Error(
+        `DCA configuration has no current cycle: ${configurationId}`,
+      );
+    }
+
+    if (cycle.status === 'pending') {
+      await this.initialOrderService.reconcilePending(configurationId);
+      cycle = this.cycleModels.getCurrent(configurationId);
+
+      if (!cycle) {
+        throw new Error(
+          `DCA configuration has no current cycle after initial-order reconciliation: ${configurationId}`,
+        );
+      }
+
+      if (cycle.status === 'pending') {
+        const currentPrice = await configuration.exchange.getCurrentPrice(
+          configuration.symbol,
+        );
+
+        return {
+          cycleId: cycle.id,
+          cycleNumber: cycle.cycleNumber,
+          currentPrice,
+          takeProfitReached: false,
+          stopLossReached: false,
+          executedDcaLevels: [],
+          reachedDcaLevels: [],
+          initialOrderPending: true,
+        };
+      }
+    }
+
+    if (cycle.status !== 'active') {
       throw new Error(
         `DCA configuration has no active cycle: ${configurationId}`,
       );
@@ -134,12 +182,104 @@ export class DcaStrategyService implements DcaStrategyRuntime {
       );
     }
 
+    const pendingTakeProfit = this.exitOrderRepository.getByCycleAndType(
+      cycle.id,
+      'takeProfit',
+    );
+
+    if (
+      pendingTakeProfit &&
+      (pendingTakeProfit.status === 'open' ||
+        pendingTakeProfit.status === 'partiallyFilled')
+    ) {
+      const execution = await this.takeProfitService.execute(configurationId);
+
+      if (execution.order.status === 'filled') {
+        const nextCycle = await this.start(configurationId);
+
+        return {
+          cycleId: cycle.id,
+          cycleNumber: cycle.cycleNumber,
+          currentPrice: execution.currentPrice,
+          takeProfitReached: true,
+          stopLossReached: false,
+          executedDcaLevels: [],
+          reachedDcaLevels: [],
+          nextCycle,
+        };
+      }
+
+      return {
+        cycleId: cycle.id,
+        cycleNumber: cycle.cycleNumber,
+        currentPrice: execution.currentPrice,
+        takeProfitReached: execution.reached,
+        stopLossReached: false,
+        executedDcaLevels: [],
+        reachedDcaLevels: [],
+        takeProfitPending: true,
+      };
+    }
+
+    const pendingStopLoss = this.exitOrderRepository.getByCycleAndType(
+      cycle.id,
+      'stopLoss',
+    );
+
+    if (
+      pendingStopLoss &&
+      (pendingStopLoss.status === 'open' ||
+        pendingStopLoss.status === 'partiallyFilled')
+    ) {
+      const execution = await this.stopLossService.execute(configurationId);
+
+      if (execution.order.status === 'filled') {
+        const nextCycle = await this.start(configurationId);
+
+        return {
+          cycleId: cycle.id,
+          cycleNumber: cycle.cycleNumber,
+          currentPrice: execution.currentPrice,
+          takeProfitReached: false,
+          stopLossReached: true,
+          executedDcaLevels: [],
+          reachedDcaLevels: [],
+          nextCycle,
+        };
+      }
+
+      return {
+        cycleId: cycle.id,
+        cycleNumber: cycle.cycleNumber,
+        currentPrice: execution.currentPrice,
+        takeProfitReached: false,
+        stopLossReached: execution.reached,
+        executedDcaLevels: [],
+        reachedDcaLevels: [],
+        stopLossPending: true,
+      };
+    }
+
     const takeProfit = await this.takeProfitService.evaluate(
       configurationId,
     );
 
     if (takeProfit.reached) {
-      await this.takeProfitService.execute(configurationId);
+      const execution = await this.takeProfitService.execute(configurationId);
+
+      if (execution.order.status !== 'filled') {
+        return {
+          cycleId: cycle.id,
+          cycleNumber: cycle.cycleNumber,
+          currentPrice: takeProfit.currentPrice,
+          takeProfitReached: true,
+          stopLossReached: false,
+          executedDcaLevels: [],
+          reachedDcaLevels: [],
+          takeProfitPending: true,
+        };
+      }
+
       const nextCycle = await this.start(configurationId);
 
       return {
@@ -157,7 +297,21 @@ export class DcaStrategyService implements DcaStrategyRuntime {
     const stopLoss = await this.stopLossService.evaluate(configurationId);
 
     if (stopLoss.reached) {
-      await this.stopLossService.execute(configurationId);
+      const execution = await this.stopLossService.execute(configurationId);
+
+      if (execution.order.status !== 'filled') {
+        return {
+          cycleId: cycle.id,
+          cycleNumber: cycle.cycleNumber,
+          currentPrice: stopLoss.currentPrice,
+          takeProfitReached: false,
+          stopLossReached: true,
+          executedDcaLevels: [],
+          reachedDcaLevels: [],
+          stopLossPending: true,
+        };
+      }
+
       const nextCycle = await this.start(configurationId);
 
       return {
@@ -185,13 +339,26 @@ export class DcaStrategyService implements DcaStrategyRuntime {
     const executedDcaLevels: number[] = [];
 
     for (const level of reachedDcaLevels) {
-      if (
-        !level.reached ||
-        this.orderRepository.getByCycleAndLevel(
+      if (!level.reached) {
+        continue;
+      }
+
+      const existingOrder = this.orderRepository.getByCycleAndLevel(
+        cycle.id,
+        level.level,
+      );
+
+      if (existingOrder) {
+        const reconciliation = await this.orderService.reconcilePending(
+          configurationId,
           cycle.id,
           level.level,
-        )
-      ) {
+        );
+
+        if (reconciliation.filled) {
+          executedDcaLevels.push(level.level);
+        }
+
         continue;
       }
 

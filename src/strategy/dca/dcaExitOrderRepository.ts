@@ -61,9 +61,25 @@ export class DcaExitOrderRepository {
     order: ExchangeOrder,
     request: ExchangeOrderRequest,
   ): DcaExitOrderDomainModel {
-    if (this.getByCycleAndType(cycleId, exitType)) {
+    const existing = this.getByCycleAndType(cycleId, exitType);
+
+    if (
+      existing &&
+      !['canceled', 'rejected', 'expired'].includes(existing.status)
+    ) {
       throw new Error(
         `DCA exit order already exists: ${cycleId}:${exitType}`,
+      );
+    }
+
+    if (existing) {
+      this.db.run(
+        `DELETE FROM dca_exit_order_fills WHERE dca_exit_order_id = ?`,
+        existing.id,
+      );
+      this.db.run(
+        `DELETE FROM dca_exit_orders WHERE id = ?`,
+        existing.id,
       );
     }
 
@@ -113,6 +129,46 @@ export class DcaExitOrderRepository {
     );
 
     return this.getByCycleAndType(cycleId, exitType)!;
+  }
+
+  updateOrder(
+    exitOrderId: string,
+    order: ExchangeOrder,
+  ): DcaExitOrderDomainModel {
+    const existing = this.db.get<ExitOrderRow>(
+      `SELECT * FROM dca_exit_orders WHERE id = ?`,
+      exitOrderId,
+    );
+
+    if (!existing) {
+      throw new Error(`DCA exit order not found: ${exitOrderId}`);
+    }
+
+    const now = new Date().toISOString();
+
+    this.db.run(
+      `UPDATE dca_exit_orders
+       SET exchange_order_id = ?,
+           client_order_id = ?,
+           status = ?,
+           quantity = ?,
+           executed_quantity = ?,
+           requested_price = ?,
+           average_fill_price = ?,
+           updated_at = ?
+       WHERE id = ?`,
+      order.orderId,
+      order.clientOrderId ?? null,
+      order.status,
+      order.quantity,
+      order.executedQuantity,
+      order.price ?? existing.requested_price,
+      existing.average_fill_price,
+      now,
+      exitOrderId,
+    );
+
+    return this.getByCycleAndType(existing.dca_cycle_id, existing.exit_type)!;
   }
 
   saveFills(

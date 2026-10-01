@@ -38,6 +38,13 @@ export class DcaExitOrderPersistenceModelImpl
     );
   }
 
+  updateOrder(
+    exitOrderId: string,
+    order: Parameters<DcaExitOrderRepository['updateOrder']>[1],
+  ): DcaExitOrderModel {
+    return this.repository.updateOrder(exitOrderId, order);
+  }
+
   saveFills(
     exitOrderId: string,
     trades: Parameters<DcaExitOrderRepository['saveFills']>[1],

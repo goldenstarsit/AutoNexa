@@ -126,6 +126,46 @@ export class DcaOrderRepository {
     return this.getByCycleAndLevel(cycleId, level)!;
   }
 
+  updateOrder(
+    runtimeOrderId: string,
+    order: ExchangeOrder,
+  ): DcaRuntimeOrderDomainModel {
+    const existing = this.db.get<RuntimeOrderRow>(
+      `SELECT * FROM dca_runtime_orders WHERE id = ?`,
+      runtimeOrderId,
+    );
+
+    if (!existing) {
+      throw new Error(`DCA runtime order not found: ${runtimeOrderId}`);
+    }
+
+    const now = new Date().toISOString();
+
+    this.db.run(
+      `UPDATE dca_runtime_orders
+       SET exchange_order_id = ?,
+           client_order_id = ?,
+           status = ?,
+           quantity = ?,
+           executed_quantity = ?,
+           requested_price = ?,
+           average_fill_price = ?,
+           updated_at = ?
+       WHERE id = ?`,
+      order.orderId,
+      order.clientOrderId ?? null,
+      order.status,
+      order.quantity,
+      order.executedQuantity,
+      order.price ?? existing.requested_price,
+      existing.average_fill_price,
+      now,
+      runtimeOrderId,
+    );
+
+    return this.getByCycleAndLevel(existing.dca_cycle_id, existing.level)!;
+  }
+
   saveFills(
     runtimeOrderId: string,
     trades: ExchangeTrade[],

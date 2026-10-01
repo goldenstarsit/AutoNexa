@@ -71,27 +71,36 @@ export class DcaTakeProfitService {
   ): Promise<DcaTakeProfitExecution> {
     const context = await this.prepareEvaluation(configurationId);
 
-    if (!context.evaluation.reached) {
-      throw new Error(
-        `DCA take profit has not been reached: ${configurationId}`,
-      );
-    }
-
+    const exchange = context.configuration.exchange;
     const existing = this.exitOrderRepository.getByCycleAndType(
       context.cycle.id,
       'takeProfit',
     );
 
-    if (existing) {
-      const trades = this.exitOrderRepository.getFills(existing.id);
+    if (
+      existing &&
+      (existing.status === 'open' || existing.status === 'partiallyFilled')
+    ) {
+      const order = await exchange.getOrder(
+        context.configuration.symbol,
+        existing.exchangeOrderId,
+        context.configuration.balanceMode.id,
+      );
 
-      if (
-        existing.status === 'filled' &&
-        trades.length > 0 &&
-        existing.executedQuantity !== '0'
-      ) {
-        this.cycleModels.get(context.cycle.id)?.complete();
+      this.exitOrderPersistence.updateOrder(existing.id, order);
 
+      const trades =
+        order.executedQuantity !== '0'
+          ? await exchange.getOrderTrades(
+              context.configuration.symbol,
+              order.orderId,
+              context.configuration.balanceMode.id,
+            )
+          : [];
+
+      this.exitOrderPersistence.saveFills(existing.id, trades);
+
+      if (order.status !== 'filled') {
         return {
           ...context.evaluation,
           configurationId: context.configuration.id,
@@ -99,21 +108,40 @@ export class DcaTakeProfitService {
           cycleNumber: context.cycle.cycleNumber,
           exchangeId: context.configuration.exchangeId,
           symbol: context.configuration.symbol,
-          order: this.toExchangeOrder(existing),
-          trades: trades.map((trade) => this.toExchangeTrade(trade)),
-          soldQuantity: existing.executedQuantity,
+          order,
+          trades,
+          soldQuantity: order.executedQuantity,
         };
       }
 
+      if (order.executedQuantity === '0' || trades.length === 0) {
+        throw new Error(
+          `Take-profit order is marked filled without trade fills: ${order.orderId}`,
+        );
+      }
+
+      this.cycleModels.get(context.cycle.id)?.complete();
+
+      return {
+        ...context.evaluation,
+        configurationId: context.configuration.id,
+        cycleId: context.cycle.id,
+        cycleNumber: context.cycle.cycleNumber,
+        exchangeId: context.configuration.exchangeId,
+        symbol: context.configuration.symbol,
+        order,
+        trades,
+        soldQuantity: order.executedQuantity,
+      };
+    }
+
+    if (!context.evaluation.reached) {
       throw new Error(
-        `DCA take-profit exit order already exists: ${existing.exchangeOrderId}`,
+        `DCA take profit has not been reached: ${configurationId}`,
       );
     }
 
-    if (
-      !context.cycle.entryQuantity ||
-      context.cycle.entryQuantity === '0'
-    ) {
+    if (!context.cycle.entryQuantity || context.cycle.entryQuantity === '0') {
       throw new Error(
         `DCA cycle has no entry quantity for take profit: ${context.cycle.id}`,
       );
@@ -121,17 +149,25 @@ export class DcaTakeProfitService {
 
     const executionMode = context.configuration.executionMode.id;
 
-
-    const request: import('../../domain/exchange/exchangeOrder').ExchangeOrderRequest =
-      {
-        symbol: context.configuration.symbol,
-        side: 'sell',
-        type: 'market',
-        executionMode,
-        quantity: context.cycle.entryQuantity,
-      };
-
-    const exchange = context.configuration.exchange;
+    const request: import('../../domain/exchange/exchangeOrder').ExchangeOrderRequest = {
+      symbol: context.configuration.symbol,
+      side: 'sell',
+      type:
+        executionMode === 'makerOnly'
+          ? 'makerOnly'
+          : executionMode === 'hybrid'
+            ? 'limit'
+            : 'market',
+      executionMode,
+      quantity: context.cycle.entryQuantity,
+      ...(executionMode === 'makerOnly' || executionMode === 'hybrid'
+        ? {
+            price: await exchange.getBestAskPrice(
+              context.configuration.symbol,
+            ),
+          }
+        : {}),
+    };
 
     const order = await exchange.placeOrder(
       request,
@@ -147,9 +183,17 @@ export class DcaTakeProfitService {
     );
 
     if (order.status !== 'filled') {
-      throw new Error(
-        `Take-profit order was not fully filled: ${order.orderId} (${order.status})`,
-      );
+      return {
+        ...context.evaluation,
+        configurationId: context.configuration.id,
+        cycleId: context.cycle.id,
+        cycleNumber: context.cycle.cycleNumber,
+        exchangeId: context.configuration.exchangeId,
+        symbol: context.configuration.symbol,
+        order,
+        trades: [],
+        soldQuantity: order.executedQuantity,
+      };
     }
 
     if (order.executedQuantity === '0') {

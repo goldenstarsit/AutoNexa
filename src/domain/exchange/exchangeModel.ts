@@ -25,12 +25,21 @@ export interface ExchangeModel {
 
   getCurrentPrice(symbol: string): Promise<string>;
 
+  getBestBidPrice(symbol: string): Promise<string>;
+
+  getBestAskPrice(symbol: string): Promise<string>;
+
   getAccount(
     mode?: BalanceModeId,
   ): Promise<ExchangeAccount>;
 
   placeOrder(
     request: ExchangeOrderRequest,
+    mode?: BalanceModeId,
+  ): Promise<ExchangeOrder>;
+  getOrder(
+    symbol: string,
+    orderId: string,
     mode?: BalanceModeId,
   ): Promise<ExchangeOrder>;
 

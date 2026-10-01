@@ -29,6 +29,14 @@ export class MexcExchangeModel implements ExchangeModel {
     return this.adapter.placeOrder(request, mode);
   }
 
+  getOrder(
+    symbol: Parameters<MexcExchangeAdapter['getOrder']>[0],
+    orderId: Parameters<MexcExchangeAdapter['getOrder']>[1],
+    mode?: Parameters<ExchangeModel['getOrder']>[2],
+  ) {
+    return this.adapter.getOrder(symbol, orderId, mode);
+  }
+
   getOrderTrades(
     symbol: Parameters<MexcExchangeAdapter['getOrderTrades']>[0],
     orderId: Parameters<MexcExchangeAdapter['getOrderTrades']>[1],
@@ -43,6 +51,14 @@ export class MexcExchangeModel implements ExchangeModel {
 
   getCurrentPrice(symbol: string) {
     return this.adapter.getCurrentPrice(symbol);
+  }
+
+  getBestBidPrice(symbol: string) {
+    return this.adapter.getBestBidPrice(symbol);
+  }
+
+  getBestAskPrice(symbol: string) {
+    return this.adapter.getBestAskPrice(symbol);
   }
 
   getAccount(mode?: 'live' | 'test') {

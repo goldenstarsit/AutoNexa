@@ -10,6 +10,9 @@ import { calculateTradeFillTotals } from '../../exchange/trade/exchangeTradeFill
 import type {
   DcaCyclePersistenceModel,
 } from '../../domain/strategy/dca/dcaCycleModel';
+import type {
+  DcaInitialOrderPersistenceModel,
+} from '../../domain/strategy/dca/dcaInitialOrderModel';
 import { DcaCycleModelSelector } from './models/dcaCycleModelSelector';
 import { DcaTradingRuleResolver } from './dcaTradingRuleResolver';
 
@@ -28,7 +31,7 @@ export interface DcaInitialOrderExecution {
   cycleId: string;
   order: ExchangeOrder;
   trades: ExchangeTrade[];
-  initialEntryPrice: string;
+  initialEntryPrice?: string;
 }
 
 export class DcaInitialOrderService {
@@ -37,18 +40,19 @@ export class DcaInitialOrderService {
   ) => DcaConfigurationModel | undefined;
   private readonly tradingRuleResolver: DcaTradingRuleResolver;
   private readonly cycleModels: DcaCycleModelSelector;
+  private readonly persistence: DcaInitialOrderPersistenceModel;
 
   constructor(
     cyclePersistence: DcaCyclePersistenceModel,
+    persistence: DcaInitialOrderPersistenceModel,
     getConfigurationModel: (
       configurationId: string,
     ) => DcaConfigurationModel | undefined,
   ) {
     this.getConfigurationModel = getConfigurationModel;
+    this.persistence = persistence;
     this.tradingRuleResolver = new DcaTradingRuleResolver();
-    this.cycleModels = new DcaCycleModelSelector(
-      cyclePersistence,
-    );
+    this.cycleModels = new DcaCycleModelSelector(cyclePersistence);
   }
 
   async prepare(
@@ -71,7 +75,6 @@ export class DcaInitialOrderService {
 
     const executionMode = configuration.executionMode.id;
 
-
     const rules = await this.tradingRuleResolver.resolve(
       configuration.exchange,
       configuration.symbol,
@@ -85,9 +88,17 @@ export class DcaInitialOrderService {
     const request: ExchangeOrderRequest = {
       symbol: configuration.symbol,
       side: 'buy',
-      type: 'market',
+      type:
+        executionMode === 'makerOnly'
+          ? 'makerOnly'
+          : executionMode === 'hybrid'
+            ? 'limit'
+            : 'market',
       executionMode,
       quantity: rules.minimumQuantity,
+      ...(executionMode === 'makerOnly' || executionMode === 'hybrid'
+        ? { price: await exchange.getBestBidPrice(configuration.symbol) }
+        : {}),
     };
 
     return {
@@ -107,9 +118,7 @@ export class DcaInitialOrderService {
   ): Promise<ExchangeOrder> {
     const preparation = await this.prepare(configurationId);
 
-    const exchange = preparation.exchange;
-
-    return exchange.placeOrder(
+    return preparation.exchange.placeOrder(
       preparation.request,
       preparation.balanceMode,
     );
@@ -122,51 +131,201 @@ export class DcaInitialOrderService {
 
     try {
       const preparation = await this.prepare(configurationId);
-      const exchange = preparation.exchange;
-
-      const order = await exchange.placeOrder(
+      const order = await preparation.exchange.placeOrder(
         preparation.request,
         preparation.balanceMode,
       );
 
-      if (order.status !== 'filled') {
-        throw new Error(
-          `Initial DCA order was not fully filled: ${order.orderId} (${order.status})`,
-        );
-      }
-
-      if (this.isZeroOrNegative(order.executedQuantity)) {
-        throw new Error(
-          `Initial DCA order has no executed quantity: ${order.orderId}`,
-        );
-      }
-
-      const trades = await exchange.getOrderTrades(
-        order.symbol,
-        order.orderId,
-        preparation.balanceMode,
+      const initialOrder = this.persistence.saveOrder(
+        configurationId,
+        cycle.id,
+        order,
+        preparation.request,
       );
 
-      if (trades.length === 0) {
+      const trades = await this.reconcileOrder(
+        preparation.exchange,
+        preparation.balanceMode,
+        initialOrder.id,
+        order,
+      );
+
+      const latestOrder = this.persistence.getByCycle(cycle.id);
+
+      if (!latestOrder) {
+        throw new Error(
+          `Initial DCA order persistence record disappeared: ${cycle.id}`,
+        );
+      }
+
+      if (latestOrder.status !== 'filled') {
+        return {
+          cycleId: cycle.id,
+          order,
+          trades,
+        };
+      }
+
+      const allTrades = trades.length > 0
+        ? trades
+        : await this.getSavedTrades(latestOrder.id);
+
+      if (allTrades.length === 0) {
         throw new Error(
           `Initial DCA order has no trade fills: ${order.orderId}`,
         );
       }
 
-      const initialEntry = calculateTradeFillTotals(trades);
-
-      const activeCycle = cycle.recordInitialEntryPrice(initialEntry);
+      const initialEntry = calculateTradeFillTotals(allTrades);
+      cycle.recordInitialEntryPrice(initialEntry);
 
       return {
-        cycleId: activeCycle.id,
-        order,
-        trades,
+        cycleId: cycle.id,
+        order: this.toExchangeOrder(latestOrder),
+        trades: allTrades,
         initialEntryPrice: initialEntry.averagePrice,
       };
     } catch (error) {
       this.cycleModels.get(cycle.id)?.stop();
       throw error;
     }
+  }
+
+  async reconcilePending(
+    configurationId: string,
+  ): Promise<DcaInitialOrderExecution | undefined> {
+    const cycle = this.cycleModels.getCurrent(configurationId);
+
+    if (!cycle || cycle.status !== 'pending') {
+      return undefined;
+    }
+
+    const initialOrder = this.persistence.getByCycle(cycle.id);
+
+    if (!initialOrder) {
+      throw new Error(
+        `Pending DCA cycle has no initial order: ${cycle.id}`,
+      );
+    }
+
+    const configuration = this.getConfigurationModel(configurationId);
+
+    if (!configuration) {
+      throw new Error(
+        `DCA configuration not found: ${configurationId}`,
+      );
+    }
+
+    const order = await configuration.exchange.getOrder(
+      configuration.symbol,
+      initialOrder.exchangeOrderId,
+      configuration.balanceMode.id,
+    );
+
+    const trades = await this.reconcileOrder(
+      configuration.exchange,
+      configuration.balanceMode.id,
+      initialOrder.id,
+      order,
+    );
+
+    const latestOrder = this.persistence.getByCycle(cycle.id);
+
+    if (!latestOrder) {
+      throw new Error(
+        `Initial DCA order persistence record disappeared: ${cycle.id}`,
+      );
+    }
+
+    if (latestOrder.status !== 'filled') {
+      return {
+        cycleId: cycle.id,
+        order,
+        trades,
+      };
+    }
+
+    const allTrades = trades.length > 0
+      ? trades
+      : await this.getSavedTrades(latestOrder.id);
+
+    if (allTrades.length === 0) {
+      throw new Error(
+        `Initial DCA order has no trade fills: ${latestOrder.exchangeOrderId}`,
+      );
+    }
+
+    const initialEntry = calculateTradeFillTotals(allTrades);
+    cycle.recordInitialEntryPrice(initialEntry);
+
+    return {
+      cycleId: cycle.id,
+      order,
+      trades: allTrades,
+      initialEntryPrice: initialEntry.averagePrice,
+    };
+  }
+
+  private async reconcileOrder(
+    exchange: ExchangeModel,
+    balanceMode: BalanceModeModel['id'],
+    initialOrderId: string,
+    order: ExchangeOrder,
+  ): Promise<ExchangeTrade[]> {
+    this.persistence.updateOrder(initialOrderId, order);
+
+    if (this.isZeroOrNegative(order.executedQuantity)) {
+      return [];
+    }
+
+    const trades = await exchange.getOrderTrades(
+      order.symbol,
+      order.orderId,
+      balanceMode,
+    );
+
+    if (trades.length > 0) {
+      this.persistence.saveFills(initialOrderId, trades);
+    }
+
+    return trades;
+  }
+
+  private async getSavedTrades(
+    initialOrderId: string,
+  ): Promise<ExchangeTrade[]> {
+    return this.persistence.getFills(initialOrderId).map((fill) => ({
+      tradeId: fill.exchangeTradeId,
+      orderId: fill.exchangeOrderId,
+      symbol: fill.symbol,
+      side: fill.side,
+      price: fill.price,
+      quantity: fill.quantity,
+      quoteQuantity: fill.quoteQuantity,
+      timestamp: fill.tradeTimestamp,
+    }));
+  }
+
+  private toExchangeOrder(
+    order: NonNullable<
+      ReturnType<DcaInitialOrderService['persistence']['getByCycle']>
+    >,
+  ): ExchangeOrder {
+    return {
+      orderId: order.exchangeOrderId,
+      ...(order.clientOrderId
+        ? { clientOrderId: order.clientOrderId }
+        : {}),
+      symbol: order.symbol,
+      side: order.side,
+      type: order.type,
+      status: order.status,
+      quantity: order.quantity,
+      executedQuantity: order.executedQuantity,
+      ...(order.requestedPrice
+        ? { price: order.requestedPrice }
+        : {}),
+    };
   }
 
   private isZeroOrNegative(value: string): boolean {

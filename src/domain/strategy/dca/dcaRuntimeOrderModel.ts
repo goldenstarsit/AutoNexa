@@ -95,6 +95,10 @@ export interface DcaRuntimeOrderPersistenceModel {
     request: ExchangeOrderRequest,
   ): DcaRuntimeOrderModel;
 
+  updateOrder(
+    runtimeOrderId: string,
+    order: ExchangeOrder,
+  ): DcaRuntimeOrderModel;
   saveFills(
     runtimeOrderId: string,
     trades: ExchangeTrade[],

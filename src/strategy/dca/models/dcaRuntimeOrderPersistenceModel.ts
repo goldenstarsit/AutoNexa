@@ -45,6 +45,13 @@ export class DcaRuntimeOrderPersistenceModelImpl
     );
   }
 
+  updateOrder(
+    runtimeOrderId: string,
+    order: Parameters<DcaOrderRepository['updateOrder']>[1],
+  ): DcaRuntimeOrderModel {
+    return this.repository.updateOrder(runtimeOrderId, order);
+  }
+
   saveFills(
     runtimeOrderId: string,
     trades: Parameters<DcaOrderRepository['saveFills']>[1],

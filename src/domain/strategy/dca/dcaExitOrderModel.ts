@@ -91,6 +91,10 @@ export interface DcaExitOrderPersistenceModel {
     request: ExchangeOrderRequest,
   ): DcaExitOrderModel;
 
+  updateOrder(
+    exitOrderId: string,
+    order: ExchangeOrder,
+  ): DcaExitOrderModel;
   saveFills(
     exitOrderId: string,
     trades: ExchangeTrade[],

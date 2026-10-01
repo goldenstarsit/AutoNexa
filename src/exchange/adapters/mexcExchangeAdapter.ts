@@ -16,6 +16,7 @@ import { MexcAccountApi } from './mexc/mexcAccountApi';
 import { MexcOrderApi } from './mexc/mexcOrderApi';
 import { MexcMarketApi } from './mexc/mexcMarketApi';
 import { MexcTickerApi } from './mexc/mexcTickerApi';
+import { MexcBookTickerApi } from './mexc/mexcBookTickerApi';
 import { mapDefinedMexcSymbolInfo, mapMexcSymbolInfo } from './mexc/mexcMarketMapper';
 import { OrderExecutionService } from '../order/orderExecutionService';
 import type { ExecutionModeProvider } from '../../domain/execution/executionModeProvider';
@@ -75,6 +76,7 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
 
   private readonly marketApi = new MexcMarketApi();
   private readonly tickerApi = new MexcTickerApi();
+  private readonly bookTickerApi = new MexcBookTickerApi();
 
   private readonly orderApi = new MexcOrderApi(
     this.privateApiClient,
@@ -151,7 +153,15 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
     return this.orderExecutionService.execute(request);
   }
 
-  async getOrder(symbol: string, orderId: string): Promise<ExchangeOrder> {
+  async getOrder(
+    symbol: string,
+    orderId: string,
+    mode: ExchangeBalanceMode = 'live',
+  ): Promise<ExchangeOrder> {
+    if (mode === 'test') {
+      return this.testOrderExecutionService.getOrderAsync(orderId);
+    }
+
     return this.orderApi.getOrder(symbol, orderId);
   }
 
@@ -231,6 +241,26 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
     }
 
     return ticker.price;
+  }
+
+  async getBestBidPrice(symbol: string): Promise<string> {
+    const ticker = await this.bookTickerApi.getBookTicker(symbol);
+
+    if (!ticker.bidPrice || ticker.bidPrice === '0') {
+      throw new Error(`Best bid price is unavailable: ${this.id}:${symbol}`);
+    }
+
+    return ticker.bidPrice;
+  }
+
+  async getBestAskPrice(symbol: string): Promise<string> {
+    const ticker = await this.bookTickerApi.getBookTicker(symbol);
+
+    if (!ticker.askPrice || ticker.askPrice === '0') {
+      throw new Error(`Best ask price is unavailable: ${this.id}:${symbol}`);
+    }
+
+    return ticker.askPrice;
   }
 
   async getTradingRules(

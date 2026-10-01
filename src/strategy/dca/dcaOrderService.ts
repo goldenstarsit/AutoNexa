@@ -121,9 +121,17 @@ export class DcaOrderService {
     const request: ExchangeOrderRequest = {
       symbol: configuration.symbol,
       side: 'buy',
-      type: 'market',
+      type:
+        executionMode === 'makerOnly'
+          ? 'makerOnly'
+          : executionMode === 'hybrid'
+            ? 'limit'
+            : 'market',
       executionMode,
       quantity: rules.minimumQuantity,
+      ...(executionMode === 'makerOnly' || executionMode === 'hybrid'
+        ? { price: await exchange.getBestBidPrice(configuration.symbol) }
+        : {}),
     };
 
     return {
@@ -139,6 +147,91 @@ export class DcaOrderService {
       quantity: rules.minimumQuantity,
       currentPrice,
       request,
+    };
+  }
+
+  async reconcilePending(
+    configurationId: string,
+    cycleId: string,
+    level: number,
+  ): Promise<{ order: ExchangeOrder; trades: ExchangeTrade[]; filled: boolean }> {
+    const configuration = this.getConfigurationModel(configurationId);
+    if (!configuration) {
+      throw new Error(`DCA configuration not found: ${configurationId}`);
+    }
+
+    const runtimeOrder = this.runtimeOrderPersistence.getByCycleAndLevel(
+      cycleId,
+      level,
+    );
+
+    if (!runtimeOrder) {
+      throw new Error(
+        `DCA runtime order not found: ${cycleId}:level-${level}`,
+      );
+    }
+
+    const order = await configuration.exchange.getOrder(
+      configuration.symbol,
+      runtimeOrder.exchangeOrderId,
+      configuration.balanceMode.id,
+    );
+
+    this.runtimeOrderPersistence.updateOrder(runtimeOrder.id, order);
+
+    const trades =
+      order.executedQuantity !== '0'
+        ? await configuration.exchange.getOrderTrades(
+            configuration.symbol,
+            order.orderId,
+            configuration.balanceMode.id,
+          )
+        : [];
+
+    this.runtimeOrderPersistence.saveFills(runtimeOrder.id, trades);
+
+    if (trades.length > 0) {
+      const cycle = this.cycleModels.getCurrent(configurationId);
+      if (!cycle || cycle.id !== cycleId) {
+        throw new Error(`DCA cycle is not current: ${cycleId}`);
+      }
+
+      if (!cycle.entryQuantity || !cycle.entryQuoteQuantity) {
+        throw new Error(`DCA cycle has no initial entry totals: ${cycleId}`);
+      }
+
+      const cycleFills = this.runtimeOrderPersistence.getFillsByCycle(cycleId);
+      const dcaTrades: ExchangeTrade[] = cycleFills.map((fill) => ({
+        tradeId: fill.exchangeTradeId,
+        orderId: fill.exchangeOrderId,
+        symbol: fill.symbol,
+        side: fill.side,
+        price: fill.price,
+        quantity: fill.quantity,
+        quoteQuantity: fill.quoteQuantity,
+        timestamp: fill.tradeTimestamp,
+      }));
+
+      const dcaTotals = calculateTradeFillTotals(dcaTrades);
+      const combinedTotals = combineTradeFillTotals(
+        {
+          quantity: cycle.entryQuantity,
+          quoteQuantity: cycle.entryQuoteQuantity,
+        },
+        dcaTotals,
+      );
+
+      cycle.recordDcaEntryTotals(
+        combinedTotals.quantity,
+        combinedTotals.quoteQuantity,
+        combinedTotals.averagePrice,
+      );
+    }
+
+    return {
+      order,
+      trades,
+      filled: order.status === 'filled',
     };
   }
 
