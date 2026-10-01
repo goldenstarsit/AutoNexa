@@ -51,7 +51,7 @@ export class ApplicationContext {
     const dcaStrategy = new DcaStrategyService(
       this.database,
       (configurationId) =>
-        dcaStrategyModel.getConfiguration(configurationId),
+        dcaStrategyModel.instances.get(configurationId),
     );
 
     dcaStrategyModel = new DcaStrategyModelRegistry(

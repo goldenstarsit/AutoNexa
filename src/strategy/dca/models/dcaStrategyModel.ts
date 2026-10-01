@@ -2,12 +2,14 @@ import type {
   DcaStrategyModel as DcaStrategyDomainModel,
   DcaStrategyRuntimeFactory,
 } from '../../../domain/strategy/dca/dcaStrategyModel';
-import type { DcaConfigurationModel as DcaConfigurationDomainModel } from '../../../domain/strategy/dca/dcaConfigurationModel';
+import type {
+  DcaConfigurationModel as DcaConfigurationDomainModel,
+  DcaConfigurationModelSelector,
+} from '../../../domain/strategy/dca/dcaConfigurationModel';
 import type { BalanceModeModelSelector } from '../../../domain/balance/balanceModeModel';
 import type { ExchangeModelSelector } from '../../../domain/exchange/exchangeModel';
 import type { ExecutionModeModelSelector } from '../../../domain/execution/executionModeModel';
 import type { DatabaseModel } from '../../../domain/database/databaseModel';
-import type { StrategyInstanceModelSelector } from '../../../domain/strategy/strategyInstanceModel';
 import { DcaConfigurationRepository } from '../dcaConfigurationRepository';
 import { DcaConfigurationModel } from './dcaConfigurationModel';
 
@@ -16,7 +18,7 @@ export class DcaStrategyModel implements DcaStrategyDomainModel {
   readonly strategyTypeId = 'dca' as const;
   readonly name = 'DCA';
   readonly enabled = true;
-  readonly instances: StrategyInstanceModelSelector = {
+  readonly instances: DcaConfigurationModelSelector = {
     get: (id) => this.getConfiguration(id),
     getAll: () => this.getConfigurations(),
   };

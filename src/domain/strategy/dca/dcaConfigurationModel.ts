@@ -12,8 +12,8 @@ export interface DcaConfigurationOrderModel {
 }
 
 export interface DcaConfigurationModel extends StrategyInstanceModel {
+  readonly strategy: import('../strategyModel').StrategyModel;
   readonly id: string;
-  readonly strategy: StrategyModel;
   readonly strategyTypeId: 'dca';
   readonly name: string;
   readonly balanceModeId: string;
@@ -29,4 +29,10 @@ export interface DcaConfigurationModel extends StrategyInstanceModel {
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly orders: readonly DcaConfigurationOrderModel[];
+}
+
+
+export interface DcaConfigurationModelSelector {
+  get(id: string): DcaConfigurationModel | undefined;
+  getAll(): readonly DcaConfigurationModel[];
 }

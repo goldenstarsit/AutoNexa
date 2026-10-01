@@ -1,5 +1,8 @@
 import type { StrategyModel, StrategyModelSelector } from '../strategyModel';
-import type { DcaConfigurationModel } from './dcaConfigurationModel';
+import type {
+  DcaConfigurationModel,
+  DcaConfigurationModelSelector,
+} from './dcaConfigurationModel';
 import type {
   DcaStrategyRuntime,
   DcaStrategyStartResult,
@@ -9,6 +12,7 @@ import type {
 export interface DcaStrategyModel extends StrategyModel {
   readonly id: 'dca';
   readonly strategyTypeId: 'dca';
+  readonly instances: DcaConfigurationModelSelector;
 
   getConfiguration(id: string): DcaConfigurationModel | undefined;
   getConfigurations(): readonly DcaConfigurationModel[];
