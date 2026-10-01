@@ -31,6 +31,7 @@ export interface DcaStrategyProcessResult {
   stopLossReached: boolean;
   executedDcaLevels: number[];
   reachedDcaLevels: DcaLevelEvaluation[];
+  nextCycle?: DcaStrategyStartResult;
 }
 
 export class DcaStrategyService implements DcaStrategyRuntime {
@@ -139,6 +140,7 @@ export class DcaStrategyService implements DcaStrategyRuntime {
 
     if (takeProfit.reached) {
       await this.takeProfitService.execute(configurationId);
+      const nextCycle = await this.start(configurationId);
 
       return {
         cycleId: cycle.id,
@@ -148,6 +150,7 @@ export class DcaStrategyService implements DcaStrategyRuntime {
         stopLossReached: false,
         executedDcaLevels: [],
         reachedDcaLevels: [],
+        nextCycle,
       };
     }
 
@@ -155,6 +158,7 @@ export class DcaStrategyService implements DcaStrategyRuntime {
 
     if (stopLoss.reached) {
       await this.stopLossService.execute(configurationId);
+      const nextCycle = await this.start(configurationId);
 
       return {
         cycleId: cycle.id,
@@ -164,6 +168,7 @@ export class DcaStrategyService implements DcaStrategyRuntime {
         stopLossReached: true,
         executedDcaLevels: [],
         reachedDcaLevels: [],
+        nextCycle,
       };
     }
 
