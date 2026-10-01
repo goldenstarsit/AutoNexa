@@ -6,12 +6,6 @@ import type {
   DcaConfigurationModel as DcaConfigurationDomainModel,
   DcaConfigurationModelSelector,
 } from '../../../domain/strategy/dca/dcaConfigurationModel';
-import type { BalanceModeModelSelector } from '../../../domain/balance/balanceModeModel';
-import type { ExchangeModelSelector } from '../../../domain/exchange/exchangeModel';
-import type { ExecutionModeModelSelector } from '../../../domain/execution/executionModeModel';
-import type { DatabaseModel } from '../../../domain/database/databaseModel';
-import { DcaConfigurationRepository } from '../dcaConfigurationRepository';
-import { DcaConfigurationModel } from './dcaConfigurationModel';
 
 export class DcaStrategyModel implements DcaStrategyDomainModel {
   readonly id = 'dca' as const;
@@ -23,32 +17,14 @@ export class DcaStrategyModel implements DcaStrategyDomainModel {
     getAll: () => this.getConfigurations(),
   };
 
-  private readonly repository: DcaConfigurationRepository;
-
   constructor(
-    db: DatabaseModel,
-    private readonly balanceModes: BalanceModeModelSelector,
-    private readonly exchanges: ExchangeModelSelector,
-    private readonly executionModes: ExecutionModeModelSelector,
+    private readonly configurationModels: DcaConfigurationModelSelector,
     private readonly runtimeFactory: DcaStrategyRuntimeFactory,
-  ) {
-    this.repository = new DcaConfigurationRepository(db);
-  }
+  ) {}
 
   getConfiguration(id: string): DcaConfigurationDomainModel | undefined {
-    const record = this.repository.getById(id);
-
-    return record
-      ? new DcaConfigurationModel(
-          record,
-          this,
-          this.balanceModes,
-          this.exchanges,
-          this.executionModes,
-        )
-      : undefined;
+    return this.configurationModels.get(id);
   }
-
 
   async start(configurationId: string) {
     return this.runtimeFactory().start(configurationId);
@@ -59,16 +35,7 @@ export class DcaStrategyModel implements DcaStrategyDomainModel {
   }
 
   getConfigurations(): readonly DcaConfigurationDomainModel[] {
-    return this.repository.getAll().map(
-      (record) =>
-        new DcaConfigurationModel(
-          record,
-          this,
-          this.balanceModes,
-          this.exchanges,
-          this.executionModes,
-        ),
-    );
+    return this.configurationModels.getAll();
   }
 }
 
@@ -76,17 +43,11 @@ export class DcaStrategyModelRegistry {
   private readonly model: DcaStrategyModel;
 
   constructor(
-    db: DatabaseModel,
-    balanceModes: BalanceModeModelSelector,
-    exchanges: ExchangeModelSelector,
-    executionModes: ExecutionModeModelSelector,
+    configurationModels: DcaConfigurationModelSelector,
     runtimeFactory: DcaStrategyRuntimeFactory,
   ) {
     this.model = new DcaStrategyModel(
-      db,
-      balanceModes,
-      exchanges,
-      executionModes,
+      configurationModels,
       runtimeFactory,
     );
   }

@@ -12,6 +12,10 @@ import {
   type DcaStrategyTypeModelSelector,
 } from '../domain/strategy/dcaStrategyTypeModel';
 import { DcaStrategyModelRegistry } from '../strategy/dca/models/dcaStrategyModel';
+import {
+  DcaConfigurationModelSelector,
+} from '../strategy/dca/models/dcaConfigurationModelSelector';
+import { DcaConfigurationRepository } from '../strategy/dca/dcaConfigurationRepository';
 import type { DcaStrategyModel } from '../domain/strategy/dca/dcaStrategyModel';
 import { DcaStrategyService } from '../strategy/dca/dcaStrategyService';
 
@@ -45,7 +49,6 @@ export class ApplicationContext {
       executionModeProvider,
     );
 
-
     let dcaStrategyModel: DcaStrategyModel;
 
     const dcaStrategy = new DcaStrategyService(
@@ -54,11 +57,16 @@ export class ApplicationContext {
         dcaStrategyModel.instances.get(configurationId),
     );
 
-    dcaStrategyModel = new DcaStrategyModelRegistry(
-      this.database,
+    const dcaConfigurationModels = new DcaConfigurationModelSelector(
+      new DcaConfigurationRepository(this.database),
+      () => dcaStrategyModel,
       this.balanceModes,
       this.exchangeModels,
       this.executionModes,
+    );
+
+    dcaStrategyModel = new DcaStrategyModelRegistry(
+      dcaConfigurationModels,
       () => dcaStrategy,
     ).get('dca');
 
