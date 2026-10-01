@@ -7,6 +7,7 @@ import type { BalanceModeModelSelector } from '../../../domain/balance/balanceMo
 import type { ExchangeModelSelector } from '../../../domain/exchange/exchangeModel';
 import type { ExecutionModeModelSelector } from '../../../domain/execution/executionModeModel';
 import type { DatabaseModel } from '../../../domain/database/databaseModel';
+import type { StrategyInstanceModelSelector } from '../../../domain/strategy/strategyInstanceModel';
 import { DcaConfigurationRepository } from '../dcaConfigurationRepository';
 import { DcaConfigurationModel } from './dcaConfigurationModel';
 
@@ -15,6 +16,10 @@ export class DcaStrategyModel implements DcaStrategyDomainModel {
   readonly strategyTypeId = 'dca' as const;
   readonly name = 'DCA';
   readonly enabled = true;
+  readonly instances: StrategyInstanceModelSelector = {
+    get: (id) => this.getConfiguration(id),
+    getAll: () => this.getConfigurations(),
+  };
 
   private readonly repository: DcaConfigurationRepository;
 
@@ -34,6 +39,7 @@ export class DcaStrategyModel implements DcaStrategyDomainModel {
     return record
       ? new DcaConfigurationModel(
           record,
+          this,
           this.balanceModes,
           this.exchanges,
           this.executionModes,
@@ -55,6 +61,7 @@ export class DcaStrategyModel implements DcaStrategyDomainModel {
       (record) =>
         new DcaConfigurationModel(
           record,
+          this,
           this.balanceModes,
           this.exchanges,
           this.executionModes,

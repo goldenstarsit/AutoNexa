@@ -5,10 +5,12 @@ import type { BalanceModeModelSelector } from '../../../domain/balance/balanceMo
 import type { ExchangeModelSelector } from '../../../domain/exchange/exchangeModel';
 import type { ExecutionModeModelSelector } from '../../../domain/execution/executionModeModel';
 import type { DcaConfigurationRecord } from '../dcaConfigurationRepository';
+import type { StrategyModel } from '../../../domain/strategy/strategyModel';
 
 export class DcaConfigurationModel implements DcaConfigurationDomainModel {
   readonly id: string;
   readonly strategyTypeId = 'dca' as const;
+  readonly strategy: StrategyModel;
   readonly name: string;
   readonly balanceModeId: string;
   readonly exchangeId: string;
@@ -26,11 +28,13 @@ export class DcaConfigurationModel implements DcaConfigurationDomainModel {
 
   constructor(
     record: DcaConfigurationRecord,
+    strategy: StrategyModel,
     balanceModes: BalanceModeModelSelector,
     exchanges: ExchangeModelSelector,
     executionModes: ExecutionModeModelSelector,
   ) {
     this.id = record.id;
+    this.strategy = strategy;
     this.name = record.name;
     this.balanceModeId = record.balanceModeId;
     this.exchangeId = record.exchangeId;

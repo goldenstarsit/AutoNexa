@@ -1,4 +1,6 @@
 import type { BalanceModeModel } from '../../balance/balanceModeModel';
+import type { StrategyInstanceModel } from '../strategyInstanceModel';
+import type { StrategyModel } from '../strategyModel';
 import type { ExchangeModel } from '../../exchange/exchangeModel';
 import type { ExecutionModeModel } from '../../execution/executionModeModel';
 
@@ -9,8 +11,9 @@ export interface DcaConfigurationOrderModel {
   readonly dropPercent: string;
 }
 
-export interface DcaConfigurationModel {
+export interface DcaConfigurationModel extends StrategyInstanceModel {
   readonly id: string;
+  readonly strategy: StrategyModel;
   readonly strategyTypeId: 'dca';
   readonly name: string;
   readonly balanceModeId: string;
