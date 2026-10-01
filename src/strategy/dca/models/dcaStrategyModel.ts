@@ -1,5 +1,6 @@
 import type {
   DcaStrategyModel as DcaStrategyDomainModel,
+  DcaStrategyModelSelector as DcaStrategyDomainModelSelector,
   DcaStrategyRuntimeFactory,
 } from '../../../domain/strategy/dca/dcaStrategyModel';
 import type {
@@ -12,6 +13,7 @@ export class DcaStrategyModel implements DcaStrategyDomainModel {
   readonly strategyTypeId = 'dca' as const;
   readonly name = 'DCA';
   readonly enabled = true;
+
   readonly instances: DcaConfigurationModelSelector = {
     get: (id) => this.getConfiguration(id),
     getAll: () => this.getConfigurations(),
@@ -26,6 +28,10 @@ export class DcaStrategyModel implements DcaStrategyDomainModel {
     return this.configurationModels.get(id);
   }
 
+  getConfigurations(): readonly DcaConfigurationDomainModel[] {
+    return this.configurationModels.getAll();
+  }
+
   async start(configurationId: string) {
     return this.runtimeFactory().start(configurationId);
   }
@@ -33,13 +39,11 @@ export class DcaStrategyModel implements DcaStrategyDomainModel {
   async process(configurationId: string) {
     return this.runtimeFactory().process(configurationId);
   }
-
-  getConfigurations(): readonly DcaConfigurationDomainModel[] {
-    return this.configurationModels.getAll();
-  }
 }
 
-export class DcaStrategyModelRegistry {
+export class DcaStrategyModelRegistry
+  implements DcaStrategyDomainModelSelector
+{
   private readonly model: DcaStrategyModel;
 
   constructor(
