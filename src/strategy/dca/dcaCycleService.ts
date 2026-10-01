@@ -1,9 +1,10 @@
 import type { DatabaseModel } from '../../domain/database/databaseModel';
 import type { DcaConfigurationModel } from '../../domain/strategy/dca/dcaConfigurationModel';
+import type { DcaCycleModel as DcaCycleDomainModel } from '../../domain/strategy/dca/dcaCycleModel';
 import {
   DcaCycleRepository,
-  type DcaCycleRecord,
 } from './dcaCycleRepository';
+import { DcaCycleModel } from './models/dcaCycleModel';
 
 export interface DcaInitialEntryTotals {
   quantity: string;
@@ -27,7 +28,7 @@ export class DcaCycleService {
     this.repository = new DcaCycleRepository(db);
   }
 
-  startCycle(configurationId: string): DcaCycleRecord {
+  startCycle(configurationId: string): DcaCycleDomainModel {
     const configuration =
       this.getConfigurationModel(configurationId);
 
@@ -46,37 +47,39 @@ export class DcaCycleService {
     const current = this.repository.getCurrent(configurationId);
     const cycleNumber = current ? current.cycleNumber + 1 : 1;
 
-    return this.repository.create(
-      `${configurationId}-cycle-${cycleNumber}`,
-      configurationId,
-      cycleNumber,
+    return new DcaCycleModel(
+      this.repository.create(
+        `${configurationId}-cycle-${cycleNumber}`,
+        configurationId,
+        cycleNumber,
+      ),
     );
   }
 
   getCurrent(
     configurationId: string,
-  ): DcaCycleRecord | undefined {
-    return this.repository.getCurrent(configurationId);
+  ): DcaCycleDomainModel | undefined {
+    const cycle = this.repository.getCurrent(configurationId);
+    return cycle ? new DcaCycleModel(cycle) : undefined;
   }
 
   recordInitialEntryPrice(
     cycleId: string,
     entry: DcaInitialEntryTotals,
-  ): DcaCycleRecord {
-    return this.repository.setInitialEntryPrice(
+  ): DcaCycleDomainModel {
+    const cycle = this.repository.setInitialEntryPrice(
       cycleId,
       entry.averagePrice,
-    ).id
-      ? this.repository.setEntryTotals(
-          cycleId,
-          entry.quantity,
-          entry.quoteQuantity,
-          entry.averagePrice,
-        )
-      : this.repository.setInitialEntryPrice(
-          cycleId,
-          entry.averagePrice,
-        );
+    );
+
+    const updated = this.repository.setEntryTotals(
+      cycle.id,
+      entry.quantity,
+      entry.quoteQuantity,
+      entry.averagePrice,
+    );
+
+    return new DcaCycleModel(updated);
   }
 
   recordDcaEntryTotals(
@@ -84,7 +87,7 @@ export class DcaCycleService {
     quantity: string,
     quoteQuantity: string,
     averagePrice: string,
-  ): DcaCycleRecord {
+  ): DcaCycleDomainModel {
     const cycle = this.repository.getById(cycleId);
 
     if (!cycle) {
@@ -97,19 +100,25 @@ export class DcaCycleService {
       );
     }
 
-    return this.repository.setEntryTotals(
-      cycleId,
-      quantity,
-      quoteQuantity,
-      averagePrice,
+    return new DcaCycleModel(
+      this.repository.setEntryTotals(
+        cycleId,
+        quantity,
+        quoteQuantity,
+        averagePrice,
+      ),
     );
   }
 
-  completeCycle(cycleId: string): DcaCycleRecord {
-    return this.repository.updateStatus(cycleId, 'completed');
+  completeCycle(cycleId: string): DcaCycleDomainModel {
+    return new DcaCycleModel(
+      this.repository.updateStatus(cycleId, 'completed'),
+    );
   }
 
-  stopCycle(cycleId: string): DcaCycleRecord {
-    return this.repository.updateStatus(cycleId, 'stopped');
+  stopCycle(cycleId: string): DcaCycleDomainModel {
+    return new DcaCycleModel(
+      this.repository.updateStatus(cycleId, 'stopped'),
+    );
   }
 }
