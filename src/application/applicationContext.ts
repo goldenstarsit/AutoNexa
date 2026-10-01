@@ -2,7 +2,6 @@ import type { DatabaseModel } from '../domain/database/databaseModel';
 import { SQLiteDatabaseModelFactory } from '../infrastructure/database/sqliteDatabaseModel';
 import { ExchangeModelRegistry } from '../infrastructure/exchange/mexcExchangeModel';
 import type { ExchangeModel, ExchangeModelSelector } from '../domain/exchange/exchangeModel';
-import { ExchangeBalanceModeModelRegistry } from '../infrastructure/balance/exchangeBalanceModeModels';
 import type { BalanceModeModelSelector } from '../domain/balance/balanceModeModel';
 import { ExecutionModeModelRegistry } from '../infrastructure/execution/executionModeModels';
 import { ExecutionModeRepository } from '../exchange/order/executionModeRepository';
@@ -47,9 +46,7 @@ export class ApplicationContext {
     this.exchangeModels = exchangeRegistry;
     this.exchange = exchangeRegistry.get('mexc');
 
-    this.balanceModes = new ExchangeBalanceModeModelRegistry(
-      this.exchange,
-    );
+    this.balanceModes = this.exchange.balanceModes;
 
     this.executionModes = new ExecutionModeModelRegistry(
       executionModeProvider,
