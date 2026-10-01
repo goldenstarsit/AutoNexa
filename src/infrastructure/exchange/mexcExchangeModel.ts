@@ -1,6 +1,7 @@
 import type { DatabaseModel } from '../../domain/database/databaseModel';
 import { ExchangeBalanceModeModelRegistry } from '../balance/exchangeBalanceModeModels';
 import { MexcExchangeAdapter } from '../../exchange/adapters/mexcExchangeAdapter';
+import type { BalanceModeModelSelector } from '../../domain/balance/balanceModeModel';
 import type { ExchangeId } from '../../domain/exchange/exchangeModel';
 import type { ExecutionModeProvider } from '../../domain/execution/executionModeProvider';
 import type { ExchangeModel, ExchangeModelSelector } from '../../domain/exchange/exchangeModel';
@@ -9,7 +10,7 @@ export class MexcExchangeModel implements ExchangeModel {
   readonly id: ExchangeId = 'mexc';
   readonly name = 'MEXC';
   readonly enabled = true;
-  readonly balanceModes: ExchangeBalanceModeModelRegistry;
+  readonly balanceModes: BalanceModeModelSelector;
 
   private readonly adapter: MexcExchangeAdapter;
 
