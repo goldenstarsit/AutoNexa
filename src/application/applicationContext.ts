@@ -8,8 +8,9 @@ import { ExecutionModeRepository } from '../exchange/order/executionModeReposito
 import type { ExecutionModeModelSelector } from '../domain/execution/executionModeModel';
 import {
   StrategyTypeModelRegistry,
-  type DcaStrategyTypeModelSelector,
-} from '../domain/strategy/dcaStrategyTypeModel';
+  type StrategyTypeModelSelector,
+} from '../domain/strategy/strategyTypeModel';
+import type { DcaStrategyTypeModelSelector } from '../domain/strategy/dcaStrategyTypeModel';
 import { DcaStrategyModelRegistry } from '../strategy/dca/models/dcaStrategyModel';
 import { DcaConfigurationModelSelector } from '../strategy/dca/models/dcaConfigurationModelSelector';
 import { DcaConfigurationPersistenceModelImpl } from '../strategy/dca/models/dcaConfigurationPersistenceModel';
@@ -30,7 +31,7 @@ export class ApplicationContext {
   readonly exchangeModels: ExchangeModelSelector;
   readonly balanceModes: BalanceModeModelSelector;
   readonly executionModes: ExecutionModeModelSelector;
-  readonly strategyTypes: DcaStrategyTypeModelSelector;
+  readonly strategyTypes: StrategyTypeModelSelector & DcaStrategyTypeModelSelector;
   readonly dcaStrategyModel: DcaStrategyModel;
 
   constructor() {
@@ -94,9 +95,29 @@ export class ApplicationContext {
     dcaStrategyModelRef.current = dcaStrategyModel;
     this.dcaStrategyModel = dcaStrategyModel;
 
-    this.strategyTypes = new StrategyTypeModelRegistry(
-      dcaStrategyModel,
-    );
+    const strategyTypeRegistry = new StrategyTypeModelRegistry([
+      {
+        id: 'dca',
+        name: 'DCA',
+        enabled: true,
+        strategy: dcaStrategyModel,
+      },
+    ]);
+
+    this.strategyTypes = {
+      get: (id: 'dca') => {
+        const model = strategyTypeRegistry.get(id);
+        if (model.id !== 'dca') {
+          throw new Error(`Unsupported strategy type: ${id}`);
+        }
+        return {
+          id: 'dca' as const,
+          name: model.name,
+          enabled: model.enabled,
+          strategy: dcaStrategyModel,
+        };
+      },
+    };
   }
 
   close(): void {
