@@ -362,7 +362,7 @@ export class DcaStrategyService implements DcaStrategyRuntime {
         continue;
       }
 
-      await this.orderService.execute(
+      const execution = await this.orderService.execute(
         await this.orderService.prepare(
           configurationId,
           cycle.id,
@@ -370,7 +370,9 @@ export class DcaStrategyService implements DcaStrategyRuntime {
         ),
       );
 
-      executedDcaLevels.push(level.level);
+      if (execution.order.status === 'filled') {
+        executedDcaLevels.push(level.level);
+      }
     }
 
     return {
