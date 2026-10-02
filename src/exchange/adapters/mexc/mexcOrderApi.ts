@@ -54,11 +54,10 @@ export class MexcOrderApi {
     taker: true,
     hybrid: true,
   };
-  private readonly bookTickerApi = new MexcBookTickerApi();
-
   constructor(
     private readonly privateApiClient: MexcPrivateApiClient,
     private readonly marketApi: MexcMarketApi,
+    private readonly bookTickerApi: MexcBookTickerApi = new MexcBookTickerApi(),
   ) {}
 
   async getOrder(symbol: string, orderId: string): Promise<ExchangeOrder> {
