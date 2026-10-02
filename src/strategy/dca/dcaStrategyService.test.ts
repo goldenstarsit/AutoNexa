@@ -1295,6 +1295,288 @@ test('process executes take profit, completes the cycle, and starts the next cyc
 });
 
 
+
+test('process executes stop loss, stops the cycle, and starts the next cycle', async () => {
+  const orders: ExchangeOrder[] = [];
+  const trades: ExchangeTrade[] = [];
+  const cycles = new Map<string, DcaCycleModelRecord>();
+  const exitOrders = new Map<string, DcaExitOrderModel>();
+  const exitFills = new Map<string, DcaExitOrderFillRecord[]>();
+  const initialOrders = new Map<string, DcaInitialOrderModel>();
+  let placeOrderCalls = 0;
+
+  const exchange = {
+    getTradingRules: async () => ({
+      symbol: 'BTCUSDT',
+      baseAsset: 'BTC',
+      quoteAsset: 'USDT',
+      status: '1',
+      orderTypes: ['MARKET', 'LIMIT'],
+      spotTradingAllowed: true,
+      marginTradingAllowed: false,
+      baseAssetPrecision: 6,
+      quotePrecision: 2,
+      quoteAssetPrecision: 2,
+      baseCommissionPrecision: 6,
+      quoteCommissionPrecision: 2,
+      quoteAmountPrecision: '1',
+      baseSizePrecision: '0.001',
+      maxQuoteAmount: '2000000',
+      quoteAmountPrecisionMarket: '1',
+      maxQuoteAmountMarket: '2000000',
+    }),
+    getCurrentPrice: async () => '50',
+    getBestBidPrice: async () => '49.9',
+    getBestAskPrice: async () => '50.1',
+    placeOrder: async (request: ExchangeOrderRequest) => {
+      placeOrderCalls += 1;
+      const order = createOrder({
+        orderId: `exchange-order-${placeOrderCalls}`,
+        symbol: request.symbol,
+        side: request.side,
+        type: request.type,
+        status: 'filled',
+        quantity: request.quantity,
+        executedQuantity: request.quantity,
+        price: request.price,
+      });
+      orders.push(order);
+      return order;
+    },
+    getOrder: async (_symbol: string, orderId: string) =>
+      orders.find((order) => order.orderId === orderId) ?? orders[orders.length - 1],
+    getOrderTrades: async (_symbol: string, orderId: string) => {
+      const existing = trades.filter((trade) => trade.orderId === orderId);
+      if (existing.length > 0) return existing;
+
+      const order = orders.find((item) => item.orderId === orderId);
+      if (!order) return [];
+
+      return [
+        createTrade({
+          tradeId: `sell-trade-${orderId}`,
+          orderId,
+          side: 'sell',
+          price: '50',
+          quantity: order.executedQuantity,
+          quoteQuantity: '0.05',
+        }),
+      ];
+    },
+    getAccount: async () => ({ balances: [] }),
+    depositTestBalance: async () => undefined,
+    withdrawTestBalance: async () => undefined,
+  } as unknown as ExchangeModel;
+
+  const executionMode: ExecutionModeModel = {
+    id: 'takerOnly',
+    name: 'Taker Only',
+    enabled: true,
+    execute: async <T>(operation: { maker: () => Promise<T>; taker: () => Promise<T> }) =>
+      operation.taker(),
+  };
+
+  const configuration = createConfiguration(exchange, executionMode);
+  const configurationWithNoOrders = { ...configuration, orders: [] };
+
+  const cyclePersistence: DcaCyclePersistenceModel = {
+    getById: (id) => cycles.get(id),
+    getCurrent: (configurationId) =>
+      [...cycles.values()]
+        .filter((cycle) => cycle.dcaConfigurationId === configurationId)
+        .sort((a, b) => b.cycleNumber - a.cycleNumber)[0],
+    create: (id, configurationId, cycleNumber) => {
+      const record: DcaCycleModelRecord = {
+        id,
+        dcaConfigurationId: configurationId,
+        cycleNumber,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      cycles.set(id, record);
+      return record;
+    },
+    setInitialEntryPrice: (id, initialEntryPrice) => {
+      const cycle = cycles.get(id)!;
+      const updated = { ...cycle, initialEntryPrice, status: 'active' as const };
+      cycles.set(id, updated);
+      return updated;
+    },
+    setEntryTotals: (id, entryQuantity, entryQuoteQuantity, averageEntryPrice) => {
+      const cycle = cycles.get(id)!;
+      const updated = {
+        ...cycle,
+        entryQuantity,
+        entryQuoteQuantity,
+        averageEntryPrice,
+      };
+      cycles.set(id, updated);
+      return updated;
+    },
+    updateStatus: (id, status) => {
+      const cycle = cycles.get(id)!;
+      const updated = { ...cycle, status };
+      cycles.set(id, updated);
+      return updated;
+    },
+  };
+
+  const initialOrderPersistence: DcaInitialOrderPersistenceModel = {
+    getByCycle: (cycleId) => initialOrders.get(cycleId),
+    saveOrder: (configurationId, cycleId, order, request) => {
+      const record: DcaInitialOrderModel = {
+        id: `${cycleId}-initial`,
+        dcaConfigurationId: configurationId,
+        dcaCycleId: cycleId,
+        exchangeOrderId: order.orderId,
+        executionMode: request.executionMode,
+        symbol: order.symbol,
+        side: order.side,
+        type: order.type,
+        status: order.status,
+        quantity: order.quantity,
+        executedQuantity: order.executedQuantity,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        fills: [],
+      };
+      initialOrders.set(cycleId, record);
+      return record;
+    },
+    updateOrder: (id, order) => {
+      const current = [...initialOrders.values()].find((item) => item.id === id)!;
+      const updated = { ...current, status: order.status, executedQuantity: order.executedQuantity };
+      initialOrders.set(current.dcaCycleId, updated);
+      return updated;
+    },
+    getFills: (id) => initialOrders.get(id)?.fills ?? [],
+    saveFills: (id, exitTrades) => {
+      const order = [...initialOrders.values()].find((item) => item.id === id)!;
+      const fills = exitTrades.map((trade, index) => ({
+        id: `${id}-fill-${index + 1}`,
+        dcaInitialOrderId: id,
+        exchangeTradeId: trade.tradeId,
+        exchangeOrderId: trade.orderId,
+        symbol: trade.symbol,
+        side: trade.side,
+        price: trade.price,
+        quantity: trade.quantity,
+        quoteQuantity: trade.quoteQuantity,
+        tradeTimestamp: trade.timestamp,
+        createdAt: new Date().toISOString(),
+      }));
+      initialOrders.set(order.dcaCycleId, { ...order, fills });
+      return fills;
+    },
+  };
+
+  const runtimeOrderPersistence: DcaRuntimeOrderPersistenceModel = {
+    getByCycleAndLevel: () => undefined,
+    getFills: () => [],
+    getFillsByCycle: () => [],
+    saveOrder: () => {
+      throw new Error('DCA order should not execute before stop loss');
+    },
+    updateOrder: () => {
+      throw new Error('DCA order should not execute before stop loss');
+    },
+    saveFills: () => [],
+  };
+
+  const exitOrderPersistence: DcaExitOrderPersistenceModel = {
+    getByCycleAndType: (cycleId, exitType) =>
+      exitOrders.get(`${cycleId}:${exitType}`),
+    getFills: (exitOrderId) => exitFills.get(exitOrderId) ?? [],
+    saveOrder: (configurationId, cycleId, exitType, order, request) => {
+      const record: DcaExitOrderModel = {
+        id: `${cycleId}-${exitType}`,
+        dcaConfigurationId: configurationId,
+        dcaCycleId: cycleId,
+        exitType,
+        exchangeOrderId: order.orderId,
+        executionMode: request.executionMode,
+        symbol: order.symbol,
+        side: order.side,
+        type: order.type,
+        status: order.status,
+        quantity: order.quantity,
+        executedQuantity: order.executedQuantity,
+        requestedPrice: request.price,
+        averageFillPrice: order.price,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        fills: [],
+      };
+      exitOrders.set(`${cycleId}:${exitType}`, record);
+      return record;
+    },
+    updateOrder: (id, order) => {
+      const current = [...exitOrders.values()].find((item) => item.id === id)!;
+      const updated = {
+        ...current,
+        status: order.status,
+        executedQuantity: order.executedQuantity,
+      };
+      exitOrders.set(`${current.dcaCycleId}:${current.exitType}`, updated);
+      return updated;
+    },
+    saveFills: (exitOrderId, exitTrades) => {
+      const fills = exitTrades.map((trade, index) => ({
+        id: `${exitOrderId}-fill-${index + 1}`,
+        dcaExitOrderId: exitOrderId,
+        exchangeTradeId: trade.tradeId,
+        exchangeOrderId: trade.orderId,
+        symbol: trade.symbol,
+        side: trade.side,
+        price: trade.price,
+        quantity: trade.quantity,
+        quoteQuantity: trade.quoteQuantity,
+        tradeTimestamp: trade.timestamp,
+        createdAt: new Date().toISOString(),
+      }));
+      exitFills.set(exitOrderId, fills);
+      return fills;
+    },
+  };
+
+  const service = new DcaStrategyService(
+    cyclePersistence,
+    runtimeOrderPersistence,
+    exitOrderPersistence,
+    initialOrderPersistence,
+    { getByCycleAndLevel: () => undefined, getFillsByCycle: () => [], getFills: () => [] },
+    (configurationId) =>
+      configurationId === configuration.id ? configurationWithNoOrders : undefined,
+  );
+
+  const cycle1 = cyclePersistence.create('configuration-1-cycle-1', configuration.id, 1);
+  cyclePersistence.setInitialEntryPrice(cycle1.id, '100');
+  cyclePersistence.setEntryTotals(cycle1.id, '0.001', '0.1', '100');
+  cyclePersistence.updateStatus(cycle1.id, 'active');
+
+  const result = await service.process(configuration.id);
+
+  assert.equal(result.takeProfitReached, false);
+  assert.equal(result.stopLossReached, true);
+  assert.deepEqual(result.executedDcaLevels, []);
+  assert.equal(cycles.get(cycle1.id)?.status, 'stopped');
+
+  const cycle2 = cycles.get('configuration-1-cycle-2');
+  assert.ok(cycle2);
+  assert.equal(cycle2.cycleNumber, 2);
+  assert.equal(cycle2.status, 'active');
+
+  const slExit = exitOrders.get(`${cycle1.id}:stopLoss`);
+  assert.ok(slExit);
+  assert.equal(slExit.side, 'sell');
+  assert.equal(slExit.quantity, '0.001');
+  assert.equal(slExit.status, 'filled');
+  assert.equal(exitFills.get(slExit.id)?.length, 1);
+  assert.equal(initialOrders.has(cycle2.id), true);
+  assert.equal(placeOrderCalls, 2);
+});
+
 test('process reconciles a persisted pending DCA order when its level is reached', async () => {
   const executionMode: ExecutionModeModel = {
     id: 'takerOnly',
