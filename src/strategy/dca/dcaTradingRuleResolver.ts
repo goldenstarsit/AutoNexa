@@ -75,7 +75,7 @@ function calculateMinimumQuantity(
 
   const numerator = multiplyByPowerOfTen(
     notional.digits,
-    priceValue.scale,
+    priceValue.scale + size.scale,
   );
   const denominator = multiplyByPowerOfTen(
     priceValue.digits,
