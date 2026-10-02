@@ -58,6 +58,11 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
         },
       },
     );
+
+    this.testOrderExecutionRouter = new OrderExecutionService(
+      this.testOrderExecutionService,
+      executionModeProvider,
+    );
   }
   readonly name = 'MEXC';
 
@@ -85,6 +90,7 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
 
   private readonly orderExecutionService: OrderExecutionService;
   private readonly testOrderExecutionService: TestOrderExecutionService;
+  private readonly testOrderExecutionRouter: OrderExecutionService;
 
   private health: ExchangeHealth = {
     state: 'disconnected',
@@ -147,7 +153,7 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
     mode: ExchangeBalanceMode = 'live',
   ): Promise<ExchangeOrder> {
     if (mode === 'test') {
-      return this.testOrderExecutionService.execute(request);
+      return this.testOrderExecutionRouter.execute(request);
     }
 
     return this.orderExecutionService.execute(request);

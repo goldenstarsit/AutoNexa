@@ -10,6 +10,7 @@ import type {
 import { TestBalanceService } from '../account/testBalanceService';
 import { compareDecimalAmounts, multiplyDecimalAmounts } from '../account/decimalAmount';
 import { TestOrderRepository, type TestOrderRecord, type TestOrderTradeRecord } from './testOrderRepository';
+import type { OrderExecutionCapabilities } from './orderExecutionCapabilities';
 
 export interface TestOrderExecutionMarket {
   getCurrentPrice(symbol: string): Promise<string>;
@@ -17,6 +18,12 @@ export interface TestOrderExecutionMarket {
 }
 
 export class TestOrderExecutionService {
+  readonly executionCapabilities: OrderExecutionCapabilities = {
+    maker: true,
+    taker: true,
+    hybrid: true,
+  };
+
   private readonly repository: TestOrderRepository;
   private readonly balanceService: TestBalanceService;
 
@@ -27,6 +34,10 @@ export class TestOrderExecutionService {
   ) {
     this.repository = new TestOrderRepository(db);
     this.balanceService = new TestBalanceService(db, exchangeId);
+  }
+
+  async placeOrder(request: ExchangeOrderRequest): Promise<ExchangeOrder> {
+    return this.execute(request);
   }
 
   async execute(request: ExchangeOrderRequest): Promise<ExchangeOrder> {
