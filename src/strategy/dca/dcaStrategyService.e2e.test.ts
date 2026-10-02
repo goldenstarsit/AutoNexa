@@ -6,6 +6,7 @@ import type { ExchangeOrder, ExchangeOrderRequest } from '../../domain/exchange/
 import type { ExecutionModeModel } from '../../domain/execution/executionModeModel';
 import type { DcaConfigurationModel, DcaConfigurationOrderModel } from '../../domain/strategy/dca/dcaConfigurationModel';
 import { SQLiteAdapter } from '../../database/adapters/sqliteAdapter';
+import { SQLiteDatabaseModel } from '../../infrastructure/database/sqliteDatabaseModel';
 import { migrations } from '../../database/migrations';
 import { runMigrations } from '../../database/migrations/migrationRunner';
 import { DcaCycleRepository } from './dcaCycleRepository';
@@ -172,10 +173,10 @@ test('DCA E2E persists cycle, initial order, and DCA order through real SQLite r
 
   const configuration = createConfiguration(exchange, executionMode);
 
-  const cycleRepository = new DcaCycleRepository(db);
-  const orderRepository = new DcaOrderRepository(db);
-  const exitOrderRepository = new DcaExitOrderRepository(db);
-  const initialOrderRepository = new DcaInitialOrderRepository(db);
+  const cycleRepository = new DcaCycleRepository(new SQLiteDatabaseModel(db));
+  const orderRepository = new DcaOrderRepository(new SQLiteDatabaseModel(db));
+  const exitOrderRepository = new DcaExitOrderRepository(new SQLiteDatabaseModel(db));
+  const initialOrderRepository = new DcaInitialOrderRepository(new SQLiteDatabaseModel(db));
 
   const service = new DcaStrategyService(
     new DcaCyclePersistenceModelImpl(cycleRepository),

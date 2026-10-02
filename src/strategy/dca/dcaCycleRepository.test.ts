@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { SQLiteAdapter } from '../../database/adapters/sqliteAdapter';
+import { SQLiteDatabaseModel } from '../../infrastructure/database/sqliteDatabaseModel';
 import { DcaCycleRepository } from './dcaCycleRepository';
 
 function createDatabase() {
@@ -28,7 +29,7 @@ function createDatabase() {
 test('cycle state survives repository recreation', () => {
   const db = createDatabase();
 
-  const firstRepository = new DcaCycleRepository(db);
+  const firstRepository = new DcaCycleRepository(new SQLiteDatabaseModel(db));
 
   firstRepository.create(
     'dca-btcusdt-cycle-1',
@@ -53,7 +54,7 @@ test('cycle state survives repository recreation', () => {
     'active',
   );
 
-  const recreatedRepository = new DcaCycleRepository(db);
+  const recreatedRepository = new DcaCycleRepository(new SQLiteDatabaseModel(db));
   const recovered = recreatedRepository.getCurrent('dca-btcusdt');
 
   assert.ok(recovered);

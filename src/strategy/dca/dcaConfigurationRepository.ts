@@ -50,6 +50,15 @@ interface DcaConfigurationOrderRow {
   drop_percent: string;
 }
 
+export interface DcaRuntimeConfigurationUpdate {
+  balanceModeId: string;
+  executionModeId: string;
+  takeProfitPercent: string;
+  stopLossPercent: string;
+  enabled: boolean;
+  dropPercents: readonly string[];
+}
+
 export class DcaConfigurationRepository {
   constructor(public readonly db: DatabaseModel) {}
 
@@ -153,6 +162,98 @@ export class DcaConfigurationRepository {
     }
   }
 
+  updateRuntimeConfiguration(
+    id: string,
+    update: DcaRuntimeConfigurationUpdate,
+  ): void {
+    const transaction = this.db.transaction(() => {
+      const configuration = this.db.get<{ id: string }>(
+        `
+          SELECT id
+          FROM dca_configurations
+          WHERE id = ?
+        `,
+        id,
+      );
+
+      if (!configuration) {
+        throw new Error(`DCA configuration not found: ${id}`);
+      }
+
+      const now = new Date().toISOString();
+
+      this.db.run(
+        `
+          UPDATE dca_configurations
+          SET balance_mode_id = ?,
+              execution_mode_id = ?,
+              take_profit_percent = ?,
+              stop_loss_percent = ?,
+              enabled = ?,
+              updated_at = ?
+          WHERE id = ?
+        `,
+        update.balanceModeId,
+        update.executionModeId,
+        update.takeProfitPercent,
+        update.stopLossPercent,
+        update.enabled ? 1 : 0,
+        now,
+        id,
+      );
+
+      this.db.run(
+        `
+          DELETE FROM dca_configuration_orders
+          WHERE dca_configuration_id = ?
+        `,
+        id,
+      );
+
+      for (let index = 0; index < update.dropPercents.length; index += 1) {
+        const dropPercent = update.dropPercents[index];
+
+        const existingOrder = this.db.get<{ id: string }>(
+          `
+            SELECT id
+            FROM dca_orders
+            WHERE drop_percent = ?
+          `,
+          dropPercent,
+        );
+
+        const dcaOrderId = existingOrder?.id ?? `dca-order-${dropPercent}`;
+
+        if (!existingOrder) {
+          this.db.run(
+            `
+              INSERT INTO dca_orders (id, drop_percent)
+              VALUES (?, ?)
+            `,
+            dcaOrderId,
+            dropPercent,
+          );
+        }
+
+        this.db.run(
+          `
+            INSERT INTO dca_configuration_orders (
+              id,
+              dca_configuration_id,
+              dca_order_id,
+              level
+            )
+            VALUES (?, ?, ?, ?)
+          `,
+          `${id}-runtime-order-${index + 1}`,
+          id,
+          dcaOrderId,
+          index + 1,
+        );
+      }
+    });
+  }
+
   getOrders(id: string): DcaConfigurationOrderRecord[] {
     return this.db
       .all<DcaConfigurationOrderRow>(
@@ -178,7 +279,9 @@ export class DcaConfigurationRepository {
       }));
   }
 
-  private toRecord(row: DcaConfigurationRow): DcaConfigurationRecord {
+  private toRecord(
+    row: DcaConfigurationRow,
+  ): DcaConfigurationRecord {
     return {
       id: row.id,
       strategyTypeId: row.strategy_type_id,

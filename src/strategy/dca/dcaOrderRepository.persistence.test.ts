@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { ExchangeOrder, ExchangeOrderRequest } from '../../domain/exchange/exchangeOrder';
 import { SQLiteAdapter } from '../../database/adapters/sqliteAdapter';
+import { SQLiteDatabaseModel } from '../../infrastructure/database/sqliteDatabaseModel';
+import type { ExchangeTrade } from '../../domain/exchange/exchangeTrade';
 import { DcaOrderRepository } from './dcaOrderRepository';
 import { DcaInitialOrderRepository } from './dcaInitialOrderRepository';
 import { DcaExitOrderRepository } from './dcaExitOrderRepository';
@@ -50,15 +52,15 @@ test('DCA runtime order survives repository recreation', () => {
     )
   `);
 
-  const firstRepository = new DcaOrderRepository(db);
+  const firstRepository = new DcaOrderRepository(new SQLiteDatabaseModel(db));
 
   const order: ExchangeOrder = {
     orderId: 'exchange-order-1',
     clientOrderId: 'client-order-1',
     symbol: 'BTCUSDT',
-    side: 'BUY',
-    type: 'LIMIT',
-    status: 'NEW',
+    side: 'buy',
+    type: 'limit',
+    status: 'open',
     quantity: '0.001',
     executedQuantity: '0',
     price: '100',
@@ -66,8 +68,8 @@ test('DCA runtime order survives repository recreation', () => {
 
   const request: ExchangeOrderRequest = {
     symbol: 'BTCUSDT',
-    side: 'BUY',
-    type: 'LIMIT',
+    side: 'buy',
+    type: 'limit',
     quantity: '0.001',
     price: '100',
     executionMode: 'makerOnly',
@@ -82,7 +84,7 @@ test('DCA runtime order survives repository recreation', () => {
     request,
   );
 
-  const recreatedRepository = new DcaOrderRepository(db);
+  const recreatedRepository = new DcaOrderRepository(new SQLiteDatabaseModel(db));
   const recovered = recreatedRepository.getByCycleAndLevel('cycle-1', 1);
 
   assert.ok(recovered);
@@ -94,7 +96,7 @@ test('DCA runtime order survives repository recreation', () => {
   assert.equal(recovered.exchangeOrderId, 'exchange-order-1');
   assert.equal(recovered.clientOrderId, 'client-order-1');
   assert.equal(recovered.symbol, 'BTCUSDT');
-  assert.equal(recovered.status, 'NEW');
+  assert.equal(recovered.status, 'new');
   assert.equal(recovered.quantity, '0.001');
   assert.equal(recovered.executedQuantity, '0');
   assert.equal(recovered.requestedPrice, '100');
@@ -145,15 +147,15 @@ test('DCA runtime order fills survive repository recreation', () => {
     )
   `);
 
-  const repository = new DcaOrderRepository(db);
+  const repository = new DcaOrderRepository(new SQLiteDatabaseModel(db));
 
   const order: ExchangeOrder = {
     orderId: 'exchange-order-2',
     clientOrderId: 'client-order-2',
     symbol: 'BTCUSDT',
-    side: 'BUY',
-    type: 'LIMIT',
-    status: 'FILLED',
+    side: 'buy',
+    type: 'limit',
+    status: 'filled',
     quantity: '0.001',
     executedQuantity: '0.001',
     price: '100',
@@ -161,8 +163,8 @@ test('DCA runtime order fills survive repository recreation', () => {
 
   const request: ExchangeOrderRequest = {
     symbol: 'BTCUSDT',
-    side: 'BUY',
-    type: 'LIMIT',
+    side: 'buy',
+    type: 'limit',
     quantity: '0.001',
     price: '100',
     executionMode: 'makerOnly',
@@ -190,7 +192,7 @@ test('DCA runtime order fills survive repository recreation', () => {
 
   repository.saveFills(savedOrder.id, [trade]);
 
-  const recreatedRepository = new DcaOrderRepository(db);
+  const recreatedRepository = new DcaOrderRepository(new SQLiteDatabaseModel(db));
   const recovered = recreatedRepository.getByCycleAndLevel('cycle-1', 1);
 
   assert.ok(recovered);
@@ -289,16 +291,16 @@ test('initial and exit orders survive repository recreation', () => {
     )
   `);
 
-  const initialRepository = new DcaInitialOrderRepository(db);
-  const exitRepository = new DcaExitOrderRepository(db);
+  const initialRepository = new DcaInitialOrderRepository(new SQLiteDatabaseModel(db));
+  const exitRepository = new DcaExitOrderRepository(new SQLiteDatabaseModel(db));
 
   const initialOrder: ExchangeOrder = {
     orderId: 'initial-exchange-order',
     clientOrderId: 'initial-client-order',
     symbol: 'BTCUSDT',
-    side: 'BUY',
-    type: 'MARKET',
-    status: 'FILLED',
+    side: 'buy',
+    type: 'market',
+    status: 'filled',
     quantity: '0.001',
     executedQuantity: '0.001',
   };
@@ -307,25 +309,25 @@ test('initial and exit orders survive repository recreation', () => {
     orderId: 'take-profit-exchange-order',
     clientOrderId: 'take-profit-client-order',
     symbol: 'BTCUSDT',
-    side: 'SELL',
-    type: 'MARKET',
-    status: 'FILLED',
+    side: 'sell',
+    type: 'market',
+    status: 'filled',
     quantity: '0.001',
     executedQuantity: '0.001',
   };
 
   const marketRequest: ExchangeOrderRequest = {
     symbol: 'BTCUSDT',
-    side: 'BUY',
-    type: 'MARKET',
+    side: 'buy',
+    type: 'market',
     quantity: '0.001',
     executionMode: 'takerOnly',
   };
 
   const exitRequest: ExchangeOrderRequest = {
     symbol: 'BTCUSDT',
-    side: 'SELL',
-    type: 'MARKET',
+    side: 'sell',
+    type: 'market',
     quantity: '0.001',
     executionMode: 'takerOnly',
   };
@@ -371,8 +373,8 @@ test('initial and exit orders survive repository recreation', () => {
     },
   ]);
 
-  const recreatedInitialRepository = new DcaInitialOrderRepository(db);
-  const recreatedExitRepository = new DcaExitOrderRepository(db);
+  const recreatedInitialRepository = new DcaInitialOrderRepository(new SQLiteDatabaseModel(db));
+  const recreatedExitRepository = new DcaExitOrderRepository(new SQLiteDatabaseModel(db));
 
   const recoveredInitial = recreatedInitialRepository.getByCycle('cycle-1');
   const recoveredExit = recreatedExitRepository.getByCycleAndType(
@@ -385,7 +387,7 @@ test('initial and exit orders survive repository recreation', () => {
   assert.equal(recoveredInitial.dcaConfigurationId, 'config-1');
   assert.equal(recoveredInitial.dcaCycleId, 'cycle-1');
   assert.equal(recoveredInitial.exchangeOrderId, 'initial-exchange-order');
-  assert.equal(recoveredInitial.status, 'FILLED');
+  assert.equal(recoveredInitial.status, 'filled');
   assert.equal(recoveredInitial.quantity, '0.001');
   assert.equal(recoveredInitial.executedQuantity, '0.001');
   assert.equal(recoveredInitial.fills.length, 1);
@@ -398,7 +400,7 @@ test('initial and exit orders survive repository recreation', () => {
   assert.equal(recoveredExit.dcaCycleId, 'cycle-1');
   assert.equal(recoveredExit.exitType, 'takeProfit');
   assert.equal(recoveredExit.exchangeOrderId, 'take-profit-exchange-order');
-  assert.equal(recoveredExit.status, 'FILLED');
+  assert.equal(recoveredExit.status, 'filled');
   assert.equal(recoveredExit.quantity, '0.001');
   assert.equal(recoveredExit.executedQuantity, '0.001');
   assert.equal(recoveredExit.fills.length, 1);
