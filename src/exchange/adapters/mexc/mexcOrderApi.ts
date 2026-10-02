@@ -2,6 +2,7 @@ import type { ExchangeOrder, ExchangeOrderRequest } from '../../../domain/exchan
 import type { ExchangeTrade } from '../../../domain/exchange/exchangeTrade';
 import { MexcPrivateApiClient } from './mexcPrivateApiClient';
 import { MexcMarketApi } from './mexcMarketApi';
+import { MexcBookTickerApi } from './mexcBookTickerApi';
 import { mapDefinedMexcSymbolInfo } from './mexcMarketMapper';
 import { validateMexcOrder } from './mexcOrderValidator';
 import { normalizeMexcOrderStatus } from './mexcOrderStatus';
@@ -53,6 +54,8 @@ export class MexcOrderApi {
     taker: true,
     hybrid: true,
   };
+  private readonly bookTickerApi = new MexcBookTickerApi();
+
   constructor(
     private readonly privateApiClient: MexcPrivateApiClient,
     private readonly marketApi: MexcMarketApi,
@@ -205,7 +208,18 @@ export class MexcOrderApi {
 
     const exchangeSymbolInfo = mapDefinedMexcSymbolInfo(symbolInfo);
 
-    validateMexcOrder(request, exchangeSymbolInfo);
+    const marketReferencePrice =
+    request.type === 'market'
+      ? (
+          await this.bookTickerApi.getBookTicker(request.symbol)
+        )[request.side === 'buy' ? 'askPrice' : 'bidPrice']
+      : undefined;
+
+  validateMexcOrder(
+    request,
+    exchangeSymbolInfo,
+    marketReferencePrice,
+  );
     const response = await this.privateApiClient.request<MexcOrderResponse>(
       'POST',
       '/api/v3/order',

@@ -1,9 +1,14 @@
 import type { ExchangeOrderRequest } from '../../../domain/exchange/exchangeOrder';
 import type { ExchangeSymbolInfo } from '../../market/exchangeMarket';
+import {
+  compareDecimalAmounts,
+  multiplyDecimalAmounts,
+} from '../../account/decimalAmount';
 
 export function validateMexcOrder(
   request: ExchangeOrderRequest,
   symbolInfo: ExchangeSymbolInfo,
+  marketReferencePrice?: string,
 ): void {
   validatePositiveNumber(request.quantity, 'quantity');
 
@@ -46,9 +51,20 @@ export function validateMexcOrder(
     symbolInfo.quoteAmountPrecision,
     'quoteAmountPrecision',
   );
+  validatePositiveNumber(
+    symbolInfo.quoteAmountPrecisionMarket,
+    'quoteAmountPrecisionMarket',
+  );
 
   if (symbolInfo.maxQuoteAmount) {
     validatePositiveNumber(symbolInfo.maxQuoteAmount, 'maxQuoteAmount');
+  }
+
+  if (symbolInfo.maxQuoteAmountMarket) {
+    validatePositiveNumber(
+      symbolInfo.maxQuoteAmountMarket,
+      'maxQuoteAmountMarket',
+    );
   }
 
   validateDecimalPlaces(
@@ -57,7 +73,7 @@ export function validateMexcOrder(
     'quantity',
   );
 
-  if (compareDecimal(request.quantity, symbolInfo.baseSizePrecision) < 0) {
+  if (compareDecimalAmounts(request.quantity, symbolInfo.baseSizePrecision) < 0) {
     throw new Error(
       `MEXC quantity must be at least ${symbolInfo.baseSizePrecision}`,
     );
@@ -69,53 +85,48 @@ export function validateMexcOrder(
     );
   }
 
-  if (request.type !== 'market') {
-    const notional = multiplyDecimal(
-      request.quantity,
-      request.price!,
+  const notionalPrice =
+    request.type === 'market' ? marketReferencePrice : request.price;
+
+  if (request.type === 'market' && notionalPrice === undefined) {
+    throw new Error(
+      'MEXC market order requires a market reference price for validation',
     );
-
-    if (
-      compareDecimal(
-        notional,
-        symbolInfo.quoteAmountPrecision,
-      ) < 0
-    ) {
-      throw new Error(
-        `MEXC order value must be at least ${symbolInfo.quoteAmountPrecision}`,
-      );
-    }
-
-    if (
-      symbolInfo.maxQuoteAmount &&
-      compareDecimal(
-        notional,
-        symbolInfo.maxQuoteAmount,
-      ) > 0
-    ) {
-      throw new Error(
-        `MEXC order value must not exceed ${symbolInfo.maxQuoteAmount}`,
-      );
-    }
-}
-
-function multiplyDecimal(left: string, right: string): string {
-  const [leftInteger, leftFraction = ''] = left.split('.');
-  const [rightInteger, rightFraction = ''] = right.split('.');
-  const leftDigits = `${leftInteger}${leftFraction}`;
-  const rightDigits = `${rightInteger}${rightFraction}`;
-  const scale = leftFraction.length + rightFraction.length;
-  const product = BigInt(leftDigits) * BigInt(rightDigits);
-  const value = product.toString();
-
-  if (scale === 0) {
-    return value;
   }
 
-  const padded = value.padStart(scale + 1, '0');
-  const position = padded.length - scale;
+  if (notionalPrice !== undefined) {
+    validatePositiveNumber(notionalPrice, 'reference price');
 
-  return `${padded.slice(0, position)}.${padded.slice(position)}`;
+    const notional = multiplyDecimalAmounts(
+      request.quantity,
+      notionalPrice,
+    );
+
+    const minimumNotional =
+      request.type === 'market'
+        ? symbolInfo.quoteAmountPrecisionMarket
+        : symbolInfo.quoteAmountPrecision;
+
+    const maximumNotional =
+      request.type === 'market'
+        ? symbolInfo.maxQuoteAmountMarket
+        : symbolInfo.maxQuoteAmount;
+
+    if (compareDecimalAmounts(notional, minimumNotional) < 0) {
+      throw new Error(
+        `MEXC ${request.type} order value must be at least ${minimumNotional}`,
+      );
+    }
+
+    if (
+      maximumNotional &&
+      compareDecimalAmounts(notional, maximumNotional) > 0
+    ) {
+      throw new Error(
+        `MEXC ${request.type} order value must not exceed ${maximumNotional}`,
+      );
+    }
+  }
 }
 
 function isDecimalMultiple(value: string, step: string): boolean {
@@ -133,39 +144,13 @@ function isDecimalMultiple(value: string, step: string): boolean {
   return valueInteger % stepInteger === BigInt(0);
 }
 
-function compareDecimal(left: string, right: string): number {
-  const [leftInteger, leftFraction = ''] = left.split('.');
-  const [rightInteger, rightFraction = ''] = right.split('.');
-  const leftNormalizedInteger = leftInteger.replace(/^0+(?=\d)/, '');
-  const rightNormalizedInteger = rightInteger.replace(/^0+(?=\d)/, '');
-  const scale = Math.max(leftFraction.length, rightFraction.length);
-
-  const leftNormalized = BigInt(
-    `${leftNormalizedInteger}${leftFraction.padEnd(scale, '0')}`,
-  );
-
-  const rightNormalized = BigInt(
-    `${rightNormalizedInteger}${rightFraction.padEnd(scale, '0')}`,
-  );
-
-  if (leftNormalized < rightNormalized) {
-    return -1;
-  }
-
-  if (leftNormalized > rightNormalized) {
-    return 1;
-  }
-
-  return 0;
-}
-
 function validatePositiveNumber(
   value: string,
   field: string,
 ): void {
   if (
     !/^(?:\d+\.?\d*|\.\d+)$/.test(value) ||
-    compareDecimal(value, '0') <= 0
+    compareDecimalAmounts(value, '0') <= 0
   ) {
     throw new Error(`MEXC ${field} must be a positive number`);
   }
@@ -177,7 +162,6 @@ function validateDecimalPlaces(
   field: string,
 ): void {
   const [, decimals = ''] = value.split('.');
-
   if (decimals.length > maxPlaces) {
     throw new Error(
       `MEXC ${field} exceeds maximum precision of ${maxPlaces} decimal places`,
@@ -188,6 +172,4 @@ function validateDecimalPlaces(
 function decimalPlaces(value: string): number {
   const [, decimals = ''] = value.split('.');
   return decimals.length;
-}
-
 }
