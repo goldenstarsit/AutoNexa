@@ -57,6 +57,13 @@ function normalizeHttpError(error: ExchangeHttpError): ExchangeError {
     retryable:
       category === 'rateLimit' ||
       category === 'server',
+    code:
+      typeof error.data === 'object' &&
+      error.data !== null &&
+      'code' in error.data &&
+      (typeof error.data.code === 'string' || typeof error.data.code === 'number')
+        ? error.data.code
+        : undefined,
     cause: error.data,
   };
 }
