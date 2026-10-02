@@ -17,6 +17,13 @@ export function shouldFallbackToTaker(failure: MakerFailure): boolean {
 export function classifyMakerFailure(error: unknown): MakerFailure {
   const data = getExchangeOrderErrorData(error);
 
+  if (data?.code === 'maker_unavailable') {
+    return {
+      reason: 'maker_unavailable',
+      error,
+    };
+  }
+
   if (data?.code === 30041 || data?.code === '30041') {
     return {
       reason: 'maker_rejected',
