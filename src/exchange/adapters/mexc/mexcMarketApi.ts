@@ -63,6 +63,10 @@ export class MexcMarketApi {
   }
 
 
+  invalidateExchangeInfo(): void {
+    this.exchangeInfo = undefined;
+  }
+
   async getSymbolInfo(
     symbol: string,
   ): Promise<MexcExchangeInfoResponse['symbols'][number] | undefined> {
