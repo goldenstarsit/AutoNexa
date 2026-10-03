@@ -13,6 +13,7 @@ import { dcaCycleEntryTotalsMigration } from './011_dca_cycle_entry_totals';
 import { testOrdersMigration } from './012_test_orders';
 import { dcaExitOrdersMigration } from './013_dca_exit_orders';
 import { dcaInitialOrdersMigration } from './014_dca_initial_orders';
+import { testMarketPricesMigration } from './015_test_market_prices';
 
 export const migrations: Migration[] = [
   initialMigration,
@@ -29,4 +30,5 @@ export const migrations: Migration[] = [
   testOrdersMigration,
   dcaExitOrdersMigration,
   dcaInitialOrdersMigration,
+  testMarketPricesMigration,
 ];

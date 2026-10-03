@@ -312,7 +312,7 @@ function expectedBuy(mode: Mode): ExchangeOrderRequest {
   };
 }
 
-function expectedSell(mode: Mode): ExchangeOrderRequest {
+function expectedSell(mode: Mode, price = '100.1'): ExchangeOrderRequest {
   return {
     symbol,
     side: 'sell',
@@ -325,7 +325,7 @@ function expectedSell(mode: Mode): ExchangeOrderRequest {
     executionMode: mode,
     quantity: '1',
     ...(mode === 'makerOnly' || mode === 'hybrid'
-      ? { price: '100.1' }
+      ? { price }
       : {}),
   };
 }
@@ -376,7 +376,7 @@ for (const mode of ['makerOnly', 'hybrid', 'takerOnly'] as const) {
 
     await service.execute(configurationId);
 
-    assert.deepEqual(captured[0], expectedSell(mode));
+    assert.deepEqual(captured[0], expectedSell(mode, '101'));
   });
 
   test(`DCA ${mode}: stop-loss request`, async () => {

@@ -162,9 +162,7 @@ export class DcaTakeProfitService {
       quantity: context.cycle.entryQuantity,
       ...(executionMode === 'makerOnly' || executionMode === 'hybrid'
         ? {
-            price: await exchange.getBestAskPrice(
-              context.configuration.symbol,
-            ),
+            price: context.evaluation.takeProfitPrice,
           }
         : {}),
     };

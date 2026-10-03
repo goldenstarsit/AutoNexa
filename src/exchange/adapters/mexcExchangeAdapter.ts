@@ -23,6 +23,7 @@ import type { ExecutionModeProvider } from '../../domain/execution/executionMode
 import { MexcLiveBalanceSource } from '../account/sources/mexcLiveBalanceSource';
 import { MexcPrivateApiClient } from './mexc/mexcPrivateApiClient';
 import { TestOrderExecutionService } from '../order/testOrderExecutionService';
+import { MexcTestMarketPriceRepository } from './mexc/mexcTestMarketPriceRepository';
 
 export class MexcExchangeAdapter implements ExchangeAdapter {
   readonly id = 'mexc';
@@ -31,6 +32,7 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
     db: DatabaseModel,
     executionModeProvider?: ExecutionModeProvider,
   ) {
+    this.testMarketPriceRepository = new MexcTestMarketPriceRepository(db);
     this.testBalanceSource = new TestBalanceService(db, this.id);
 
     this.balanceSourceRouter = new BalanceSourceRouter(
@@ -48,7 +50,8 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
       db,
       this.id,
       {
-        getCurrentPrice: (symbol) => this.getCurrentPrice(symbol),
+        getCurrentPrice: (symbol) =>
+          this.getTestMarketPrice(symbol),
         getSymbolInfo: async (symbol) => {
           const info = await this.getSymbolInfo(symbol);
           if (!info) {
@@ -77,6 +80,7 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
   );
 
   private readonly testBalanceSource: BalanceSource & TestBalanceOperations;
+  private readonly testMarketPriceRepository: MexcTestMarketPriceRepository;
   private readonly balanceSourceRouter: BalanceSourceRouter;
 
   private readonly marketApi = new MexcMarketApi();
@@ -91,6 +95,7 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
   private readonly orderExecutionService: OrderExecutionService;
   private readonly testOrderExecutionService: TestOrderExecutionService;
   private readonly testOrderExecutionRouter: OrderExecutionService;
+
 
   private health: ExchangeHealth = {
     state: 'disconnected',
@@ -237,6 +242,32 @@ export class MexcExchangeAdapter implements ExchangeAdapter {
         ),
       ],
     };
+  }
+
+  async getTestMarketPriceOrLive(symbol: string): Promise<string> {
+    return this.getTestMarketPrice(symbol);
+  }
+
+  setTestMarketPrice(symbol: string, price: string): void {
+    if (!price || price === '0') {
+      throw new Error(`Test market price must be positive: ${symbol}`);
+    }
+
+    this.testMarketPriceRepository.set(symbol, price);
+  }
+
+  clearTestMarketPrice(symbol: string): void {
+    this.testMarketPriceRepository.clear(symbol);
+  }
+
+  private async getTestMarketPrice(symbol: string): Promise<string> {
+    const override = this.testMarketPriceRepository.get(symbol);
+
+    if (override) {
+      return override;
+    }
+
+    return this.getCurrentPrice(symbol);
   }
 
   async getCurrentPrice(symbol: string): Promise<string> {

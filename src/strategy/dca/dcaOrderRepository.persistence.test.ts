@@ -96,7 +96,7 @@ test('DCA runtime order survives repository recreation', () => {
   assert.equal(recovered.exchangeOrderId, 'exchange-order-1');
   assert.equal(recovered.clientOrderId, 'client-order-1');
   assert.equal(recovered.symbol, 'BTCUSDT');
-  assert.equal(recovered.status, 'new');
+  assert.equal(recovered.status, 'open');
   assert.equal(recovered.quantity, '0.001');
   assert.equal(recovered.executedQuantity, '0');
   assert.equal(recovered.requestedPrice, '100');
