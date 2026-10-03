@@ -8,7 +8,7 @@ interface RouteContext {
 }
 
 interface StrategyRequest {
-  action: 'start' | 'process';
+  action: 'start' | 'process' | 'stop';
 }
 
 export async function POST(
@@ -28,9 +28,13 @@ export async function POST(
     );
   }
 
-  if (body.action !== 'start' && body.action !== 'process') {
+  if (
+    body.action !== 'start' &&
+    body.action !== 'process' &&
+    body.action !== 'stop'
+  ) {
     return NextResponse.json(
-      { error: 'Request action must be start or process' },
+      { error: 'Request action must be start, process, or stop' },
       { status: 400 },
     );
   }
@@ -47,7 +51,9 @@ export async function POST(
       const result =
         body.action === 'start'
           ? await strategy.start(instance.id)
-          : await strategy.process(instance.id);
+          : body.action === 'process'
+            ? await strategy.process(instance.id)
+            : await strategy.stop(instance.id);
 
       return NextResponse.json({
         configurationId,

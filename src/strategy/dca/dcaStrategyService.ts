@@ -119,6 +119,37 @@ export class DcaStrategyService implements DcaStrategyRuntime {
     };
   }
 
+  async stop(
+    configurationId: string,
+  ): Promise<{ cycleId: string; cycleNumber: number }> {
+    const configuration = this.getConfigurationModel(configurationId);
+
+    if (!configuration) {
+      throw new Error(`DCA configuration not found: ${configurationId}`);
+    }
+
+    const cycle = this.cycleModels.getCurrent(configurationId);
+
+    if (!cycle) {
+      throw new Error(
+        `DCA configuration has no current cycle: ${configurationId}`,
+      );
+    }
+
+    if (cycle.status !== 'active' && cycle.status !== 'pending') {
+      throw new Error(
+        `DCA configuration has no running cycle: ${configurationId}`,
+      );
+    }
+
+    cycle.stop();
+
+    return {
+      cycleId: cycle.id,
+      cycleNumber: cycle.cycleNumber,
+    };
+  }
+
   async process(
     configurationId: string,
   ): Promise<DcaStrategyProcessResult> {

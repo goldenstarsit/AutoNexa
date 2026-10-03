@@ -15,6 +15,7 @@ import { DcaStrategyModelRegistry } from '../strategy/dca/models/dcaStrategyMode
 import { DcaConfigurationModelSelector } from '../strategy/dca/models/dcaConfigurationModelSelector';
 import { DcaConfigurationPersistenceModelImpl } from '../strategy/dca/models/dcaConfigurationPersistenceModel';
 import { DcaConfigurationRepository } from '../strategy/dca/dcaConfigurationRepository';
+import { DcaConfigurationService } from '../strategy/dca/dcaConfigurationService';
 import type { DcaStrategyModel } from '../domain/strategy/dca/dcaStrategyModel';
 import { DcaStrategyService } from '../strategy/dca/dcaStrategyService';
 import { DcaCycleRepository } from '../strategy/dca/dcaCycleRepository';
@@ -35,6 +36,8 @@ export class ApplicationContext {
   readonly executionModes: ExecutionModeModelSelector;
   readonly strategyTypes: StrategyTypeModelSelector & DcaStrategyTypeModelSelector;
   readonly dcaStrategyModel: DcaStrategyModel;
+  readonly dcaConfigurationRepository: DcaConfigurationRepository;
+  readonly dcaConfigurationService: DcaConfigurationService;
 
   constructor() {
     this.database = new SQLiteDatabaseModelFactory().create();
@@ -83,9 +86,18 @@ export class ApplicationContext {
         dcaStrategyModelRef.current!.instances.get(configurationId),
     );
 
+    const dcaConfigurationRepository = new DcaConfigurationRepository(
+      this.database,
+    );
+    this.dcaConfigurationRepository = dcaConfigurationRepository;
+    this.dcaConfigurationService = new DcaConfigurationService(
+      dcaConfigurationRepository,
+      new DcaCycleRepository(this.database),
+    );
+
     const dcaConfigurationModels = new DcaConfigurationModelSelector(
       new DcaConfigurationPersistenceModelImpl(
-        new DcaConfigurationRepository(this.database),
+        dcaConfigurationRepository,
       ),
       () => dcaStrategyModelRef.current!,
       this.balanceModes,

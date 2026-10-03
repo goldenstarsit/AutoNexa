@@ -222,9 +222,25 @@ export class DcaConfigurationRepository {
           dropPercent,
         );
 
-        const dcaOrderId = existingOrder?.id ?? `dca-order-${dropPercent}`;
+        let dcaOrderId = existingOrder?.id;
 
-        if (!existingOrder) {
+        if (!dcaOrderId) {
+          const latestOrder = this.db.get<{ id: string }>(
+            `
+              SELECT id
+              FROM dca_orders
+              WHERE id LIKE 'dca-order-%'
+              ORDER BY CAST(SUBSTR(id, 11) AS INTEGER) DESC
+              LIMIT 1
+            `,
+          );
+
+          const latestNumber = latestOrder
+            ? Number(latestOrder.id.slice('dca-order-'.length))
+            : 0;
+
+          dcaOrderId = `dca-order-${latestNumber + 1}`;
+
           this.db.run(
             `
               INSERT INTO dca_orders (id, drop_percent)

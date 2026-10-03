@@ -50,7 +50,15 @@ export class MexcExchangeModel implements ExchangeModel {
   }
 
   getCurrentPrice(symbol: string) {
-    return this.adapter.getCurrentPrice(symbol);
+    return this.adapter.getTestMarketPriceOrLive(symbol);
+  }
+
+  setTestMarketPrice(symbol: string, price: string): void {
+    this.adapter.setTestMarketPrice(symbol, price);
+  }
+
+  clearTestMarketPrice(symbol: string): void {
+    this.adapter.clearTestMarketPrice(symbol);
   }
 
   getBestBidPrice(symbol: string) {

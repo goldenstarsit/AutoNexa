@@ -19,6 +19,10 @@ export interface DcaStrategyModel extends StrategyModel {
 
   start(configurationId: string): Promise<DcaStrategyStartResult>;
   process(configurationId: string): Promise<DcaStrategyProcessResult>;
+  stop(configurationId: string): Promise<{
+    cycleId: string;
+    cycleNumber: number;
+  }>;
 }
 
 export interface DcaStrategyModelSelector extends StrategyModelSelector {

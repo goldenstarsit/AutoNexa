@@ -39,6 +39,10 @@ export class DcaStrategyModel implements DcaStrategyDomainModel {
   async process(configurationId: string) {
     return this.runtimeFactory().process(configurationId);
   }
+
+  async stop(configurationId: string) {
+    return this.runtimeFactory().stop(configurationId);
+  }
 }
 
 export class DcaStrategyModelRegistry

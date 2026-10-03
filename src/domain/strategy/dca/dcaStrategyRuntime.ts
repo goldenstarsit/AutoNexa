@@ -17,4 +17,8 @@ export interface DcaStrategyProcessResult {
 export interface DcaStrategyRuntime {
   start(configurationId: string): Promise<DcaStrategyStartResult>;
   process(configurationId: string): Promise<DcaStrategyProcessResult>;
+  stop(configurationId: string): Promise<{
+    cycleId: string;
+    cycleNumber: number;
+  }>;
 }
