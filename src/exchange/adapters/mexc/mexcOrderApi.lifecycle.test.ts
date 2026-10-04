@@ -66,6 +66,7 @@ function createApi(calls: Call[]) {
             status: 'FILLED',
             type: 'LIMIT_MAKER',
             side: 'SELL',
+            transactTime: 1700000000000,
           },
         ] as T;
       }
@@ -79,6 +80,7 @@ function createApi(calls: Call[]) {
         executedQty: '0.000012',
         status: 'FILLED',
         type: 'LIMIT_MAKER',
+        transactTime: 1700000000000,
         side: 'SELL',
       } as T;
     },
@@ -107,6 +109,7 @@ function assertOrder(order: ExchangeOrder) {
     quantity: '0.000012',
     executedQuantity: '0.000012',
     price: '90000.00',
+    timestamp: 1700000000000,
   });
 }
 

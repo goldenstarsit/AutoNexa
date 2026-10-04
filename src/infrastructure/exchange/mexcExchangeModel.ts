@@ -1,7 +1,7 @@
 import type { DatabaseModel } from '../../domain/database/databaseModel';
 import { ExchangeBalanceModeModelRegistry } from '../balance/exchangeBalanceModeModels';
 import { MexcExchangeAdapter } from '../../exchange/adapters/mexcExchangeAdapter';
-import type { BalanceModeModelSelector } from '../../domain/balance/balanceModeModel';
+import type { BalanceModeId, BalanceModeModelSelector } from '../../domain/balance/balanceModeModel';
 import type { ExchangeId } from '../../domain/exchange/exchangeModel';
 import type { ExecutionModeProvider } from '../../domain/execution/executionModeProvider';
 import type { ExchangeModel, ExchangeModelSelector } from '../../domain/exchange/exchangeModel';
@@ -43,6 +43,14 @@ export class MexcExchangeModel implements ExchangeModel {
     mode?: Parameters<MexcExchangeAdapter['getOrderTrades']>[2],
   ) {
     return this.adapter.getOrderTrades(symbol, orderId, mode);
+  }
+
+  getOrderHistory(
+    symbol: Parameters<MexcExchangeAdapter['getOrderHistory']>[0],
+    options?: Parameters<MexcExchangeAdapter['getOrderHistory']>[1],
+    _mode?: BalanceModeId,
+  ) {
+    return this.adapter.getOrderHistory(symbol, options);
   }
 
   getSymbolInfo(symbol: string) {

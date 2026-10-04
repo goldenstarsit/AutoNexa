@@ -41,4 +41,5 @@ export interface ExchangeOrder {
   quantity: string;
   executedQuantity: string;
   price?: string;
+  timestamp?: number;
 }

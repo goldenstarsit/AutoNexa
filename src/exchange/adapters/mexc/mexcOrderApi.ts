@@ -82,6 +82,7 @@ export class MexcOrderApi {
       quantity: response.origQty,
       executedQuantity: response.executedQty,
       price: response.price,
+      timestamp: response.transactTime,
     };
   }
 
@@ -132,6 +133,7 @@ export class MexcOrderApi {
       quantity: order.origQty,
       executedQuantity: order.executedQty,
       price: order.price,
+      timestamp: order.transactTime,
     }));
   }
 
@@ -157,6 +159,7 @@ export class MexcOrderApi {
       quantity: response.origQty,
       executedQuantity: response.executedQty,
       price: response.price,
+      timestamp: response.transactTime,
     };
   }
 
@@ -195,6 +198,7 @@ export class MexcOrderApi {
       quantity: order.origQty,
       executedQuantity: order.executedQty,
       price: order.price,
+      timestamp: order.transactTime,
     }));
   }
 

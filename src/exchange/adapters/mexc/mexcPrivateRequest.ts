@@ -15,7 +15,7 @@ export class MexcPrivateRequestBuilder {
 
   build(
     params: Record<string, string | number | boolean> = {},
-    timestamp = Date.now(),
+    timestamp = Date.now() + 3000,
   ): MexcPrivateRequest {
     const queryParams = {
       ...params,

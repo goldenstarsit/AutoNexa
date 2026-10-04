@@ -50,6 +50,16 @@ export interface ExchangeModel {
     mode?: BalanceModeId,
   ): Promise<ExchangeTrade[]>;
 
+  getOrderHistory?: (
+    symbol: string,
+    options?: {
+      startTime?: number;
+      endTime?: number;
+      limit?: number;
+    },
+    mode?: BalanceModeId,
+  ) => Promise<ExchangeOrder[]>;
+
   depositTestBalance: TestBalanceOperationsModel['depositTestBalance'];
   withdrawTestBalance: TestBalanceOperationsModel['withdrawTestBalance'];
 }
