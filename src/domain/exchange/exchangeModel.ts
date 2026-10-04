@@ -19,6 +19,7 @@ export interface ExchangeModel {
   readonly enabled: boolean;
   readonly balanceModes: BalanceModeModelSelector;
 
+  getSymbolInfo(symbol: string): Promise<import('../../exchange/market/exchangeMarket').ExchangeSymbolInfo | undefined>;
   getTradingRules(
     symbol: string,
   ): Promise<ExchangeTradingRules | undefined>;

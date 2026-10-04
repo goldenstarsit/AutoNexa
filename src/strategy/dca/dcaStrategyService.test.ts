@@ -137,6 +137,7 @@ test('start creates cycle 1 and executes the initial order', async () => {
     getAccount: async () => ({ balances: [] }),
     depositTestBalance: () => {},
     withdrawTestBalance: () => {},
+    getSymbolInfo: async () => undefined,
     getTradingRules: async () => ({
       symbol: 'BTCUSDT',
       status: '1',
@@ -379,6 +380,7 @@ test('process reconciles a pending initial order before evaluating the active cy
     getAccount: async () => ({ balances: [] }),
     depositTestBalance: () => {},
     withdrawTestBalance: () => {},
+    getSymbolInfo: async () => undefined,
     getTradingRules: async () => ({
       symbol: 'BTCUSDT',
       status: '1',
@@ -704,6 +706,7 @@ test('process executes a reached DCA level and records the executed level', asyn
     getAccount: async () => ({ balances: [] }),
     depositTestBalance: () => {},
     withdrawTestBalance: () => {},
+    getSymbolInfo: async () => undefined,
     getTradingRules: async () => ({
       symbol: 'BTCUSDT',
       status: '1',
@@ -988,6 +991,7 @@ test('process executes take profit, completes the cycle, and starts the next cyc
   let placeOrderCalls = 0;
 
   const exchange = {
+    getSymbolInfo: async () => undefined,
     getTradingRules: async () => ({
       symbol: 'BTCUSDT',
       baseAsset: 'BTC',
@@ -1306,6 +1310,7 @@ test('process executes maker-only take profit at the take-profit price', async (
   let placeOrderCalls = 0;
 
   const exchange = {
+    getSymbolInfo: async () => undefined,
     getTradingRules: async () => ({
       symbol: 'BTCUSDT',
       baseAsset: 'BTC',
@@ -1566,6 +1571,7 @@ test('process executes stop loss, stops the cycle, and starts the next cycle', a
   let placeOrderCalls = 0;
 
   const exchange = {
+    getSymbolInfo: async () => undefined,
     getTradingRules: async () => ({
       symbol: 'BTCUSDT',
       baseAsset: 'BTC',
@@ -1860,6 +1866,7 @@ test('process reconciles a persisted pending DCA order when its level is reached
     getAccount: async () => ({ balances: [] }),
     depositTestBalance: () => {},
     withdrawTestBalance: () => {},
+    getSymbolInfo: async () => undefined,
     getTradingRules: async () => ({
       symbol: 'BTCUSDT',
       status: '1',

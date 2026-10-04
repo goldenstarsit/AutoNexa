@@ -107,6 +107,7 @@ test('DCA E2E persists cycle, initial order, and DCA order through real SQLite r
     getAccount: async () => ({ balances: [] }),
     depositTestBalance: () => {},
     withdrawTestBalance: () => {},
+    getSymbolInfo: async () => undefined,
     getTradingRules: async () => ({
       symbol: 'BTCUSDT',
       status: '1',

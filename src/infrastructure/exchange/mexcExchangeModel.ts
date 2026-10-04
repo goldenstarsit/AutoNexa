@@ -45,6 +45,10 @@ export class MexcExchangeModel implements ExchangeModel {
     return this.adapter.getOrderTrades(symbol, orderId, mode);
   }
 
+  getSymbolInfo(symbol: string) {
+    return this.adapter.getSymbolInfo(symbol);
+  }
+
   getTradingRules(symbol: string) {
     return this.adapter.getTradingRules(symbol);
   }

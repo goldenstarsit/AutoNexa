@@ -35,6 +35,7 @@ export interface DcaStrategyProcessResult {
   takeProfitReached: boolean;
   stopLossReached: boolean;
   executedDcaLevels: number[];
+  skippedDcaLevels: number[];
   reachedDcaLevels: DcaLevelEvaluation[];
   nextCycle?: DcaStrategyStartResult;
   initialOrderPending?: boolean;
@@ -195,6 +196,7 @@ export class DcaStrategyService implements DcaStrategyRuntime {
           takeProfitReached: false,
           stopLossReached: false,
           executedDcaLevels: [],
+      skippedDcaLevels: [],
           reachedDcaLevels: [],
           initialOrderPending: true,
         };
@@ -235,6 +237,7 @@ export class DcaStrategyService implements DcaStrategyRuntime {
           takeProfitReached: true,
           stopLossReached: false,
           executedDcaLevels: [],
+      skippedDcaLevels: [],
           reachedDcaLevels: [],
           nextCycle,
         };
@@ -247,6 +250,7 @@ export class DcaStrategyService implements DcaStrategyRuntime {
         takeProfitReached: execution.reached,
         stopLossReached: false,
         executedDcaLevels: [],
+      skippedDcaLevels: [],
         reachedDcaLevels: [],
         takeProfitPending: true,
       };
@@ -274,6 +278,7 @@ export class DcaStrategyService implements DcaStrategyRuntime {
           takeProfitReached: false,
           stopLossReached: true,
           executedDcaLevels: [],
+      skippedDcaLevels: [],
           reachedDcaLevels: [],
           nextCycle,
         };
@@ -286,6 +291,7 @@ export class DcaStrategyService implements DcaStrategyRuntime {
         takeProfitReached: false,
         stopLossReached: execution.reached,
         executedDcaLevels: [],
+      skippedDcaLevels: [],
         reachedDcaLevels: [],
         stopLossPending: true,
       };
@@ -306,6 +312,7 @@ export class DcaStrategyService implements DcaStrategyRuntime {
           takeProfitReached: true,
           stopLossReached: false,
           executedDcaLevels: [],
+      skippedDcaLevels: [],
           reachedDcaLevels: [],
           takeProfitPending: true,
         };
@@ -320,6 +327,7 @@ export class DcaStrategyService implements DcaStrategyRuntime {
         takeProfitReached: true,
         stopLossReached: false,
         executedDcaLevels: [],
+      skippedDcaLevels: [],
         reachedDcaLevels: [],
         nextCycle,
       };
@@ -338,6 +346,7 @@ export class DcaStrategyService implements DcaStrategyRuntime {
           takeProfitReached: false,
           stopLossReached: true,
           executedDcaLevels: [],
+      skippedDcaLevels: [],
           reachedDcaLevels: [],
           stopLossPending: true,
         };
@@ -352,6 +361,7 @@ export class DcaStrategyService implements DcaStrategyRuntime {
         takeProfitReached: false,
         stopLossReached: true,
         executedDcaLevels: [],
+      skippedDcaLevels: [],
         reachedDcaLevels: [],
         nextCycle,
       };
@@ -368,41 +378,46 @@ export class DcaStrategyService implements DcaStrategyRuntime {
     );
 
     const executedDcaLevels: number[] = [];
+    const skippedDcaLevels: number[] = [];
 
     for (const level of reachedDcaLevels) {
       if (!level.reached) {
         continue;
       }
 
-      const existingOrder = this.orderRepository.getByCycleAndLevel(
-        cycle.id,
-        level.level,
-      );
-
-      if (existingOrder) {
-        const reconciliation = await this.orderService.reconcilePending(
-          configurationId,
+      try {
+        const existingOrder = this.orderRepository.getByCycleAndLevel(
           cycle.id,
           level.level,
         );
 
-        if (reconciliation.filled) {
-          executedDcaLevels.push(level.level);
+        if (existingOrder) {
+          const reconciliation = await this.orderService.reconcilePending(
+            configurationId,
+            cycle.id,
+            level.level,
+          );
+
+          if (reconciliation.filled) {
+            executedDcaLevels.push(level.level);
+          }
+
+          continue;
         }
 
-        continue;
-      }
+        const execution = await this.orderService.execute(
+          await this.orderService.prepare(
+            configurationId,
+            cycle.id,
+            level.level,
+          ),
+        );
 
-      const execution = await this.orderService.execute(
-        await this.orderService.prepare(
-          configurationId,
-          cycle.id,
-          level.level,
-        ),
-      );
-
-      if (execution.order.status === 'filled') {
-        executedDcaLevels.push(level.level);
+        if (execution.order.status === 'filled') {
+          executedDcaLevels.push(level.level);
+        }
+      } catch {
+        skippedDcaLevels.push(level.level);
       }
     }
 
@@ -413,6 +428,7 @@ export class DcaStrategyService implements DcaStrategyRuntime {
       takeProfitReached: false,
       stopLossReached: false,
       executedDcaLevels,
+      skippedDcaLevels,
       reachedDcaLevels,
     };
   }

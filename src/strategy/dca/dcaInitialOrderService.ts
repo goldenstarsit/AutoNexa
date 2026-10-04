@@ -15,6 +15,10 @@ import type {
 } from '../../domain/strategy/dca/dcaInitialOrderModel';
 import { DcaCycleModelSelector } from './models/dcaCycleModelSelector';
 import { DcaTradingRuleResolver } from './dcaTradingRuleResolver';
+import {
+  compareDecimalAmounts,
+  multiplyDecimalAmounts,
+} from '../../exchange/account/decimalAmount';
 
 export interface DcaInitialOrderPreparation {
   configurationId: string;
@@ -124,6 +128,53 @@ export class DcaInitialOrderService {
     );
   }
 
+  private async ensureSufficientInitialBalance(
+    preparation: DcaInitialOrderPreparation,
+  ): Promise<void> {
+    if (preparation.balanceMode !== 'live') {
+      return;
+    }
+
+    const symbolInfo = await preparation.exchange.getSymbolInfo(
+      preparation.symbol,
+    );
+
+    if (!symbolInfo) {
+      throw new Error(
+        `Exchange symbol not found: ${preparation.symbol}`,
+      );
+    }
+
+    const referencePrice =
+      preparation.request.type === 'market'
+        ? await preparation.exchange.getBestAskPrice(preparation.symbol)
+        : preparation.request.price;
+
+    if (!referencePrice) {
+      throw new Error(
+        `Initial order price is unavailable: ${preparation.symbol}`,
+      );
+    }
+
+    const required = multiplyDecimalAmounts(
+      preparation.quantity,
+      referencePrice,
+    );
+
+    const account = await preparation.exchange.getAccount('live');
+    const quoteBalance = account.balances.find(
+      (balance) =>
+        balance.asset.toUpperCase() === symbolInfo.quoteAsset.toUpperCase(),
+    );
+    const available = quoteBalance?.free ?? '0';
+
+    if (compareDecimalAmounts(available, required) < 0) {
+      throw new Error(
+        `Insufficient live balance for ${symbolInfo.quoteAsset}: required ${required}, available ${available}`,
+      );
+    }
+  }
+
   async startCycleAndExecute(
     configurationId: string,
   ): Promise<DcaInitialOrderExecution> {
@@ -131,6 +182,7 @@ export class DcaInitialOrderService {
 
     try {
       const preparation = await this.prepare(configurationId);
+      await this.ensureSufficientInitialBalance(preparation);
       const order = await preparation.exchange.placeOrder(
         preparation.request,
         preparation.balanceMode,
