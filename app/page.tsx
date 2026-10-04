@@ -31,60 +31,136 @@ type Strategy = {
   currentPrice: string | null;
 };
 
-const symbols = ['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'TRXUSDT'];
-
-function formatNumber(value: string | null, digits = 8) {
+function formatNumber(value: string | null, digits = 8): string {
   if (value === null || value === '') return '—';
+
   const number = Number(value);
+
   if (!Number.isFinite(number)) return value;
+
   return number.toLocaleString(undefined, {
     maximumFractionDigits: digits,
+  });
+}
+
+function formatPrice(value: string | null): string {
+  if (value === null || value === '') return '—';
+
+  const number = Number(value);
+
+  if (!Number.isFinite(number)) return value;
+
+  return number.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 8,
   });
 }
 
 function StatusPill({
   children,
   positive = false,
+  warning = false,
 }: {
   children: React.ReactNode;
   positive?: boolean;
+  warning?: boolean;
 }) {
+  const className = positive
+    ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300'
+    : warning
+      ? 'border-amber-400/30 bg-amber-400/10 text-amber-300'
+      : 'border-white/10 bg-white/5 text-zinc-300';
+
   return (
     <span
-      className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${
-        positive
-          ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300'
-          : 'border-white/10 bg-white/5 text-zinc-300'
-      }`}
+      className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${className}`}
     >
       {children}
     </span>
   );
 }
 
-function StrategyCard({ strategy }: { strategy: Strategy }) {
+function ProgressBar({
+  executed,
+  total,
+}: {
+  executed: number;
+  total: number;
+}) {
   const progress =
-    strategy.totalDcaLevels > 0
-      ? Math.min(
-          100,
-          (strategy.executedDcaLevels / strategy.totalDcaLevels) * 100,
-        )
-      : 0;
+    total > 0 ? Math.min(100, (executed / total) * 100) : 0;
 
-  const status =
-    strategy.cycleStatus ??
-    (strategy.enabled ? 'waiting' : 'disabled');
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-xs font-medium text-zinc-400">
+          DCA Progress
+        </span>
+
+        <span className="text-sm font-bold text-white">
+          {executed} / {total}
+        </span>
+      </div>
+
+      <div className="h-3 overflow-hidden rounded-full bg-white/10">
+        <div
+          className="h-full rounded-full bg-emerald-400 transition-all duration-700"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+
+      <div className="mt-1 text-right text-[10px] font-semibold text-zinc-500">
+        {progress.toFixed(0)}%
+      </div>
+    </div>
+  );
+}
+
+function DataItem({
+  label,
+  value,
+  valueClassName = 'text-white',
+}: {
+  label: string;
+  value: React.ReactNode;
+  valueClassName?: string;
+}) {
+  return (
+    <div className="rounded-2xl bg-black/20 p-3">
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+        {label}
+      </div>
+
+      <div className={`mt-1 text-sm font-bold ${valueClassName}`}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function StrategyCard({ strategy }: { strategy: Strategy }) {
+  const status = strategy.cycleStatus ?? 'waiting';
+
+  const statusClass =
+    status === 'active'
+      ? 'text-emerald-300'
+      : status === 'pending'
+        ? 'text-amber-300'
+        : status === 'completed'
+          ? 'text-sky-300'
+          : 'text-zinc-300';
 
   return (
     <article className="overflow-hidden rounded-3xl border border-white/10 bg-zinc-900/80 shadow-2xl shadow-black/20 backdrop-blur">
-      <div className="border-b border-white/10 p-5">
+      <div className="border-b border-white/10 p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <div className="text-xl font-bold tracking-tight text-white">
+            <div className="text-2xl font-black tracking-tight text-white">
               {strategy.symbol}
             </div>
+
             <div className="mt-1 text-xs text-zinc-500">
-              {strategy.id}
+              Cycle {strategy.cycleNumber ?? '—'}
             </div>
           </div>
 
@@ -92,110 +168,127 @@ function StrategyCard({ strategy }: { strategy: Strategy }) {
             <StatusPill positive={strategy.enabled === 1}>
               {strategy.enabled === 1 ? 'LIVE' : 'DISABLED'}
             </StatusPill>
-            <StatusPill>{status.toUpperCase()}</StatusPill>
+
+            <StatusPill warning={status === 'pending'}>
+              {status}
+            </StatusPill>
           </div>
         </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-3">
-          <div className="rounded-2xl bg-black/20 p-3">
-            <div className="text-[10px] uppercase tracking-wider text-zinc-500">
-              Current Price
-            </div>
-            <div className="mt-1 text-lg font-semibold text-white">
-              {formatNumber(strategy.currentPrice)}
-            </div>
+        <div className="mt-6 rounded-2xl border border-emerald-400/10 bg-emerald-400/[0.04] p-4">
+          <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">
+            Live Price
           </div>
 
-          <div className="rounded-2xl bg-black/20 p-3">
-            <div className="text-[10px] uppercase tracking-wider text-zinc-500">
-              Average Entry
-            </div>
-            <div className="mt-1 text-lg font-semibold text-white">
-              {formatNumber(strategy.averageEntryPrice)}
-            </div>
+          <div className="mt-1 text-3xl font-black tracking-tight text-white sm:text-4xl">
+            {formatPrice(strategy.currentPrice)}
+          </div>
+
+          <div className="mt-1 text-xs text-emerald-300">
+            MEXC live market price
           </div>
         </div>
       </div>
 
-      <div className="space-y-5 p-5">
-        <div>
-          <div className="mb-2 flex items-center justify-between text-xs">
-            <span className="text-zinc-400">DCA Progress</span>
-            <span className="font-semibold text-white">
-              {strategy.executedDcaLevels}/{strategy.totalDcaLevels}
-            </span>
+      <div className="space-y-5 p-5 sm:p-6">
+        <ProgressBar
+          executed={strategy.executedDcaLevels}
+          total={strategy.totalDcaLevels}
+        />
+
+        <div className="grid grid-cols-2 gap-3">
+          <DataItem
+            label="Cycle Status"
+            value={status.toUpperCase()}
+            valueClassName={statusClass}
+          />
+
+          <DataItem
+            label="Pending DCA"
+            value={strategy.pendingDcaLevels}
+          />
+
+          <DataItem
+            label="Initial Entry"
+            value={formatPrice(strategy.initialEntryPrice)}
+          />
+
+          <DataItem
+            label="Average Entry"
+            value={formatPrice(strategy.averageEntryPrice)}
+          />
+
+          <DataItem
+            label="Entry Quantity"
+            value={formatNumber(strategy.entryQuantity)}
+          />
+
+          <DataItem
+            label="Entry Value"
+            value={formatNumber(strategy.entryQuoteQuantity, 4)}
+          />
+
+          <DataItem
+            label="Take Profit"
+            value={`${strategy.takeProfitPercent}%`}
+            valueClassName="text-emerald-300"
+          />
+
+          <DataItem
+            label="Stop Loss"
+            value={`${strategy.stopLossPercent}%`}
+            valueClassName="text-red-300"
+          />
+        </div>
+
+        <div className="border-t border-white/10 pt-5">
+          <div className="mb-3 text-xs font-bold uppercase tracking-wider text-zinc-500">
+            Order Status
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-white/10">
-            <div
-              className="h-full rounded-full bg-emerald-400 transition-all duration-500"
-              style={{ width: `${progress}%` }}
-            />
+
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-2xl bg-black/20 p-3 text-center">
+              <div className="text-[9px] font-bold uppercase text-zinc-500">
+                Initial
+              </div>
+
+              <div className="mt-1 text-xs font-bold text-white">
+                {strategy.initialOrderStatus ?? '—'}
+              </div>
+            </div>
+
+            <div className="rounded-2xl bg-black/20 p-3 text-center">
+              <div className="text-[9px] font-bold uppercase text-zinc-500">
+                Take Profit
+              </div>
+
+              <div className="mt-1 text-xs font-bold text-emerald-300">
+                {strategy.takeProfitStatus ?? '—'}
+              </div>
+            </div>
+
+            <div className="rounded-2xl bg-black/20 p-3 text-center">
+              <div className="text-[9px] font-bold uppercase text-zinc-500">
+                Stop Loss
+              </div>
+
+              <div className="mt-1 text-xs font-bold text-red-300">
+                {strategy.stopLossStatus ?? '—'}
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <div className="text-xs text-zinc-500">Cycle</div>
-            <div className="mt-1 font-semibold text-white">
-              {strategy.cycleNumber ?? '—'}
-            </div>
-          </div>
+        <div className="flex items-center justify-between border-t border-white/10 pt-4 text-xs">
+          <span className="text-zinc-500">
+            {strategy.balanceModeId.toUpperCase()} · {strategy.executionModeId}
+          </span>
 
-          <div>
-            <div className="text-xs text-zinc-500">Balance</div>
-            <div className="mt-1 font-semibold uppercase text-white">
-              {strategy.balanceModeId}
-            </div>
-          </div>
-
-          <div>
-            <div className="text-xs text-zinc-500">Initial Entry</div>
-            <div className="mt-1 font-semibold text-white">
-              {formatNumber(strategy.initialEntryPrice)}
-            </div>
-          </div>
-
-          <div>
-            <div className="text-xs text-zinc-500">Entry Quantity</div>
-            <div className="mt-1 font-semibold text-white">
-              {formatNumber(strategy.entryQuantity)}
-            </div>
-          </div>
-
-          <div>
-            <div className="text-xs text-zinc-500">Take Profit</div>
-            <div className="mt-1 font-semibold text-emerald-300">
-              {strategy.takeProfitPercent}%
-            </div>
-          </div>
-
-          <div>
-            <div className="text-xs text-zinc-500">Stop Loss</div>
-            <div className="mt-1 font-semibold text-red-300">
-              {strategy.stopLossPercent}%
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-3 gap-2 border-t border-white/10 pt-4 text-center">
-          <div>
-            <div className="text-[10px] uppercase text-zinc-500">Initial</div>
-            <div className="mt-1 text-xs font-semibold text-white">
-              {strategy.initialOrderStatus ?? '—'}
-            </div>
-          </div>
-          <div>
-            <div className="text-[10px] uppercase text-zinc-500">TP</div>
-            <div className="mt-1 text-xs font-semibold text-white">
-              {strategy.takeProfitStatus ?? '—'}
-            </div>
-          </div>
-          <div>
-            <div className="text-[10px] uppercase text-zinc-500">SL</div>
-            <div className="mt-1 text-xs font-semibold text-white">
-              {strategy.stopLossStatus ?? '—'}
-            </div>
-          </div>
+          <span className="text-zinc-600">
+            {strategy.cycleUpdatedAt
+              ? new Date(strategy.cycleUpdatedAt).toLocaleTimeString()
+              : '—'}
+          </span>
         </div>
       </div>
     </article>
@@ -222,45 +315,67 @@ export default function Home() {
         strategies: Strategy[];
       };
 
-      setStrategies(data.strategies);
+      setStrategies(data.strategies.filter((strategy) => strategy.enabled === 1));
       setUpdatedAt(data.updatedAt);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Dashboard error');
+      setError(
+        err instanceof Error ? err.message : 'Dashboard error',
+      );
     }
   }, []);
 
   useEffect(() => {
     void load();
-    const timer = window.setInterval(() => void load(), 2000);
+
+    const timer = window.setInterval(() => {
+      void load();
+    }, 2000);
+
     return () => window.clearInterval(timer);
   }, [load]);
+
+  const activeCycles = strategies.filter(
+    (strategy) => strategy.cycleStatus === 'active',
+  ).length;
+
+  const totalExecutedDca = strategies.reduce(
+    (sum, strategy) => sum + strategy.executedDcaLevels,
+    0,
+  );
 
   return (
     <main className="min-h-screen bg-[#09090b] px-4 py-6 text-white sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <header className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <div className="mb-2 text-xs font-bold uppercase tracking-[0.25em] text-emerald-400">
-              AutoNexa
-            </div>
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Strategy Dashboard
-            </h1>
-            <p className="mt-2 text-sm text-zinc-400">
-              Live progress for all DCA strategies. Refreshing every 2 seconds.
-            </p>
-          </div>
+        <header className="mb-8">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <div className="mb-2 text-xs font-black uppercase tracking-[0.3em] text-emerald-400">
+                AutoNexa
+              </div>
 
-          <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/5 px-4 py-3 text-sm">
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-              <span className="font-semibold text-emerald-300">LIVE MONITOR</span>
+              <h1 className="text-3xl font-black tracking-tight sm:text-5xl">
+                Live Strategy Monitor
+              </h1>
+
+              <p className="mt-2 text-sm text-zinc-400">
+                Live prices and real strategy progress.
+              </p>
             </div>
-            <div className="mt-1 text-xs text-zinc-500">
-              {updatedAt
-                ? `Updated ${new Date(updatedAt).toLocaleTimeString()}`
-                : 'Connecting...'}
+
+            <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/5 px-4 py-3">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+                <span className="text-xs font-black uppercase tracking-wider text-emerald-300">
+                  Live Monitor
+                </span>
+              </div>
+
+              <div className="mt-1 text-xs text-zinc-500">
+                {updatedAt
+                  ? `Updated ${new Date(updatedAt).toLocaleTimeString()}`
+                  : 'Connecting...'}
+              </div>
             </div>
           </div>
         </header>
@@ -273,61 +388,52 @@ export default function Home() {
 
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div className="rounded-2xl border border-white/10 bg-zinc-900/70 p-4">
-            <div className="text-xs text-zinc-500">Strategies</div>
-            <div className="mt-1 text-2xl font-bold">{strategies.length}</div>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-zinc-900/70 p-4">
-            <div className="text-xs text-zinc-500">Enabled</div>
-            <div className="mt-1 text-2xl font-bold text-emerald-300">
-              {strategies.filter((x) => x.enabled === 1).length}
+            <div className="text-xs text-zinc-500">Running</div>
+            <div className="mt-1 text-2xl font-black text-emerald-300">
+              {strategies.length}
             </div>
           </div>
+
           <div className="rounded-2xl border border-white/10 bg-zinc-900/70 p-4">
             <div className="text-xs text-zinc-500">Active Cycles</div>
-            <div className="mt-1 text-2xl font-bold">
-              {strategies.filter((x) => x.cycleStatus === 'active').length}
+            <div className="mt-1 text-2xl font-black">
+              {activeCycles}
             </div>
           </div>
+
           <div className="rounded-2xl border border-white/10 bg-zinc-900/70 p-4">
             <div className="text-xs text-zinc-500">DCA Executed</div>
-            <div className="mt-1 text-2xl font-bold">
-              {strategies.reduce((sum, x) => sum + x.executedDcaLevels, 0)}
+            <div className="mt-1 text-2xl font-black">
+              {totalExecutedDca}
             </div>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-zinc-900/70 p-4">
+            <div className="text-xs text-zinc-500">Refresh</div>
+            <div className="mt-1 text-2xl font-black">2s</div>
           </div>
         </div>
 
         <section className="grid gap-5 lg:grid-cols-2">
-          {(strategies.length ? strategies : symbols.map((symbol) => ({
-            id: symbol,
-            symbol,
-            enabled: 0,
-            balanceModeId: 'live',
-            executionModeId: '—',
-            takeProfitPercent: '—',
-            stopLossPercent: '—',
-            cycleId: null,
-            cycleNumber: null,
-            cycleStatus: null,
-            initialEntryPrice: null,
-            averageEntryPrice: null,
-            entryQuantity: null,
-            entryQuoteQuantity: null,
-            cycleUpdatedAt: null,
-            totalDcaLevels: 0,
-            executedDcaLevels: 0,
-            pendingDcaLevels: 0,
-            initialOrderStatus: null,
-            initialOrderPrice: null,
-            initialExecutedQuantity: null,
-            takeProfitStatus: null,
-            takeProfitFillPrice: null,
-            stopLossStatus: null,
-            stopLossFillPrice: null,
-            currentPrice: null,
-          }))).map((strategy) => (
-            <StrategyCard key={strategy.id} strategy={strategy} />
+          {strategies.map((strategy) => (
+            <StrategyCard
+              key={strategy.id}
+              strategy={strategy}
+            />
           ))}
         </section>
+
+        {!strategies.length && !error && (
+          <div className="rounded-3xl border border-white/10 bg-zinc-900/70 p-10 text-center">
+            <div className="text-lg font-bold text-white">
+              No running strategies
+            </div>
+
+            <div className="mt-2 text-sm text-zinc-500">
+              Waiting for an enabled strategy...
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );
