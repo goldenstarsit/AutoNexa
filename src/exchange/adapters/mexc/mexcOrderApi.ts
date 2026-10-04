@@ -234,16 +234,6 @@ export class MexcOrderApi {
       },
     );
 
-    return {
-      orderId: response.orderId,
-      clientOrderId: response.clientOrderId,
-      symbol: response.symbol,
-      side: normalizeMexcOrderSide(response.side),
-      type: request.type,
-      status: normalizeMexcOrderStatus(response.status as Parameters<typeof normalizeMexcOrderStatus>[0]),
-      quantity: response.origQty,
-      executedQuantity: response.executedQty,
-      price: response.price,
-    };
+    return this.getOrder(request.symbol, response.orderId);
   }
 }

@@ -91,9 +91,11 @@ test('market BUY validates against best ask before submitting', async () => {
   const order = await api.placeOrder(request());
 
   assert.equal(order.orderId, '123');
-  assert.equal(calls.length, 1);
+  assert.equal(calls.length, 2);
   assert.equal(calls[0].method, 'POST');
   assert.equal(calls[0].path, '/api/v3/order');
+  assert.equal(calls[1].method, 'GET');
+  assert.equal(calls[1].path, '/api/v3/order');
   assert.deepEqual(calls[0].params, {
     symbol: 'BTCUSDT',
     side: 'BUY',
@@ -115,7 +117,7 @@ test('market SELL validates against best bid before submitting', async () => {
     ),
   );
 
-  assert.equal(calls.length, 1);
+  assert.equal(calls.length, 2);
   assert.equal(calls[0].params && typeof calls[0].params === 'object'
     ? (calls[0].params as Record<string, unknown>).side
     : undefined, 'SELL');

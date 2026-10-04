@@ -214,3 +214,67 @@ test('getOrderHistory forwards time range and limit', async () => {
     },
   });
 });
+
+test('placeOrder re-reads the authoritative order after POST', async () => {
+  const calls: Call[] = [];
+  const privateApiClient = {
+    async request<T>(
+      method: 'GET' | 'POST' | 'DELETE',
+      path: string,
+      params: Record<string, string | number | boolean>,
+    ): Promise<T> {
+      calls.push({ method, path, params });
+      if (method === 'POST' && path === '/api/v3/order') {
+        return {
+          symbol: 'BTCUSDT',
+          orderId: '123',
+          clientOrderId: 'client-1',
+        } as T;
+      }
+      if (method === 'GET' && path === '/api/v3/order') {
+        return {
+          symbol: 'BTCUSDT',
+          orderId: '123',
+          clientOrderId: 'client-1',
+          price: '90000.00',
+          origQty: '0.000012',
+          executedQty: '0.000012',
+          status: 'FILLED',
+          type: 'MARKET',
+          side: 'BUY',
+        } as T;
+      }
+      throw new Error(`Unexpected request: ${method} ${path}`);
+    },
+  };
+  const marketApi = {
+    async getSymbolInfo() {
+      return symbolInfo;
+    },
+  };
+  const bookTickerApi = {
+    async getBookTicker() {
+      return { askPrice: '90000.00', bidPrice: '89999.00' };
+    },
+  };
+  const api = new MexcOrderApi(
+    privateApiClient as never,
+    marketApi as never,
+    bookTickerApi as never,
+  );
+
+  const order = await api.placeOrder({
+    symbol: 'BTCUSDT',
+    side: 'buy',
+    type: 'market',
+    quantity: '0.000012',
+    executionMode: 'takerOnly',
+  });
+
+  assert.equal(order.status, 'filled');
+  assert.equal(order.orderId, '123');
+  assert.deepEqual(calls.map(({ method, path }) => ({ method, path })), [
+    { method: 'POST', path: '/api/v3/order' },
+    { method: 'GET', path: '/api/v3/order' },
+  ]);
+});
