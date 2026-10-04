@@ -2118,3 +2118,138 @@ test('process reconciles a persisted pending DCA order when its level is reached
   assert.equal(runtimeFills.length, 1);
   assert.equal(cycles.get(cycle.id)?.entryQuantity, '0.002');
 });
+
+test('process stops an orphan pending cycle when its initial order is missing', async () => {
+  const cycles = new Map<string, DcaCycleModelRecord>();
+  const configurationId = 'configuration-orphan';
+
+  const now = new Date().toISOString();
+  cycles.set(`${configurationId}-cycle-1`, {
+    id: `${configurationId}-cycle-1`,
+    dcaConfigurationId: configurationId,
+    cycleNumber: 1,
+    status: 'pending',
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  const cyclePersistence: DcaCyclePersistenceModel = {
+    getById: (id) => cycles.get(id),
+    getCurrent: (id) =>
+      [...cycles.values()]
+        .filter((cycle) => cycle.dcaConfigurationId === id)
+        .sort((a, b) => b.cycleNumber - a.cycleNumber)[0],
+    create: () => {
+      throw new Error('create should not be called');
+    },
+    setInitialEntryPrice: () => {
+      throw new Error('setInitialEntryPrice should not be called');
+    },
+    setEntryTotals: () => {
+      throw new Error('setEntryTotals should not be called');
+    },
+    updateStatus: (id, status) => {
+      const cycle = cycles.get(id);
+      if (!cycle) throw new Error(`missing cycle: ${id}`);
+      const updated = { ...cycle, status, updatedAt: new Date().toISOString() };
+      cycles.set(id, updated);
+      return updated;
+    },
+  };
+
+  const initialOrderPersistence: DcaInitialOrderPersistenceModel = {
+    getByCycle: () => undefined,
+    saveOrder: () => {
+      throw new Error('saveOrder should not be called');
+    },
+    getFills: () => [],
+    saveFills: () => [],
+    updateOrder: () => {
+      throw new Error('updateOrder should not be called');
+    },
+  };
+
+  const runtimeOrderPersistence: DcaRuntimeOrderPersistenceModel = {
+    getByCycleAndLevel: () => undefined,
+    getFillsByCycle: () => [],
+    getFills: () => [],
+    saveOrder: () => {
+      throw new Error('saveOrder should not be called');
+    },
+    updateOrder: () => {
+      throw new Error('updateOrder should not be called');
+    },
+    saveFills: () => [],
+  };
+
+  const exitOrderPersistence: DcaExitOrderPersistenceModel = {
+    getByCycleAndType: () => undefined,
+    saveOrder: () => {
+      throw new Error('saveOrder should not be called');
+    },
+    updateOrder: () => {
+      throw new Error('updateOrder should not be called');
+    },
+    getFills: () => [],
+    saveFills: () => [],
+  };
+
+  const exchange: ExchangeModel = {
+    id: 'mexc',
+    name: 'MEXC',
+    enabled: true,
+    balanceModes: { get: () => balanceModeForExchange() },
+    getAccount: async () => ({ balances: [] }),
+    depositTestBalance: () => {},
+    withdrawTestBalance: () => {},
+    getSymbolInfo: async () => undefined,
+    getTradingRules: async () => undefined,
+    getCurrentPrice: async () => '100',
+    getBestBidPrice: async () => '99.9',
+    getBestAskPrice: async () => '100.1',
+    placeOrder: async () => {
+      throw new Error('placeOrder should not be called');
+    },
+    getOrder: async () => {
+      throw new Error('getOrder should not be called');
+    },
+    getOrderTrades: async () => [],
+  } as ExchangeModel;
+
+  const executionMode: ExecutionModeModel = {
+    id: 'takerOnly',
+    name: 'Taker Only',
+    enabled: true,
+    execute: async <T>(operation: {
+      maker: () => Promise<T>;
+      taker: () => Promise<T>;
+    }) => operation.taker(),
+  } as ExecutionModeModel;
+
+  const configuration = createConfiguration(exchange, executionMode);
+  const orphanConfiguration = {
+    ...configuration,
+    id: configurationId,
+  };
+
+  const service = new DcaStrategyService(
+    cyclePersistence,
+    runtimeOrderPersistence,
+    exitOrderPersistence,
+    initialOrderPersistence,
+    {
+      getByCycleAndLevel: () => undefined,
+      getFillsByCycle: () => [],
+      getFills: () => [],
+    },
+    (id) => (id === configurationId ? orphanConfiguration : undefined),
+  );
+
+  const result = await service.process(configurationId);
+
+  assert.equal(result.cycleId, `${configurationId}-cycle-1`);
+  assert.equal(
+    cycles.get(`${configurationId}-cycle-1`)?.status,
+    'stopped',
+  );
+});

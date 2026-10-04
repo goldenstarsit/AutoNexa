@@ -255,9 +255,8 @@ export class DcaInitialOrderService {
     const initialOrder = this.persistence.getByCycle(cycle.id);
 
     if (!initialOrder) {
-      throw new Error(
-        `Pending DCA cycle has no initial order: ${cycle.id}`,
-      );
+      cycle.stop();
+      return undefined;
     }
 
     const configuration = this.getConfigurationModel(configurationId);

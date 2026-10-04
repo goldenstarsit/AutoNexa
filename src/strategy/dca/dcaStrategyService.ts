@@ -203,6 +203,20 @@ export class DcaStrategyService implements DcaStrategyRuntime {
       }
     }
 
+    if (cycle.status === 'stopped') {
+      return {
+        cycleId: cycle.id,
+        cycleNumber: cycle.cycleNumber,
+        currentPrice: '',
+        takeProfitReached: false,
+        stopLossReached: false,
+        executedDcaLevels: [],
+        skippedDcaLevels: [],
+        reachedDcaLevels: [],
+        initialOrderPending: false,
+      };
+    }
+
     if (cycle.status !== 'active') {
       throw new Error(
         `DCA configuration has no active cycle: ${configurationId}`,
