@@ -424,6 +424,7 @@ export class DcaStrategyService implements DcaStrategyRuntime {
             configurationId,
             cycle.id,
             level.level,
+            stopLoss.currentPrice,
           ),
         );
 

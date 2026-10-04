@@ -17,6 +17,7 @@ export interface DcaRuntimeOrderRecord {
   readonly quantity: string;
   readonly executedQuantity: string;
   readonly requestedPrice?: string;
+  readonly triggerPrice?: string;
   readonly averageFillPrice?: string;
   readonly createdAt: string;
   readonly updatedAt: string;
@@ -66,6 +67,7 @@ export interface DcaRuntimeOrderModel {
   readonly quantity: string;
   readonly executedQuantity: string;
   readonly requestedPrice?: string;
+  readonly triggerPrice?: string;
   readonly averageFillPrice?: string;
   readonly createdAt: string;
   readonly updatedAt: string;
@@ -93,6 +95,7 @@ export interface DcaRuntimeOrderPersistenceModel {
     level: number,
     order: ExchangeOrder,
     request: ExchangeOrderRequest,
+    triggerPrice: string,
   ): DcaRuntimeOrderModel;
 
   updateOrder(

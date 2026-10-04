@@ -358,7 +358,7 @@ for (const mode of ['makerOnly', 'hybrid', 'takerOnly'] as const) {
       () => configuration,
     );
 
-    const preparation = await service.prepare(configurationId, cycleId, 1);
+    const preparation = await service.prepare(configurationId, cycleId, 1, '95');
 
     assert.deepEqual(preparation.request, expectedBuy(mode));
   });

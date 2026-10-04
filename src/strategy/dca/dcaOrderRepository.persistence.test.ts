@@ -29,6 +29,7 @@ test('DCA runtime order survives repository recreation', () => {
       executed_quantity TEXT NOT NULL,
       requested_price TEXT,
       average_fill_price TEXT,
+      trigger_price TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
       UNIQUE (dca_cycle_id, level)
@@ -82,6 +83,7 @@ test('DCA runtime order survives repository recreation', () => {
     1,
     order,
     request,
+    '95',
   );
 
   const recreatedRepository = new DcaOrderRepository(new SQLiteDatabaseModel(db));
@@ -124,6 +126,7 @@ test('DCA runtime order fills survive repository recreation', () => {
       executed_quantity TEXT NOT NULL,
       requested_price TEXT,
       average_fill_price TEXT,
+      trigger_price TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
       UNIQUE (dca_cycle_id, level)
@@ -177,6 +180,7 @@ test('DCA runtime order fills survive repository recreation', () => {
     1,
     order,
     request,
+    '95',
   );
 
   const trade: ExchangeTrade = {
@@ -228,6 +232,7 @@ test('initial and exit orders survive repository recreation', () => {
       executed_quantity TEXT NOT NULL,
       requested_price TEXT,
       average_fill_price TEXT,
+      trigger_price TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
       UNIQUE (dca_cycle_id)
@@ -268,6 +273,7 @@ test('initial and exit orders survive repository recreation', () => {
       executed_quantity TEXT NOT NULL,
       requested_price TEXT,
       average_fill_price TEXT,
+      trigger_price TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
       UNIQUE (dca_cycle_id, exit_type)
@@ -337,6 +343,7 @@ test('initial and exit orders survive repository recreation', () => {
     'cycle-1',
     initialOrder,
     marketRequest,
+    '100',
   );
 
   initialRepository.saveFills(savedInitial.id, [

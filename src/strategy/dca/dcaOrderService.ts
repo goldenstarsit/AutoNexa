@@ -10,6 +10,7 @@ import {
 } from '../../exchange/trade/exchangeTradeFillCalculator';
 import type { DcaCyclePersistenceModel } from '../../domain/strategy/dca/dcaCycleModel';
 import { DcaCycleModelSelector } from './models/dcaCycleModelSelector';
+import { multiplyDecimalAmounts } from '../../exchange/account/decimalAmount';
 import { DcaTradingRuleResolver } from './dcaTradingRuleResolver';
 import type { DcaRuntimeOrderRecord } from '../../domain/strategy/dca/dcaRuntimeOrderModel';
 
@@ -55,6 +56,7 @@ export class DcaOrderService {
     configurationId: string,
     cycleId: string,
     level: number,
+    triggerPrice: string,
   ): Promise<DcaOrderPreparation> {
     const configuration =
       this.getConfigurationModel(configurationId);
@@ -114,9 +116,7 @@ export class DcaOrderService {
     );
 
     const exchange = configuration.exchange;
-    const currentPrice = await exchange.getCurrentPrice(
-      configuration.symbol,
-    );
+    const currentPrice = triggerPrice;
 
     const request: ExchangeOrderRequest = {
       symbol: configuration.symbol,
@@ -267,6 +267,7 @@ export class DcaOrderService {
       preparation.level,
       order,
       preparation.request,
+      preparation.currentPrice,
     );
 
     const trades =
@@ -297,33 +298,23 @@ export class DcaOrderService {
         );
       }
 
-      const cycleFills =
-        this.runtimeOrderPersistence.getFillsByCycle(
-          preparation.cycleId,
-        );
-
-      const dcaTrades: ExchangeTrade[] = cycleFills.map(
-        (fill) => ({
-          tradeId: fill.exchangeTradeId,
-          orderId: fill.exchangeOrderId,
-          symbol: fill.symbol,
-          side: fill.side,
-          price: fill.price,
-          quantity: fill.quantity,
-          quoteQuantity: fill.quoteQuantity,
-          timestamp: fill.tradeTimestamp,
-        }),
+      const executedQuantity = calculateTradeFillTotals(
+        trades,
+      ).quantity;
+      const triggerQuoteQuantity = multiplyDecimalAmounts(
+        preparation.currentPrice,
+        executedQuantity,
       );
-
-      const dcaTotals =
-        calculateTradeFillTotals(dcaTrades);
 
       const combinedTotals = combineTradeFillTotals(
         {
           quantity: cycle.entryQuantity,
           quoteQuantity: cycle.entryQuoteQuantity,
         },
-        dcaTotals,
+        {
+          quantity: executedQuantity,
+          quoteQuantity: triggerQuoteQuantity,
+        },
       );
 
       cycle.recordDcaEntryTotals(

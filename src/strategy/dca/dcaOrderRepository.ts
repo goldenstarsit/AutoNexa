@@ -28,6 +28,7 @@ type RuntimeOrderRow = {
   executed_quantity: string;
   requested_price: string | null;
   average_fill_price: string | null;
+  trigger_price: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -69,6 +70,7 @@ export class DcaOrderRepository {
     level: number,
     order: ExchangeOrder,
     request: ExchangeOrderRequest,
+    triggerPrice: string,
   ): DcaRuntimeOrderDomainModel {
     if (this.getByCycleAndLevel(cycleId, level)) {
       throw new Error(
@@ -98,10 +100,11 @@ export class DcaOrderRepository {
           executed_quantity,
           requested_price,
           average_fill_price,
+          trigger_price,
           created_at,
           updated_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       id,
       configurationId,
@@ -119,6 +122,7 @@ export class DcaOrderRepository {
       order.executedQuantity,
       order.price ?? request.price ?? null,
       null,
+      triggerPrice,
       now,
       now,
     );
@@ -339,6 +343,7 @@ export class DcaOrderRepository {
       executedQuantity: row.executed_quantity,
       requestedPrice: row.requested_price ?? undefined,
       averageFillPrice: row.average_fill_price ?? undefined,
+      triggerPrice: row.trigger_price ?? undefined,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };

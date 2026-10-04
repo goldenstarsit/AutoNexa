@@ -25,6 +25,7 @@ type InitialOrderRow = {
   executed_quantity: string;
   requested_price: string | null;
   average_fill_price: string | null;
+  trigger_price: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -48,6 +49,7 @@ export class DcaInitialOrderRepository {
     cycleId: string,
     order: ExchangeOrder,
     request: ExchangeOrderRequest,
+    triggerPrice: string,
   ): DcaInitialOrderModel {
     if (this.getByCycle(cycleId)) {
       throw new Error(`DCA initial order already exists: ${cycleId}`);
@@ -72,9 +74,10 @@ export class DcaInitialOrderRepository {
         executed_quantity,
         requested_price,
         average_fill_price,
+        trigger_price,
         created_at,
         updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       id,
       configurationId,
       cycleId,
@@ -89,6 +92,7 @@ export class DcaInitialOrderRepository {
       order.executedQuantity,
       order.price ?? request.price ?? null,
       null,
+      triggerPrice,
       now,
       now,
     );
@@ -239,6 +243,7 @@ export class DcaInitialOrderRepository {
       quantity: row.quantity,
       executedQuantity: row.executed_quantity,
       requestedPrice: row.requested_price ?? undefined,
+      triggerPrice: row.trigger_price ?? undefined,
       averageFillPrice: row.average_fill_price ?? undefined,
       createdAt: row.created_at,
       updatedAt: row.updated_at,

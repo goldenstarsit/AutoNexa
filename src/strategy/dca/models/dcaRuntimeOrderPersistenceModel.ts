@@ -34,6 +34,7 @@ export class DcaRuntimeOrderPersistenceModelImpl
     level: number,
     order: Parameters<DcaOrderRepository['saveOrder']>[4],
     request: Parameters<DcaOrderRepository['saveOrder']>[5],
+    triggerPrice: Parameters<DcaOrderRepository['saveOrder']>[6],
   ): DcaRuntimeOrderModel {
     return this.repository.saveOrder(
       configurationId,
@@ -42,6 +43,7 @@ export class DcaRuntimeOrderPersistenceModelImpl
       level,
       order,
       request,
+      triggerPrice,
     );
   }
 

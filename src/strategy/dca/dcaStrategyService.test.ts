@@ -256,13 +256,14 @@ test('start creates cycle 1 and executes the initial order', async () => {
     getByCycle: (cycleId) => {
       return [...initialOrders.values()].find((order) => order.dcaCycleId === cycleId);
     },
-    saveOrder: (configurationId, cycleId, order, request) => {
+    saveOrder: (configurationId, cycleId, order, request, triggerPrice) => {
       const now = new Date().toISOString();
       const record = {
         id: `${cycleId}-initial-order`,
         dcaConfigurationId: configurationId,
         dcaCycleId: cycleId,
         exchangeOrderId: order.orderId,
+        triggerPrice,
         clientOrderId: order.clientOrderId,
         executionMode: request.executionMode,
         symbol: order.symbol,
@@ -400,7 +401,7 @@ test('process reconciles a pending initial order before evaluating the active cy
     }),
     getCurrentPrice: async () => {
       currentPriceCalls += 1;
-      return '100';
+      return '101';
     },
     getBestBidPrice: async () => '99.9',
     getBestAskPrice: async () => '100.1',
@@ -532,6 +533,7 @@ test('process reconciles a pending initial order before evaluating the active cy
     dcaConfigurationId: configurationId,
     dcaCycleId: cycleId,
     exchangeOrderId: 'exchange-initial-1',
+    triggerPrice: '101',
     executionMode: 'makerOnly',
     symbol: 'BTCUSDT',
     side: 'buy',
@@ -548,7 +550,7 @@ test('process reconciles a pending initial order before evaluating the active cy
     getByCycle: (id) =>
       [...initialOrders.values()].find((order) => order.dcaCycleId === id),
 
-    saveOrder: (id, cycle, order, request) => {
+    saveOrder: (id, cycle, order, request, triggerPrice) => {
       const record = {
         id: `${cycle}-initial-order`,
         dcaConfigurationId: id,
@@ -564,6 +566,7 @@ test('process reconciles a pending initial order before evaluating the active cy
         executedQuantity: order.executedQuantity,
         requestedPrice: order.price ?? request.price,
         averageFillPrice: undefined,
+        triggerPrice,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         fills: [],
@@ -664,7 +667,7 @@ test('process reconciles a pending initial order before evaluating the active cy
   assert.ok(currentPriceCalls >= 1);
   assert.equal(result.cycleId, cycleId);
   assert.equal(result.cycleNumber, 1);
-  assert.equal(result.currentPrice, '100');
+  assert.equal(result.currentPrice, '101');
   assert.equal(result.initialOrderPending, undefined);
   assert.deepEqual(result.executedDcaLevels, []);
   assert.deepEqual(result.reachedDcaLevels, [
@@ -672,7 +675,7 @@ test('process reconciles a pending initial order before evaluating the active cy
       level: 1,
       dcaOrderId: 'dca-order-1',
       dropPercent: '5',
-      triggerPrice: '95',
+      triggerPrice: '95.95',
       reached: false,
     },
   ]);
@@ -680,7 +683,12 @@ test('process reconciles a pending initial order before evaluating the active cy
   const cycle = cycles.get(cycleId);
   assert.ok(cycle);
   assert.equal(cycle.status, 'active');
-  assert.equal(cycle.initialEntryPrice, '100');
+  assert.equal(cycle.initialEntryPrice, '101');
+  assert.equal(cycle.entryQuantity, '0.001');
+  assert.equal(cycle.entryQuoteQuantity, '0.101');
+  assert.equal(cycle.averageEntryPrice, '101');
+  assert.equal(initialOrders.get(`${cycleId}-initial-order`)?.triggerPrice, '101');
+  assert.equal(initialOrders.get(`${cycleId}-initial-order`)?.fills[0]?.price, '100');
 });
 
 test('process executes a reached DCA level and records the executed level', async () => {
@@ -1124,12 +1132,13 @@ test('process executes take profit, completes the cycle, and starts the next cyc
       const order = initialOrders.get(cycleId);
       return order;
     },
-    saveOrder: (configurationId, cycleId, order, request) => {
+    saveOrder: (configurationId, cycleId, order, request, triggerPrice) => {
       const record: DcaInitialOrderModel = {
         id: `${cycleId}-initial`,
         dcaConfigurationId: configurationId,
         dcaCycleId: cycleId,
         exchangeOrderId: order.orderId,
+        triggerPrice,
         executionMode: request.executionMode,
         symbol: order.symbol,
         side: order.side,
@@ -1432,12 +1441,13 @@ test('process executes maker-only take profit at the take-profit price', async (
 
   const initialOrderPersistence: DcaInitialOrderPersistenceModel = {
     getByCycle: (cycleId) => initialOrders.get(cycleId),
-    saveOrder: (configurationId, cycleId, order, request) => {
+    saveOrder: (configurationId, cycleId, order, request, triggerPrice) => {
       const record: DcaInitialOrderModel = {
         id: `${cycleId}-initial`,
         dcaConfigurationId: configurationId,
         dcaCycleId: cycleId,
         exchangeOrderId: order.orderId,
+        triggerPrice,
         executionMode: request.executionMode,
         symbol: order.symbol,
         side: order.side,
@@ -1690,12 +1700,13 @@ test('process executes stop loss, stops the cycle, and starts the next cycle', a
 
   const initialOrderPersistence: DcaInitialOrderPersistenceModel = {
     getByCycle: (cycleId) => initialOrders.get(cycleId),
-    saveOrder: (configurationId, cycleId, order, request) => {
+    saveOrder: (configurationId, cycleId, order, request, triggerPrice) => {
       const record: DcaInitialOrderModel = {
         id: `${cycleId}-initial`,
         dcaConfigurationId: configurationId,
         dcaCycleId: cycleId,
         exchangeOrderId: order.orderId,
+        triggerPrice,
         executionMode: request.executionMode,
         symbol: order.symbol,
         side: order.side,

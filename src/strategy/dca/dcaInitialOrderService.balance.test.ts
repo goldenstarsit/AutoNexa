@@ -111,6 +111,7 @@ function createService(
     dcaConfigurationId: 'dca-btcusdt',
     dcaCycleId: 'cycle-1',
     exchangeOrderId: 'order-1',
+    triggerPrice: '100000',
     clientOrderId: undefined,
     symbol: 'BTCUSDT',
     side: 'buy',

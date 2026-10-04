@@ -18,6 +18,7 @@ export interface DcaInitialOrderRecord {
   readonly quantity: string;
   readonly executedQuantity: string;
   readonly requestedPrice?: string;
+  readonly triggerPrice?: string;
   readonly averageFillPrice?: string;
   readonly createdAt: string;
   readonly updatedAt: string;
@@ -48,6 +49,7 @@ export interface DcaInitialOrderPersistenceModel {
     cycleId: string,
     order: ExchangeOrder,
     request: ExchangeOrderRequest,
+    triggerPrice: string,
   ): DcaInitialOrderModel;
   updateOrder(
     initialOrderId: string,

@@ -20,12 +20,14 @@ export class DcaInitialOrderPersistenceModelImpl
     cycleId: string,
     order: Parameters<DcaInitialOrderRepository['saveOrder']>[2],
     request: Parameters<DcaInitialOrderRepository['saveOrder']>[3],
+    triggerPrice: Parameters<DcaInitialOrderRepository['saveOrder']>[4],
   ): DcaInitialOrderModel {
     return this.repository.saveOrder(
       configurationId,
       cycleId,
       order,
       request,
+      triggerPrice,
     );
   }
 

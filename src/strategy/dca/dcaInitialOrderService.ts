@@ -193,6 +193,7 @@ export class DcaInitialOrderService {
         cycle.id,
         order,
         preparation.request,
+        preparation.currentPrice,
       );
 
       const trades = await this.reconcileOrder(
@@ -228,14 +229,30 @@ export class DcaInitialOrderService {
         );
       }
 
-      const initialEntry = calculateTradeFillTotals(allTrades);
-      cycle.recordInitialEntryPrice(initialEntry);
+      const triggerPrice = latestOrder.triggerPrice;
+      if (!triggerPrice) {
+        throw new Error(
+          `Initial DCA order has no trigger price: ${latestOrder.id}`,
+        );
+      }
+
+      const executedQuantity = calculateTradeFillTotals(allTrades).quantity;
+      const triggerQuoteQuantity = multiplyDecimalAmounts(
+        triggerPrice,
+        executedQuantity,
+      );
+
+      cycle.recordInitialEntryPrice({
+        quantity: executedQuantity,
+        quoteQuantity: triggerQuoteQuantity,
+        averagePrice: triggerPrice,
+      });
 
       return {
         cycleId: cycle.id,
         order: this.toExchangeOrder(latestOrder),
         trades: allTrades,
-        initialEntryPrice: initialEntry.averagePrice,
+        initialEntryPrice: triggerPrice,
       };
     } catch (error) {
       this.cycleModels.get(cycle.id)?.stop();
@@ -306,14 +323,30 @@ export class DcaInitialOrderService {
       );
     }
 
-    const initialEntry = calculateTradeFillTotals(allTrades);
-    cycle.recordInitialEntryPrice(initialEntry);
+    const triggerPrice = latestOrder.triggerPrice;
+    if (!triggerPrice) {
+      throw new Error(
+        `Initial DCA order has no trigger price: ${latestOrder.id}`,
+      );
+    }
+
+    const executedQuantity = calculateTradeFillTotals(allTrades).quantity;
+    const triggerQuoteQuantity = multiplyDecimalAmounts(
+      triggerPrice,
+      executedQuantity,
+    );
+
+    cycle.recordInitialEntryPrice({
+      quantity: executedQuantity,
+      quoteQuantity: triggerQuoteQuantity,
+      averagePrice: triggerPrice,
+    });
 
     return {
       cycleId: cycle.id,
       order,
       trades: allTrades,
-      initialEntryPrice: initialEntry.averagePrice,
+      initialEntryPrice: triggerPrice,
     };
   }
 
