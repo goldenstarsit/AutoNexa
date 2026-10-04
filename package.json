@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "strategy:runtime": "tsx src/application/strategyRuntime.ts"
   },
   "dependencies": {
     "better-sqlite3": "^13.0.3",

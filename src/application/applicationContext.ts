@@ -17,6 +17,8 @@ import { DcaConfigurationPersistenceModelImpl } from '../strategy/dca/models/dca
 import { DcaConfigurationRepository } from '../strategy/dca/dcaConfigurationRepository';
 import { DcaConfigurationService } from '../strategy/dca/dcaConfigurationService';
 import type { DcaStrategyModel } from '../domain/strategy/dca/dcaStrategyModel';
+import type { DcaStrategyRuntime } from '../domain/strategy/dca/dcaStrategyRuntime';
+import { DcaStrategyRuntimeRunner } from './dcaStrategyRuntimeRunner';
 import { DcaStrategyService } from '../strategy/dca/dcaStrategyService';
 import { DcaCycleRepository } from '../strategy/dca/dcaCycleRepository';
 import { DcaCyclePersistenceModelImpl } from '../strategy/dca/models/dcaCyclePersistenceModel';
@@ -38,6 +40,8 @@ export class ApplicationContext {
   readonly dcaStrategyModel: DcaStrategyModel;
   readonly dcaConfigurationRepository: DcaConfigurationRepository;
   readonly dcaConfigurationService: DcaConfigurationService;
+  readonly dcaStrategyRuntime: DcaStrategyRuntime;
+  readonly dcaStrategyRuntimeRunner: DcaStrategyRuntimeRunner;
 
   constructor() {
     this.database = new SQLiteDatabaseModelFactory().create();
@@ -86,10 +90,17 @@ export class ApplicationContext {
         dcaStrategyModelRef.current!.instances.get(configurationId),
     );
 
+    this.dcaStrategyRuntime = dcaStrategy;
+
     const dcaConfigurationRepository = new DcaConfigurationRepository(
       this.database,
     );
     this.dcaConfigurationRepository = dcaConfigurationRepository;
+    this.dcaStrategyRuntimeRunner = new DcaStrategyRuntimeRunner(
+      this.dcaStrategyRuntime,
+      dcaConfigurationRepository,
+      new DcaCycleRepository(this.database),
+    );
     this.dcaConfigurationService = new DcaConfigurationService(
       dcaConfigurationRepository,
       new DcaCycleRepository(this.database),
