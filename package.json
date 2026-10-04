@@ -7,7 +7,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
-    "strategy:runtime": "tsx src/application/strategyRuntime.ts"
+    "strategy:runtime": "node --env-file=.env --import tsx src/application/strategyRuntime.ts"
   },
   "dependencies": {
     "better-sqlite3": "^13.0.3",
