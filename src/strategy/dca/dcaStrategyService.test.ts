@@ -175,6 +175,12 @@ test('start creates cycle 1 and executes the initial order', async () => {
     getOrderTrades: async (_symbol: string, _orderId: string) => [createTrade({
       orderId: 'exchange-initial-1',
     })],
+    cancelOrder: async (_symbol: string, orderId: string) =>
+      createOrder({
+        orderId,
+        status: 'canceled',
+        executedQuantity: '0',
+      }),
   } as ExchangeModel;
 
   const executionMode: ExecutionModeModel = {
@@ -436,6 +442,12 @@ test('process reconciles a pending initial order before evaluating the active cy
         }),
       ];
     },
+    cancelOrder: async (_symbol: string, orderId: string) =>
+      createOrder({
+        orderId,
+        status: 'canceled',
+        executedQuantity: '0',
+      }),
   } as ExchangeModel;
 
   const executionMode: ExecutionModeModel = {
@@ -763,6 +775,12 @@ test('process executes a reached DCA level and records the executed level', asyn
         quoteQuantity: '0.094',
       }),
     ],
+    cancelOrder: async (_symbol: string, orderId: string) =>
+      createOrder({
+        orderId,
+        status: 'canceled',
+        executedQuantity: '0',
+      }),
   };
 
   const configuration = {
@@ -1913,18 +1931,24 @@ test('process reconciles a persisted pending DCA order when its level is reached
         executedQuantity: '0.001',
       });
     },
-    getOrderTrades: async () => {
-      getOrderTradesCalls += 1;
-      return [
-        createTrade({
-          tradeId: 'dca-pending-trade-1',
-          orderId: 'exchange-dca-pending-1',
-          price: '94',
-          quantity: '0.001',
-          quoteQuantity: '0.094',
-        }),
-      ];
-    },
+      getOrderTrades: async () => {
+        getOrderTradesCalls += 1;
+        return [
+          createTrade({
+            tradeId: 'dca-pending-trade-1',
+            orderId: 'exchange-dca-pending-1',
+            price: '94',
+            quantity: '0.001',
+            quoteQuantity: '0.094',
+          }),
+        ];
+      },
+    cancelOrder: async (_symbol: string, orderId: string) =>
+      createOrder({
+        orderId,
+        status: 'canceled',
+        executedQuantity: '0',
+      }),
   };
 
   const configuration = {
@@ -2225,6 +2249,12 @@ test('process stops an orphan pending cycle when its initial order is missing', 
       throw new Error('getOrder should not be called');
     },
     getOrderTrades: async () => [],
+    cancelOrder: async (_symbol: string, orderId: string) =>
+      createOrder({
+        orderId,
+        status: 'canceled',
+        executedQuantity: '0',
+      }),
   } as ExchangeModel;
 
   const executionMode: ExecutionModeModel = {

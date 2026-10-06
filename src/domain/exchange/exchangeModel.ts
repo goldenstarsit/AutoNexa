@@ -44,6 +44,11 @@ export interface ExchangeModel {
     mode?: BalanceModeId,
   ): Promise<ExchangeOrder>;
 
+  cancelOrder(
+    symbol: string,
+    orderId: string,
+  ): Promise<ExchangeOrder>;
+
   getOrderTrades(
     symbol: string,
     orderId: string,

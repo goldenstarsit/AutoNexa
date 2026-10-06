@@ -160,6 +160,12 @@ test('DCA E2E persists cycle, initial order, and DCA order through real SQLite r
         timestamp: Date.now(),
       },
     ],
+    cancelOrder: async (_symbol: string, orderId: string) =>
+      createOrder({
+        orderId,
+        status: 'canceled',
+        executedQuantity: '0',
+      }),
   } as ExchangeModel;
 
   const executionMode: ExecutionModeModel = {

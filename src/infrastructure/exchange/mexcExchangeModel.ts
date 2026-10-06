@@ -37,6 +37,13 @@ export class MexcExchangeModel implements ExchangeModel {
     return this.adapter.getOrder(symbol, orderId, mode);
   }
 
+  cancelOrder(
+    symbol: Parameters<MexcExchangeAdapter['cancelOrder']>[0],
+    orderId: Parameters<MexcExchangeAdapter['cancelOrder']>[1],
+  ) {
+    return this.adapter.cancelOrder(symbol, orderId);
+  }
+
   getOrderTrades(
     symbol: Parameters<MexcExchangeAdapter['getOrderTrades']>[0],
     orderId: Parameters<MexcExchangeAdapter['getOrderTrades']>[1],
