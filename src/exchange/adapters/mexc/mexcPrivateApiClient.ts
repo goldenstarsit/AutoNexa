@@ -2,6 +2,7 @@ import type { ExchangeHttpClient } from '../../http/exchangeHttpClient';
 import { FetchExchangeHttpClient } from '../../http/fetchExchangeHttpClient';
 import { getMexcCredentials } from '../../../config/exchangeCredentials';
 import { MexcPrivateRequestBuilder } from './mexcPrivateRequest';
+import { MexcApiClient } from './mexcApiClient';
 import { MexcSigner } from './mexcSigner';
 import { MEXC_API_CONFIG } from './mexcApiConfig';
 import { InMemoryExchangeRateLimiter } from '../../inMemoryExchangeRateLimiter';
@@ -13,6 +14,9 @@ import { normalizeExchangeError } from '../../exchangeErrorNormalizer';
 export class MexcPrivateApiClient {
   private readonly httpClient: ExchangeHttpClient;
   private requestBuilder: MexcPrivateRequestBuilder | undefined;
+  private readonly apiClient: MexcApiClient;
+  private serverTimeOffset: number | undefined;
+  private serverTimeSyncRequest: Promise<number> | undefined;
   private readonly rateLimiter: ExchangeRateLimiter;
   private readonly retryController: ExchangeRetryController;
 
@@ -34,6 +38,27 @@ export class MexcPrivateApiClient {
     this.httpClient = httpClient;
     this.rateLimiter = rateLimiter;
     this.retryController = retryController;
+    this.apiClient = new MexcApiClient(this.httpClient);
+  }
+
+  private async getServerTimeOffset(): Promise<number> {
+    if (this.serverTimeOffset !== undefined) {
+      return this.serverTimeOffset;
+    }
+
+    if (!this.serverTimeSyncRequest) {
+      this.serverTimeSyncRequest = this.apiClient
+        .getServerTime()
+        .then((response) => {
+          this.serverTimeOffset = response.serverTime - Date.now();
+          return this.serverTimeOffset;
+        })
+        .finally(() => {
+          this.serverTimeSyncRequest = undefined;
+        });
+    }
+
+    return this.serverTimeSyncRequest;
   }
 
   async request<T = unknown>(
@@ -50,10 +75,13 @@ export class MexcPrivateApiClient {
       );
     }
 
-    const signedRequest = this.requestBuilder.build(params);
+    const serverTimeOffset = await this.getServerTimeOffset();
     let attempt = 1;
-
     while (true) {
+      const signedRequest = this.requestBuilder.build(
+        params,
+        Date.now() + serverTimeOffset,
+      );
       if (!this.rateLimiter.canRequest()) {
         const state = this.rateLimiter.getState();
         const resetAt = state.resetAt ?? Date.now();
