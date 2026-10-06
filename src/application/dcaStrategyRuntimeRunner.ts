@@ -78,6 +78,9 @@ export class DcaStrategyRuntimeRunner {
       console.error(
         `[DcaStrategyRuntimeRunner] ${configurationId}:`,
         error instanceof Error ? error.message : error,
+        error instanceof Error && 'data' in error
+          ? (error as Error & { data?: unknown }).data
+          : undefined,
       );
     }
   }
