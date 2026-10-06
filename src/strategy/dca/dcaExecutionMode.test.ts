@@ -312,6 +312,20 @@ function expectedBuy(mode: Mode): ExchangeOrderRequest {
   };
 }
 
+function expectedInitialBuy(mode: Mode): ExchangeOrderRequest {
+  if (mode === 'makerOnly') {
+    return expectedBuy(mode);
+  }
+
+  return {
+    symbol,
+    side: 'buy',
+    type: 'market',
+    executionMode: mode,
+    quantity: '0.1',
+  };
+}
+
 function expectedSell(mode: Mode, price = '100.1'): ExchangeOrderRequest {
   return {
     symbol,
@@ -344,7 +358,7 @@ for (const mode of ['makerOnly', 'hybrid', 'takerOnly'] as const) {
 
     const preparation = await service.prepare(configurationId);
 
-    assert.deepEqual(preparation.request, expectedBuy(mode));
+    assert.deepEqual(preparation.request, expectedInitialBuy(mode));
   });
 
   test(`DCA ${mode}: DCA order request`, async () => {
