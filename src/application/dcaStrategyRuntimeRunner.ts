@@ -74,8 +74,11 @@ export class DcaStrategyRuntimeRunner {
       }
 
       await this.runtime.process(configurationId);
-    } catch {
-      // A failure in one strategy must never stop other strategies.
+    } catch (error) {
+      console.error(
+        `[DcaStrategyRuntimeRunner] ${configurationId}:`,
+        error instanceof Error ? error.message : error,
+      );
     }
   }
 }
