@@ -68,3 +68,59 @@ test('cycle state survives repository recreation', () => {
 
   db.close();
 });
+
+test('getCurrent prefers an active cycle over a newer stopped cycle', () => {
+  const db = createDatabase();
+  const repository = new DcaCycleRepository(new SQLiteDatabaseModel(db));
+
+  repository.create('dca-btcusdt-cycle-1', 'dca-btcusdt', 1);
+  repository.setInitialEntryPrice('dca-btcusdt-cycle-1', '100');
+
+  repository.create('dca-btcusdt-cycle-2', 'dca-btcusdt', 2);
+  repository.updateStatus('dca-btcusdt-cycle-2', 'stopped');
+
+  const current = repository.getCurrent('dca-btcusdt');
+
+  assert.ok(current);
+  assert.equal(current.id, 'dca-btcusdt-cycle-1');
+  assert.equal(current.status, 'active');
+
+  db.close();
+});
+
+test('getCurrent prefers an active cycle over a newer completed cycle', () => {
+  const db = createDatabase();
+  const repository = new DcaCycleRepository(new SQLiteDatabaseModel(db));
+
+  repository.create('dca-btcusdt-cycle-1', 'dca-btcusdt', 1);
+  repository.setInitialEntryPrice('dca-btcusdt-cycle-1', '100');
+
+  repository.create('dca-btcusdt-cycle-2', 'dca-btcusdt', 2);
+  repository.updateStatus('dca-btcusdt-cycle-2', 'completed');
+
+  const current = repository.getCurrent('dca-btcusdt');
+
+  assert.ok(current);
+  assert.equal(current.id, 'dca-btcusdt-cycle-1');
+  assert.equal(current.status, 'active');
+
+  db.close();
+});
+
+test('getCurrent prefers a pending cycle over a newer terminal cycle', () => {
+  const db = createDatabase();
+  const repository = new DcaCycleRepository(new SQLiteDatabaseModel(db));
+
+  repository.create('dca-btcusdt-cycle-1', 'dca-btcusdt', 1);
+
+  repository.create('dca-btcusdt-cycle-2', 'dca-btcusdt', 2);
+  repository.updateStatus('dca-btcusdt-cycle-2', 'completed');
+
+  const current = repository.getCurrent('dca-btcusdt');
+
+  assert.ok(current);
+  assert.equal(current.id, 'dca-btcusdt-cycle-1');
+  assert.equal(current.status, 'pending');
+
+  db.close();
+});

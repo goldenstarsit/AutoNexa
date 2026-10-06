@@ -28,6 +28,13 @@ export class DcaCycleModelSelector
 
   start(configurationId: string): DcaCycleDomainModel {
     const current = this.persistence.getCurrent(configurationId);
+
+    if (current?.status === 'pending' || current?.status === 'active') {
+      throw new Error(
+        `DCA configuration already has a non-terminal cycle: ${current.id} (${current.status})`,
+      );
+    }
+
     const cycleNumber = current ? current.cycleNumber + 1 : 1;
 
     const record = this.persistence.create(

@@ -121,7 +121,12 @@ export class DcaCycleRepository {
           updated_at
         FROM dca_cycles
         WHERE dca_configuration_id = ?
-        ORDER BY cycle_number DESC
+        ORDER BY
+          CASE
+            WHEN status IN ('pending', 'active') THEN 0
+            ELSE 1
+          END,
+          cycle_number DESC
         LIMIT 1
       `,
       dcaConfigurationId,
