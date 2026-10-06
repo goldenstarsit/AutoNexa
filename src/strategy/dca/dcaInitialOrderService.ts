@@ -92,15 +92,10 @@ export class DcaInitialOrderService {
     const request: ExchangeOrderRequest = {
       symbol: configuration.symbol,
       side: 'buy',
-      type:
-        executionMode === 'makerOnly'
-          ? 'makerOnly'
-          : executionMode === 'hybrid'
-            ? 'limit'
-            : 'market',
+      type: executionMode === 'makerOnly' ? 'makerOnly' : 'market',
       executionMode,
       quantity: rules.minimumQuantity,
-      ...(executionMode === 'makerOnly' || executionMode === 'hybrid'
+      ...(executionMode === 'makerOnly'
         ? { price: await exchange.getBestBidPrice(configuration.symbol) }
         : {}),
     };
