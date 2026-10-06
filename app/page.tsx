@@ -29,6 +29,15 @@ type Strategy = {
   stopLossStatus: string | null;
   stopLossFillPrice: string | null;
   currentPrice: string | null;
+  invested: string | null;
+  currentValue: string | null;
+  unrealizedPnl: string | null;
+  takeProfitPrice: string | null;
+  stopLossPrice: string | null;
+  completedCycles: number;
+  wins: number;
+  losses: number;
+  realizedPnl: number;
 };
 
 function formatNumber(value: string | null, digits = 8): string {
@@ -224,20 +233,81 @@ function StrategyCard({ strategy }: { strategy: Strategy }) {
           />
 
           <DataItem
-            label="Entry Value"
-            value={formatNumber(strategy.entryQuoteQuantity, 4)}
+            label="Invested"
+            value={formatNumber(strategy.invested, 4)}
+          />
+
+          <DataItem
+            label="Current Value"
+            value={formatNumber(strategy.currentValue, 4)}
+          />
+
+          <DataItem
+            label="Unrealized P&L"
+            value={formatNumber(strategy.unrealizedPnl, 4)}
+            valueClassName={
+              strategy.unrealizedPnl !== null &&
+              Number(strategy.unrealizedPnl) >= 0
+                ? 'text-emerald-300'
+                : 'text-red-300'
+            }
           />
 
           <DataItem
             label="Take Profit"
-            value={`${strategy.takeProfitPercent}%`}
+            value={formatPrice(strategy.takeProfitPrice)}
             valueClassName="text-emerald-300"
           />
 
           <DataItem
             label="Stop Loss"
-            value={`${strategy.stopLossPercent}%`}
+            value={formatPrice(strategy.stopLossPrice)}
             valueClassName="text-red-300"
+          />
+        </div>
+
+        <div className="border-t border-white/10 pt-5">
+          <div className="mb-3 text-xs font-bold uppercase tracking-wider text-zinc-500">
+            Performance
+          </div>
+
+          <div className="mb-5 grid grid-cols-3 gap-2">
+            <div className="rounded-2xl bg-black/20 p-3 text-center">
+              <div className="text-[9px] font-bold uppercase text-zinc-500">
+                Completed
+              </div>
+              <div className="mt-1 text-sm font-black text-white">
+                {strategy.completedCycles}
+              </div>
+            </div>
+
+            <div className="rounded-2xl bg-black/20 p-3 text-center">
+              <div className="text-[9px] font-bold uppercase text-zinc-500">
+                Wins
+              </div>
+              <div className="mt-1 text-sm font-black text-emerald-300">
+                {strategy.wins}
+              </div>
+            </div>
+
+            <div className="rounded-2xl bg-black/20 p-3 text-center">
+              <div className="text-[9px] font-bold uppercase text-zinc-500">
+                Losses
+              </div>
+              <div className="mt-1 text-sm font-black text-red-300">
+                {strategy.losses}
+              </div>
+            </div>
+          </div>
+
+          <DataItem
+            label="Realized P&L"
+            value={formatNumber(String(strategy.realizedPnl), 4)}
+            valueClassName={
+              strategy.realizedPnl >= 0
+                ? 'text-emerald-300'
+                : 'text-red-300'
+            }
           />
         </div>
 

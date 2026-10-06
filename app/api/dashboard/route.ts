@@ -29,6 +29,10 @@ type DashboardRow = {
   takeProfitFillPrice: string | null;
   stopLossStatus: string | null;
   stopLossFillPrice: string | null;
+  completedCycles: number;
+  wins: number;
+  losses: number;
+  realizedPnl: number;
 };
 
 async function getMarketPrice(symbol: string): Promise<string | null> {
@@ -143,7 +147,62 @@ export async function GET() {
             WHERE eo.dca_cycle_id = cy.id
               AND eo.exit_type = 'stopLoss'
             LIMIT 1
-          ) AS stopLossFillPrice
+          ) AS stopLossFillPrice,
+
+          (
+            SELECT COUNT(*)
+            FROM dca_cycles hc
+            WHERE hc.dca_configuration_id = c.id
+              AND hc.status = 'completed'
+          ) AS completedCycles,
+
+          (
+            SELECT COUNT(*)
+            FROM dca_cycles wc
+            WHERE wc.dca_configuration_id = c.id
+              AND wc.status = 'completed'
+              AND EXISTS (
+                SELECT 1
+                FROM dca_exit_orders eo
+                WHERE eo.dca_cycle_id = wc.id
+                  AND eo.exit_type = 'takeProfit'
+                  AND eo.status = 'filled'
+              )
+          ) AS wins,
+
+          (
+            SELECT COUNT(*)
+            FROM dca_cycles lc
+            WHERE lc.dca_configuration_id = c.id
+              AND lc.status = 'completed'
+              AND EXISTS (
+                SELECT 1
+                FROM dca_exit_orders eo
+                WHERE eo.dca_cycle_id = lc.id
+                  AND eo.exit_type = 'stopLoss'
+                  AND eo.status = 'filled'
+              )
+          ) AS losses,
+
+          (
+            SELECT COALESCE(
+              SUM(
+                CASE
+                  WHEN eo.status = 'filled'
+                  THEN COALESCE(eo.executed_quantity, '0')
+                    * COALESCE(eo.average_fill_price, '0')
+                    - COALESCE(hc.entry_quote_quantity, '0')
+                  ELSE 0
+                END
+              ),
+              0
+            )
+            FROM dca_cycles hc
+            JOIN dca_exit_orders eo
+              ON eo.dca_cycle_id = hc.id
+            WHERE hc.dca_configuration_id = c.id
+              AND hc.status = 'completed'
+          ) AS realizedPnl
 
         FROM dca_configurations c
         LEFT JOIN dca_cycles cy
@@ -174,6 +233,44 @@ export async function GET() {
       strategies: rows.map((row) => ({
         ...row,
         currentPrice: priceMap.get(row.symbol) ?? null,
+
+        invested: row.entryQuoteQuantity ?? null,
+
+        currentValue:
+          row.entryQuantity !== null &&
+          priceMap.get(row.symbol) !== null
+            ? String(
+                Number(row.entryQuantity) *
+                  Number(priceMap.get(row.symbol)),
+              )
+            : null,
+
+        unrealizedPnl:
+          row.entryQuantity !== null &&
+          row.entryQuoteQuantity !== null &&
+          priceMap.get(row.symbol) !== null
+            ? String(
+                Number(row.entryQuantity) *
+                  Number(priceMap.get(row.symbol)) -
+                  Number(row.entryQuoteQuantity),
+              )
+            : null,
+
+        takeProfitPrice:
+          row.averageEntryPrice !== null
+            ? String(
+                Number(row.averageEntryPrice) *
+                  (1 + Number(row.takeProfitPercent) / 100),
+              )
+            : null,
+
+        stopLossPrice:
+          row.initialEntryPrice !== null
+            ? String(
+                Number(row.initialEntryPrice) *
+                  (1 - Number(row.stopLossPercent) / 100),
+              )
+            : null,
       })),
     });
   } finally {
