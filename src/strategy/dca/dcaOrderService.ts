@@ -200,19 +200,7 @@ export class DcaOrderService {
         throw new Error(`DCA cycle has no initial entry totals: ${cycleId}`);
       }
 
-      const cycleFills = this.runtimeOrderPersistence.getFillsByCycle(cycleId);
-      const dcaTrades: ExchangeTrade[] = cycleFills.map((fill) => ({
-        tradeId: fill.exchangeTradeId,
-        orderId: fill.exchangeOrderId,
-        symbol: fill.symbol,
-        side: fill.side,
-        price: fill.price,
-        quantity: fill.quantity,
-        quoteQuantity: fill.quoteQuantity,
-        timestamp: fill.tradeTimestamp,
-      }));
-
-      const dcaTotals = calculateTradeFillTotals(dcaTrades);
+      const dcaTotals = calculateTradeFillTotals(trades);
       const combinedTotals = combineTradeFillTotals(
         {
           quantity: cycle.entryQuantity,
